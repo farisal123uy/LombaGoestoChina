@@ -1,0 +1,17 @@
+{
+  "name": "@guardian-wallet/planner",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@guardian-wallet/shared": "0.1.0",
+    "@ai-sdk/openai": "4.0.94",
+    "ai": "7.0.141",
+    "zod": "4.6.7"
+  }
+}

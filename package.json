@@ -1,0 +1,45 @@
+{
+  "name": "guardian-wallet",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "UNLICENSED",
+  "engines": { "node": ">=22.13.0" },
+  "packageManager": "npm@10.9.2",
+  "workspaces": [
+    "packages/shared",
+    "packages/planner",
+    "packages/wallet",
+    "packages/database",
+    "apps/api",
+    "apps/worker",
+    "apps/web",
+    "contracts"
+  ],
+  "scripts": {
+    "dev": "npm run build:packages && concurrently -k -n web,api,worker \"npm run dev:web\" \"npm run dev:api\" \"npm run dev:worker\"",
+    "dev:web": "npm run dev --workspace @guardian-wallet/web",
+    "dev:api": "npm run dev --workspace @guardian-wallet/api",
+    "dev:worker": "npm run dev --workspace @guardian-wallet/worker",
+    "build:packages": "npm run build --workspace @guardian-wallet/shared && npm run build --workspace @guardian-wallet/planner && npm run build --workspace @guardian-wallet/wallet && npm run build --workspace @guardian-wallet/database",
+    "build": "npm run build:packages && npm run build --workspace @guardian-wallet/api && npm run build --workspace @guardian-wallet/worker && npm run build --workspace @guardian-wallet/web && npm run compile --workspace @guardian-wallet/contracts",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "npm run build:packages && npm run typecheck --workspaces --if-present",
+    "test:contracts": "npm run test --workspace @guardian-wallet/contracts",
+    "test:integration": "vitest run --config vitest.config.ts",
+    "test:e2e": "playwright test",
+    "db:generate": "npm run db:generate --workspace @guardian-wallet/database",
+    "db:migrate": "npm run db:migrate --workspace @guardian-wallet/database"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.1",
+    "@playwright/test": "1.64.1",
+    "@types/node": "^22.15.0",
+    "concurrently": "^9.2.0",
+    "eslint": "9.39.1",
+    "globals": "^16.5.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "^8.48.0",
+    "vitest": "4.0.18"
+  }
+}
