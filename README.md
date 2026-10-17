@@ -11,6 +11,7 @@ bounded planner, owner API, SQL-backed task queue and a persist-before-send work
 The web application includes sponsored owner onboarding at `/setup` and financial
 procurement at `/dashboard`. See the [progress checkpoint](docs/PROGRESS.md),
 [runtime guide](docs/PROCUREMENT_RUNTIME.md) and [A+B API handoff](docs/ab-handoff.md).
+Teammate frontend setup: [Frontend handoff](docs/FRONTEND_HANDOFF.md).
 
 Verification: 36 integration tests, 14 contract/fork cases and six browser cases
 passed. Supabase is migrated through `0003`, and real local Qwen/provider quote

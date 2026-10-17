@@ -124,8 +124,13 @@ snapshot, bukan jaminan proses tetap hidup sesudah terminal/komputer ditutup.
 
 - Queue batching/gas economics, evaluasi adversarial lebih luas, hosting dan final
   demo/submission.
-- Perubahan implementasi masih belum di-commit/push. Riwayat remote berbeda dari
-  root commit lokal; publishing perlu review dan penyelarasan.
+
+## GitHub dan kolaborasi frontend
+
+- Checkpoint implementasi sudah di-commit dan di-push sebagai **`5088219`** di branch
+  **`feat/wallet-agent-backend`**. Panduan teman frontend:
+  [FRONTEND_HANDOFF.md](FRONTEND_HANDOFF.md). Riwayat `main` memiliki root berbeda;
+  penggabungan ke `main` masih memerlukan penyelarasan.
 
 Private key, session authorization, bearer token, signed operation journal dan
 credential URL tidak dicantumkan dalam catatan/evidence publik.
