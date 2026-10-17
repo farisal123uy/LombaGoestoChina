@@ -103,3 +103,6 @@ npm run test:e2e
 Coordinate changes to shared schemas, API routes and root `package-lock.json` with
 the backend owner. UI/UX work can build on the existing components while preserving
 owner authentication, explicit execution controls and the `paid`/`completed` distinction.
+
+Security controls, evidence boundaries, and open backend-owner questions are in
+[security-self-assessment.md](security-self-assessment.md).
