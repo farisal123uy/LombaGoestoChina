@@ -1,6 +1,56 @@
 # Execution evidence
 
-No deployment or financial transaction has been performed by this scaffold.
+Public Base Sepolia deployment is confirmed in
+[`evidence/public-deployment.json`](evidence/public-deployment.json). The owner-signed
+sponsored bootstrap succeeded, installed policy and funded 10 MockUSD in Kernel.
+The first public procurement/payment/service outcome is now verified separately in
+[`evidence/public-procurement.json`](evidence/public-procurement.json) and the
+[AI-01 report](evidence/AI-01-public-procurement.md): 0.26 MockUSD settled, signed
+delivery and actual hosted PostgreSQL probe/unique-value write-read passed. Local
+contract and actual-Kernel fork payments/rejections have also been tested.
+The [A+B handoff](ab-handoff.md) contains reproduction commands and setup boundaries.
+The captured [local-fork manifest](evidence/2026-10-16-local-fork.json) records the
+observed hashes/outcomes with explicit source-state and simulation labels. It is
+not an explorer manifest for public Base Sepolia transactions.
+
+## Initial implementation evidence
+
+- [Live provider preview](evidence/provider-live-preview.json): real local Qwen buyer
+  intent, separate provider agent/signer, hosted invoice persistence, verified quote
+  signature and live payment planning against public policy. Worker idle and auth
+  boundaries verified; selected wait/jailbreak cases passed. No payment task,
+  UserOperation or service provisioning was created. Buyer inference ran in the CLI
+  using API planner code; actual owner API login remains required for procurement.
+- `tests/integration/provider.test.ts`: PGlite service provisioning/KV/probe with
+  explicit chain/model fixtures, quote/receipt signing, fixed-offer boundaries and
+  JSON object constraints. Worker cases test delivery retry/escalation without repay.
+- `tests/e2e/dashboard.spec.ts`: explicit scheduling, quote/evidence display, lost
+  response request-ID reuse and service actions with browser/API fixtures.
+- [Actual project bootstrap quote](evidence/sponsored-bootstrap-quote.json): full
+  contract deployment/install simulation quote with no owner signature or public
+   transaction. This earlier quote is separate from the subsequent public manifest.
+- `SponsoredBootstrap.integration.ts`: owner bootstrap, exact-signature validation,
+  origin/auth rejection, duplicate/unknown recovery, scoped sponsored payment and
+  persistent owner/Kernel native balance zero on the local fork. This uses a fixture
+  paymaster, not the production ZeroDev policy engine.
+- `tests/e2e/owner-setup.spec.ts`: visible browser flow, wrong wallet refusal and
+  offline startup guidance with injected wallet/coordinator fixtures.
+
+- [Qwen live local smoke evidence](evidence/qwen-local-evaluation.json): actual
+  qwen3:8b/Ollama inference with synthetic state and quote fixtures, recorded separately
+  from blockchain execution. Supabase connection, schema migration and RLS status
+  have been verified; hosted multi-process stress remains a separate evaluation.
+
+- `contracts/test/GuardianPayments.ts`: local account-harness policy/invariant suite.
+- `tests/integration/payment-backend.test.ts`: PostgreSQL-engine (PGlite) SQL/auth/
+  planner/worker integration, with explicitly injected chain-driver fixtures.
+- `contracts/test/Kernel.integration.ts`: actual Kernel 0.3.1 and EntryPoint 0.7 on
+  a local Base Sepolia fork at block 48189742. It tests allowed payment, denied token/
+  admin/batch/signature bypass, hostile planner fixture, owner revoke, and the actual
+  SDK execution driver's lost-response recovery with SQL state and no second send.
+- Fork worker recovery uses PGlite and a local stub bundler with static gas estimates;
+  it is not evidence of real bundler mempool behavior, hosted DB performance or gas
+  economics. All hashes emitted by this test belong to its ephemeral local fork.
 
 For each actual demonstration, record:
 
@@ -31,15 +81,15 @@ an HTTP success code, or a submission hash is not a confirmed payment.
 Base Sepolia is the development network. Confirm the accepted evidence network with
 the organizing committee and label test tokens clearly.
 
-## Required evidence bundles (all pending)
+## Final-demo evidence bundles (local coverage does not complete submission)
 
-| Bundle | Expected result; not yet observed |
+| Bundle | Coverage and outstanding evidence |
 | --- | --- |
-| AI-01 | Astra/provider request and quote; one 0.26 settlement and separate service outcome. |
-| SEC-01 | Actual dashboard jailbreak output, then labeled hostile-plan contract test; no unauthorized token transfer. |
+| AI-01 | Public 0.26 settlement + signed delivery + fresh PostgreSQL probe/write-read verified; saved JSON/report linked above. |
+| SEC-01 | Hostile-plan contract fixture verified locally/fork; actual dashboard/live-model jailbreak remains. |
 | SEC-02 | Vendor injection corpus, parser/planner outputs, decisions and benign-case controls. |
-| SEC-03–07 | Batch daily sum, protected balance, reentrancy, approval/bypass, pause/revoke results with isolated preconditions. |
-| REL-01–03 | Inference/chain state races; lost send response, restart/nonce/reorg; atomic batch and post-payment service failure. |
+| SEC-03–07 | Initial local/fork policy coverage above; expand corpus/control ordering and collect accepted public-network evidence. |
+| REL-01–03 | Local/fork crash, lost-response, stale preflight, rollback and fixture delivery retries covered; reorg/hosted service-failure evaluation remain. |
 | COST-01 | Comparable single vs batch 4/7 measurements within the 2.00 cap, latency and cost payer. |
 
 For SEC-01, distinguish local EVM execution, public-chain simulation, bundler rejection

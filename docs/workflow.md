@@ -1,5 +1,12 @@
 # Implementation workflow and branches
 
+## Current implementation ownership
+
+Active branch: **`feat/wallet-agent-backend`**. The project owner implements roles A+B;
+the teammate owns C (product/frontend/demo/submission). The original branch table below
+is a work-breakdown proposal. See [A+B handoff](ab-handoff.md) for the implemented
+wallet/backend slice, API contract, local-fork evidence and remaining work.
+
 Status: **planned**, October 16, 2026. These names describe intended work; no Git
 branches, commits, releases, or passing financial tests are created by this document.
 The current repository contains the scaffold described in [architecture](architecture.md).

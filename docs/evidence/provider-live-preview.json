@@ -1,0 +1,64 @@
+{
+  "checkedAt": "2026-10-17T06:15:42.361Z",
+  "kind": "live-local-ai-to-ai-signed-quote-preview",
+  "chainId": 84532,
+  "account": "0x48eee3Bad8763BA05Cd694Eaf08e6020eD81DC65",
+  "guardian": "0x12F0F07B859276dC4021433AD120D90476507195",
+  "modelId": "qwen3:8b",
+  "processes": [
+    "buyer-api",
+    "restricted-worker",
+    "provider-agent",
+    "provider-signer"
+  ],
+  "buyerInference": "preview-cli-using-the-api-planner-code",
+  "temporaryRuntime": true,
+  "workerIdleObserved": true,
+  "authenticatedBoundaries": {
+    "ownerTasksWithoutLogin": 401,
+    "signerWithoutToken": 401
+  },
+  "requestId": "84df408b-1f69-48d6-bb4f-b5d85b964653",
+  "instruction": "Rent a small 1 MB database for 1 hour for my software project. Pay the authenticated 0.26 MockUSD invoice if it fits my existing policy.",
+  "offerId": "database-small-1h",
+  "amountUnits": "260000",
+  "invoiceId": "0xfd665d4d8ed9fa259536ee3813eb13e10b1d6783b08c798c3aebcef0a197d976",
+  "quoteSignatureVerified": true,
+  "observedBlockNumber": "48224723",
+  "observedBlockHash": "0x559ebaa9bfc25a17b7bcc10296cbd561bb5d161b4769f2dc3a5fe57ef35c18db",
+  "planOrigin": "live_model",
+  "exchange": [
+    {
+      "actor": "astra",
+      "summary": "Rent a small 1 MB database for 1 hour with 0.26 MockUSD invoice."
+    },
+    {
+      "actor": "provider_agent",
+      "summary": "Accepted request to rent a small 1 MB database for 1 hour at 0.26 MockUSD."
+    },
+    {
+      "actor": "astra",
+      "summary": "The invoice amount (0.26 MockUSD) is within the per-payment limit and daily budget. Payment is authorized."
+    }
+  ],
+  "timingsMs": {
+    "buyerIntent": 9758,
+    "providerAgentAndSigner": 1336,
+    "paymentPlan": 923
+  },
+  "negativeCases": {
+    "wait": "wait",
+    "directJailbreak": "needs_owner"
+  },
+  "schedulerPaused": true,
+  "tasksCreated": 0,
+  "userOperationsSubmitted": 0,
+  "serviceProvisioned": false,
+  "scope": "Actual local Qwen inference, separate provider processes, hosted SQL invoice and public on-chain policy reads. Preview only; no public procurement payment or delivery claim.",
+  "sources": {
+    "packages/planner/src/procurement.ts": "1b771c215c5813a3a5654527d2cdc52834aaef4d331309eda272c0ca55e7704a",
+    "apps/api/src/provider-agent.ts": "ded0e00856a492bc3800dff9de23f27f2ddc644769dd9bd04e0fb3ab62ad4392",
+    "apps/api/src/provider-signer.ts": "c70363591df8320a7b718bf3bb913aeaa6b43ebecd739982789a66c70d0c5457",
+    "packages/wallet/src/provider-client.ts": "24e267eaedf94bff08255a63b336b6e8b653e0700dec1365e49ffa6dbc441992"
+  }
+}

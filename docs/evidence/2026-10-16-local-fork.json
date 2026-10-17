@@ -1,0 +1,105 @@
+{
+  "capturedOn": "2026-10-16",
+  "branch": "feat/wallet-agent-backend",
+  "baselineCommit": "6cd497e",
+  "sourceState": "A+B working-tree implementation; not a frozen release revision",
+  "evidenceType": "ephemeral-local-fork-not-public-transactions",
+  "publicChainTransactions": false,
+  "chainId": 84532,
+  "forkBlock": 48189742,
+  "localExecutionHardfork": "isthmus",
+  "kernelVersion": "0.3.1",
+  "entryPointVersion": "0.7",
+  "entryPoint": "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
+  "account": "0xd43752e1bB1Ac8e1398D816F8eD91d4F6932b911",
+  "guardian": "0x967466da65d97c4ffa5ce657ab84145ee1a31f3f",
+  "token": "0x255d5b41ccef1bb499b55249badff5f932ffe467",
+  "tokenLabel": "MockUSD test fixture, not USDC or dollar value",
+  "tokenDecimals": 6,
+  "invoiceAmountUnits": "260000",
+  "initialBalanceUnits": "10000000",
+  "balanceAfterFirstPaymentUnits": "9740000",
+  "balanceAfterWorkerPaymentUnits": "9480000",
+  "policy": {
+    "version": "1",
+    "protectedBalanceUnits": "6000000",
+    "perPaymentLimitUnits": "1000000",
+    "dailyLimitUnits": "2000000",
+    "dayDefinition": "UTC fixed epoch"
+  },
+  "operationResults": [
+    {
+      "label": "allowed-session-payment",
+      "userOperationHash": "0x74e6ccc29fe88b14267d808245b97d55b87f8c7aece0782a807ac6e7134c2d2f",
+      "transactionHash": "0xa8305865e99ff9f02e24bda97e5c388b02383c04616aa71775b1477e0a3b2d37",
+      "success": true
+    },
+    {
+      "label": "direct-transfer-denied",
+      "userOperationHash": "0x266bab0ace919c807bb2a19b8cd5f88f8e3b1f899b587e61771b5c9ae3fec82d",
+      "success": false,
+      "rejection": "FailedOpWithRevert"
+    },
+    {
+      "label": "infinite-approval-denied",
+      "userOperationHash": "0xee734b4871469205d8d394b67e5f43e39baa44c33bfeb8ba4bb9470729f4a836",
+      "success": false,
+      "rejection": "FailedOpWithRevert"
+    },
+    {
+      "label": "policy-admin-denied",
+      "userOperationHash": "0x38da112920f9ed3322aca6cea2d5a5d3f650b03571269a994e6f4cf9761f37d3",
+      "success": false,
+      "rejection": "FailedOpWithRevert"
+    },
+    {
+      "label": "SEC-01-compromised-planner-fixture",
+      "outputOrigin": "adversarial_fixture",
+      "userOperationHash": "0x672630ab55a2eb3b58418465a393d30fb7fb5a07229f04b8d0f1b25a90ec1967",
+      "transactionHash": "0x9abbb497ca26d53bdc0a0763dde5245007e5e7e914a722c7f9cc61addaeb0cf8",
+      "success": false,
+      "outerTransactionSucceeded": true
+    },
+    {
+      "label": "mixed-batch-bypass-denied",
+      "userOperationHash": "0x113b483a17e5357bc9fd38cbe0c0b5f16c634367ee1e96493cbc32e8a34a18f4",
+      "success": false,
+      "rejection": "FailedOpWithRevert"
+    },
+    {
+      "label": "owner-revokes-sessions",
+      "userOperationHash": "0xfc798a318aa58455ac12276d4e545a7f71a94a0c3c836ef2d99f20fb03c7836b",
+      "transactionHash": "0xc31723b4252a0c90eaccf59230d226384f4895cde5321d8e3d4818826ca242ce",
+      "success": true
+    },
+    {
+      "label": "revoked-session-denied",
+      "userOperationHash": "0x1445a47930cb3cd9a5667fa671a3141b0f09813f8fcf082f88149b4ae86d6e60",
+      "success": false,
+      "rejection": "FailedOpWithRevert"
+    }
+  ],
+  "workerRecovery": {
+    "case": "REL-02",
+    "database": "PGlite PostgreSQL engine",
+    "bundler": "local stub with static gas estimates; send response lost after actual EntryPoint inclusion",
+    "userOperationHash": "0xb0f1a99213bb4bc4c9e04954860c96bfaa0438a3107e3e6c120d92b6041d6878",
+    "transactionHash": "0xbb692c2bc338839130389a46e3e8e29377903f11d72094f23fb81f8beffc38a6",
+    "statusAfterLostResponse": "unknown",
+    "statusAfterRestartReconciliation": "paid",
+    "sendCount": 1,
+    "confirmationThreshold": 1
+  },
+  "suiteResults": {
+    "localPolicyTestsPassed": 12,
+    "sqlApiPlannerWorkerTestsPassed": 12,
+    "kernelForkTestsPassed": 1
+  },
+  "notEstablished": [
+    "Public-chain deployment or accepted competition execution evidence",
+    "Hosted PostgreSQL/pooler multi-process behavior",
+    "Real bundler mempool, pricing or production finality behavior",
+    "Live AI model jailbreak rate or two live AI provider runtimes",
+    "Service provisioning, human benefit or $0.26 production unit economics"
+  ]
+}

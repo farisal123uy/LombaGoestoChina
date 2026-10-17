@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "license": "UNLICENSED",
-  "engines": { "node": ">=22.13.0" },
+  "engines": {
+    "node": ">=22.13.0"
+  },
   "packageManager": "npm@10.9.2",
   "workspaces": [
     "packages/shared",
@@ -17,6 +19,23 @@
     "contracts"
   ],
   "scripts": {
+    "setup:services": "node tools/services/setup.mjs",
+    "setup:database-password": "node tools/services/database-password.mjs",
+    "services:check": "node tools/services/check.mjs",
+    "services:schema": "node tools/services/schema-status.mjs",
+    "wallet:check": "node tools/wallet/check.mjs",
+    "wallet:sponsorship": "npm run build:packages && node tools/wallet/check-sponsorship.mjs",
+    "onboarding": "npm run build:packages && npm run build --workspace @guardian-wallet/api && npm run compile --workspace @guardian-wallet/contracts && node tools/wallet/onboarding-server.mjs",
+    "owner:setup": "npm run build:packages && npm run build --workspace @guardian-wallet/api && npm run compile --workspace @guardian-wallet/contracts && concurrently -k -n web,owner \"npm run dev:web\" \"node tools/wallet/onboarding-server.mjs\"",
+    "provider:configure": "node tools/provider/configure.mjs",
+    "provider:check": "npm run build:packages && npm run build --workspace @guardian-wallet/api && npm run build --workspace @guardian-wallet/worker && node tools/provider/check.mjs",
+    "runtime:dev": "npm run build:packages && npm run build --workspace @guardian-wallet/api && npm run build --workspace @guardian-wallet/worker && npm run provider:configure && concurrently -k -n api,worker,seller,signer \"npm run dev:api\" \"npm run dev:worker\" \"node tools/provider/agent.mjs\" \"node tools/provider/signer.mjs\"",
+    "wallet:deployment-quote": "npm run build:packages && npm run compile --workspace @guardian-wallet/contracts && node tools/wallet/check-deployment-quote.mjs",
+    "wallet:verify": "npm run build:packages && node tools/wallet/verify-deployment.mjs",
+    "wallet:procurement:verify": "npm run build:packages && node tools/wallet/verify-procurement.mjs",
+    "model:check": "npm run build:packages && node tools/models/evaluate-qwen.mjs",
+    "cloud:vercel": "npx --yes vercel@64.3.1",
+    "cloud:railway": "npx --yes @railway/cli@5.69.0",
     "dev": "npm run build:packages && concurrently -k -n web,api,worker \"npm run dev:web\" \"npm run dev:api\" \"npm run dev:worker\"",
     "dev:web": "npm run dev --workspace @guardian-wallet/web",
     "dev:api": "npm run dev --workspace @guardian-wallet/api",
@@ -24,14 +43,25 @@
     "build:packages": "npm run build --workspace @guardian-wallet/shared && npm run build --workspace @guardian-wallet/planner && npm run build --workspace @guardian-wallet/wallet && npm run build --workspace @guardian-wallet/database",
     "build": "npm run build:packages && npm run build --workspace @guardian-wallet/api && npm run build --workspace @guardian-wallet/worker && npm run build --workspace @guardian-wallet/web && npm run compile --workspace @guardian-wallet/contracts",
     "lint": "eslint . --max-warnings 0",
-    "typecheck": "npm run build:packages && npm run typecheck --workspaces --if-present",
-    "test:contracts": "npm run test --workspace @guardian-wallet/contracts",
-    "test:integration": "vitest run --config vitest.config.ts",
+    "typecheck": "npm run build:packages && npm run compile --workspace @guardian-wallet/contracts && npm run typecheck --workspaces --if-present",
+    "test:contracts": "npm run build:packages && npm run test --workspace @guardian-wallet/contracts",
+    "test:kernel": "node -e \"if (!process.env.KERNEL_FORK_RPC_URL) throw new Error('Set KERNEL_FORK_RPC_URL before running the fork suite')\" && npm run build:packages && npm run test --workspace @guardian-wallet/contracts -- nodejs test/Kernel.integration.ts",
+    "test:integration": "npm run build:packages && vitest run --config vitest.config.ts",
     "test:e2e": "playwright test",
-    "db:generate": "npm run db:generate --workspace @guardian-wallet/database",
+    "db:generate": "npm run build:packages && npm run db:generate --workspace @guardian-wallet/database",
     "db:migrate": "npm run db:migrate --workspace @guardian-wallet/database"
   },
+  "overrides": {
+    "vite": "7.3.7",
+    "ethjs-unit": {
+      "bn.js": "4.12.3"
+    },
+    "number-to-bn": {
+      "bn.js": "4.12.3"
+    }
+  },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.10",
     "@eslint/js": "9.39.1",
     "@playwright/test": "1.64.1",
     "@types/node": "^22.15.0",
@@ -40,6 +70,6 @@
     "globals": "^16.5.0",
     "typescript": "5.9.3",
     "typescript-eslint": "^8.48.0",
-    "vitest": "4.0.18"
+    "vitest": "4.1.12"
   }
 }

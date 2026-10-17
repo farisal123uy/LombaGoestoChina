@@ -1,6 +1,11 @@
 # Evaluation plan
 
-No user study, task benchmark, or attack evaluation has been conducted yet.
+No user study, provider benchmark or cost comparison has been conducted yet. A
+four-case live Qwen smoke run now covers pay/wait/direct jailbreak/vendor parsing;
+[captured output and timings](evidence/qwen-local-evaluation.json) use synthetic
+financial state/quotes and do not claim signature, settlement or service delivery.
+Initial local policy, SQL/backend and actual-Kernel fork tests are implemented;
+see [execution evidence](execution-evidence.md) and [A+B handoff](ab-handoff.md).
 
 ## Hypothesis
 
@@ -23,7 +28,7 @@ Use identical initial balances, obligations, allowed recipients, policy versions
 event sequences. Separate tests for individual constraints so the reason for rejection
 is unambiguous.
 
-## Acceptance matrix (planned, none executed)
+## Acceptance matrix (targets; initial local coverage is recorded separately)
 
 Common fixture: MockUSD, 6 decimals, initial balance 10.00, protected balance 6.00,
 per-invoice cap 1.00, UTC-day cap 2.00, invoice 0.26 (`260000`), batch <= 10. Reset
@@ -83,6 +88,12 @@ only with an identified target network, timestamp and conversion assumptions; Ba
 Sepolia results alone cannot establish profitability. Batch savings must be observed,
 not presumed. Compare manual, deterministic and AI decisions under the same quotes,
 events and batching rules to avoid attributing scheduler savings solely to AI.
+
+For local Qwen, record model/quantization, GPU, load time and generation time instead
+of a paid cloud-token price. The captured RTX 4060 Laptop / qwen3:8b run observed
+10,235 ms on the first request (9,252 ms loading); two warm planner responses were
+567 and 1,041 ms, with roughly 46–48 generated tokens/second. These are selected
+smoke-request timings, not a production latency distribution or a scalability claim.
 
 For enterprise interviews, record current procurement pain, authority setup effort,
 frequency/volume, acceptable latency, disputes/fulfillment risk, willingness to use

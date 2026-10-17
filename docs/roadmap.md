@@ -1,7 +1,9 @@
 # Five-day implementation roadmap
 
-Revision: October 16, 2026. The repository remains a scaffold; the outcomes below are
-implementation targets. Primary demo: Astra procures a database service from a provider
+Revision: October 16, 2026. The initial A+B wallet/backend slice is implemented and
+tested locally/fork; [A+B handoff](ab-handoff.md) records ownership, endpoints and
+limitations. The outcomes below remain complete-product targets. Primary demo:
+Astra procures a database service from a provider
 agent under an enterprise owner's bounded authority. See [workflow](workflow.md),
 [architecture](architecture.md), [evaluation](evaluation.md), and [demo script](demo-script.md).
 

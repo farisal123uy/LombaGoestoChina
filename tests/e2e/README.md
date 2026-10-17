@@ -1,5 +1,9 @@
 # Browser acceptance plan
 
+`owner-setup.spec.ts` covers the sponsored setup UI with explicit wallet/coordinator
+fixtures. Actual signature and AA execution proof is in the sponsored Kernel fork
+test. Run `npx playwright install chromium` once before `npm run test:e2e`.
+
 Add `*.spec.ts` files here when user workflows are implemented. The Playwright
 configuration starts the web application; start the required backend fixtures
 explicitly for financial scenarios.
@@ -8,4 +12,10 @@ Cover owner connection, permission setup, starting a task, viewing confirmed res
 handling an exception, and revoking access. Assert the displayed network and evidence
 match the actual operation, not just the planner's response.
 
-Run with `npm run test:e2e`. No cases are implemented at scaffold stage.
+`dashboard.spec.ts` covers explicit owner scheduling after quote review, displayed
+transaction/delivery evidence and probe/KV actions, stable request IDs on a lost
+response, and runtime-offline instructions. All wallet/API responses are fixtures.
+
+Run with `npm run test:e2e`. Six browser cases currently pass. Public procurement and
+actual service evidence are recorded separately; broader adversarial/operator and
+on-chain revoke UX remain acceptance targets.

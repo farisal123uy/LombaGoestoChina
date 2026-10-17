@@ -1,0 +1,15 @@
+{
+  "capturedOn": "2026-10-17",
+  "evidenceType": "actual-project-bootstrap-quote-no-owner-signature-no-public-transaction",
+  "chainId": 84532,
+  "kernel": "0x48eee3Bad8763BA05Cd694Eaf08e6020eD81DC65",
+  "guardian": "0x12F0F07B859276dC4021433AD120D90476507195",
+  "token": "0x231243df7Bfa354C63EF2D77cAa92099865f6d29",
+  "paymaster": "0x777777777777AeC03fd955926DbF81597e66834C",
+  "actions": 3,
+  "maximumNativeGasExposureEth": "0.000025460624",
+  "ownerSignatureProvided": false,
+  "transactionsSent": 0,
+  "sponsorshipQuotaConsumptionRequested": false,
+  "scope": "CREATE2 contract deployment and Guardian installation quote only. Final inclusion requires owner signature and valid final sponsorship; project pricing/quota not guaranteed. Addresses are deterministic candidates, not a deployment claim."
+}

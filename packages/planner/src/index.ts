@@ -1,4 +1,6 @@
 import type { ActionPlan, FinancialState } from "@guardian-wallet/shared";
+export * from "./payments.js";
+export * from "./procurement.js";
 
 export interface PlanningRequest {
   taskId: string;
@@ -11,4 +13,4 @@ export interface Planner {
   plan(request: PlanningRequest): Promise<ActionPlan>;
 }
 
-export const plannerImplementationStatus = "pending" as const;
+export const plannerImplementationStatus = "bounded_payment_planner" as const;

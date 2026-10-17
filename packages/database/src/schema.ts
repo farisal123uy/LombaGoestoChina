@@ -1,5 +1,7 @@
 import { taskStatuses } from "@guardian-wallet/shared";
-import { integer, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { bigint, boolean, check, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import type { PaymentTask, PaymentAttempt } from "@guardian-wallet/shared";
 
 export const taskStatusEnum = pgEnum("task_status", taskStatuses);
 
@@ -9,7 +11,7 @@ export const goals = pgTable("goals", {
   chainId: integer("chain_id").notNull(),
   instruction: text("instruction").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
+}).enableRLS();
 
 export const tasks = pgTable("tasks", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -19,7 +21,7 @@ export const tasks = pgTable("tasks", {
   policyVersion: text("policy_version").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-});
+}).enableRLS();
 
 export const operations = pgTable("operations", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -30,4 +32,40 @@ export const operations = pgTable("operations", {
   transactionHash: text("transaction_hash"),
   errorCode: text("error_code"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
+}).enableRLS();
+
+export const paymentTasks = pgTable("payment_tasks", {
+  id: uuid("id").primaryKey(),
+  accountKey: text("account_key").notNull(),
+  ownerAddress: text("owner_address").notNull(),
+  paymentId: text("payment_id").notNull().unique(),
+  payload: jsonb("payload").$type<PaymentTask>().notNull(),
+  status: text("status").notNull(),
+  nextActionAt: timestamp("next_action_at", { withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [check("payment_task_payload_object", sql`jsonb_typeof(${t.payload}) = 'object'`)]).enableRLS();
+export const paymentAttempts = pgTable("payment_attempts", {
+  taskId: uuid("task_id").primaryKey().references(() => paymentTasks.id),
+  accountKey: text("account_key").notNull(),
+  status: text("status").notNull(),
+  record: jsonb("record").$type<PaymentAttempt>().notNull(),
+  signedPayload: text("signed_payload").notNull(),
+}, (table) => [uniqueIndex("one_active_attempt_per_account").on(table.accountKey).where(sql`${table.status} NOT IN ('confirmed','failed')`), check("payment_attempt_record_object", sql`jsonb_typeof(${table.record}) = 'object'`)]).enableRLS();
+export const executionLocks = pgTable("execution_locks", {
+  accountKey: text("account_key").primaryKey(), workerId: text("worker_id").notNull(),
+  fence: bigint("fence", { mode: "bigint" }).notNull(), leaseUntil: timestamp("lease_until", { withTimezone: true }).notNull(),
+}).enableRLS();
+export const workerControls = pgTable("worker_controls", {
+  accountKey: text("account_key").primaryKey(), paused: boolean("paused").notNull().default(true),
+}).enableRLS();
+
+export const providerInvoices = pgTable("provider_invoices", {
+  invoiceId: text("invoice_id").primaryKey(), accountKey: text("account_key").notNull(), requestId: uuid("request_id").notNull(),
+  payload: jsonb("payload").notNull(),
+}, (t) => [uniqueIndex("provider_request_idempotency").on(t.accountKey, t.requestId), check("provider_invoice_payload_object", sql`jsonb_typeof(${t.payload}) = 'object'`)]).enableRLS();
+export const providerDatabases = pgTable("provider_databases", {
+  namespaceId: uuid("namespace_id").primaryKey(), invoiceId: text("invoice_id").notNull().unique().references(() => providerInvoices.invoiceId),
+  payload: jsonb("payload").notNull(), data: jsonb("data").notNull().default({}),
+  probeCount: integer("probe_count").notNull().default(0), lastProbeId: uuid("last_probe_id"),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+}, (t) => [check("provider_database_payload_object", sql`jsonb_typeof(${t.payload}) = 'object'`), check("provider_database_data_object", sql`jsonb_typeof(${t.data}) = 'object'`)]).enableRLS();

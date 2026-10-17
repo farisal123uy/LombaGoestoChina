@@ -4,5 +4,5 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["hardhat.config.ts", "ignition/**/*.ts", "test/**/*.ts"]
+  "include": ["hardhat.config.ts", "ignition/**/*.ts", "test/**/*.ts", "artifacts/**/*.d.ts"]
 }

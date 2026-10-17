@@ -1,32 +1,35 @@
 # Security self-assessment — implementation tracker
 
-Status: **not assessed**. This document tracks implementation work and does not claim
-an audit or resistance to attacks.
+Status: **initial implementation tested locally; not independently assessed/audited**.
+See [A+B handoff](ab-handoff.md) for exact implemented paths and limitations. Local
+tests, chain-driver fixtures and actual-Kernel fork evidence are distinguished below.
 
-| Control | Scaffold status | Required evidence |
+| Control | Initial-slice status | Evidence / remaining work |
 | --- | --- | --- |
-| Owner authentication | Pending | Signature, nonce, expiry, and object-ownership tests. |
-| Read / propose / execute permission tiers | Pending | Actual signer and account authorization tests. |
-| Scoped destinations and selectors | Pending | Accepted and rejected operations on the real execution path. |
-| Per-payment and cumulative limits | Pending | Boundary and concurrency tests. |
-| Protected balance | Pending | Execution-time invariant and bypass tests. |
-| Expiry and revocation | Pending | Later operations fail after access is revoked. |
-| Gas and loop controls | Pending | Bounded retries, rate limits, and sponsor-budget behavior. |
-| Prompt injection containment | Pending | A malicious proposed action cannot bypass authority. |
-| Task idempotency and recovery | Pending | Retry/restart cases without duplicate payment. |
-| Batch aggregation and atomicity | Pending | SEC-03: sum all items before calls; no partial effects; cross-UserOperation/UTC-boundary tests. |
-| Reentrancy | Pending | SEC-05: callback and cross-entrypoint attacks against the actual account-scoped guard. |
-| Approval / signature denial | Pending | SEC-06: approve/permit/Permit2/EIP-1271 routes denied, initial allowance checked, no protected-token gas pull. |
-| Direct jailbreak / compromised planner | Pending | SEC-01: real model response separate from hostile JSON fixture; actual restricted route rejects it. |
-| Vendor parsing isolation | Pending | SEC-02: tool-free parser, escaped tags, bounded fields, trusted quote binding, benign controls. |
-| Inference-to-execution freshness | Pending | REL-01: policy/TTL/balance changes during inference and after simulation. |
-| Unknown reconciliation | Pending | REL-02: persist-before-send, keyed nonce/hash/events, timeout/restart/reorg, one logical settlement. |
-| Circuit breaker separation | Pending | SEC-07: local pause, confirmed contract pause and revoke; owner-only unpause, ordering of pending operations. |
-| Provider/invoice integrity | Pending | AI-01/REL-03: quote origin and invoice binding, stable payment IDs, separate provisioning evidence. |
+| Owner authentication | Local API tests | One-use signature nonce, expiry and owner-scoped reads; multitenant/contract-owner enrollment remains future work. |
+| Read/propose/execute boundary | Local/fork tested | Model API has no signer; worker restricted session; owner enable signature is explicit. |
+| Scoped destinations/selectors | Kernel fork tested | Allowed Guardian payment, denied direct transfer/approval/admin/mixed batch. |
+| Per-payment / daily limits | Local policy tests | Boundary, atomic batch sum and usage persistence across policy changes/UTC epoch; expand multi-process adversarial coverage. |
+| Protected balance | Local policy tests | Isolated reserve, exact floor and post-transfer outflow checks. |
+| Expiry / revocation | Local/fork tested | Local plan/quote expiry and owner nonce invalidation blocks later Kernel operations. |
+| Gas / loop controls | Partial | Non-overlapping loop, finite unknown-review window and off-chain per-operation native gas cap; no cumulative on-chain gas/rate/paymaster policy yet. |
+| Malicious planner containment | Local/fork fixture | Signed all-funds proposal rejected through actual session/Guardian path; live LLM jailbreak corpus still pending. |
+| Task idempotency/recovery | SQL/local-fork tested | Stable invoice IDs, leases/fencing, one active attempt/account, crash/lost-response restart without resend. |
+| Batch atomicity | Local policy tests | Sum eight invoices > daily cap; failed transfer rolls back prior payments/state. Queue aggregation and additional cross-UserOperation cases remain. |
+| Reentrancy | Local callback test | Global executor-module guard also blocks cross-account entry; no delegatecall storage guard assumption. |
+| Approval/signature denial | Kernel fork tested, partial corpus | Approve/direct transfer/mixed batch and ERC-1271 denied; dedicated permit/Permit2/nested/delegatecall corpus still to expand. |
+| Vendor parsing | Adapter/schema + selected live Qwen smoke | Escaped tag breakout and typed financial-field rejection; four-case Qwen smoke evidence exists, broader encoded/multi-turn corpus pending. |
+| Freshness | Contract + worker tests | Version/expiry and fresh validation before preparation; broader after-simulation race coverage remains. |
+| Unknown reconciliation | SQL + actual-driver local fork | Exact signed payload/hash persisted before send; actual EntryPoint/Guardian events restore lost response; reorg/multi-bundler scenarios to expand. |
+| Circuit breaker | Partial | Local pause and pause-only guardian/account unpause tested separately; pending control-order corpus remains. |
+| Provider/invoice integrity | Local/fork quote checks | EIP-712 EOA signer, account/domain/invoice binding and replay IDs; actual provider fulfillment remains pending. |
+| Sponsored bootstrap | Local fork + actual project quote | Exact owner hash/intent/nonce/factory/paymaster binding, finite gas exposure, durable before-send journal, restart/duplicate-request recovery; public deployment still needs owner signature. |
 
-Signing, custody, and owner authentication have not been implemented. Placeholder
-environment files contain no credentials. Model/planner runtimes must not receive
-owner or agent signing keys.
+Token custody remains in the Kernel account. Only the worker receives the agent
+credential; the API/model never receives an owner/session key. Example environment
+files contain placeholders. Signed operation payloads stay in private DB storage and
+are excluded from API views/logs. Owner/session installation and local scheduling
+have separate authorization requirements.
 
 Add concrete known risks, dependencies, trust boundaries, and test results as features
 are implemented. Budget compliance alone does not prove a decision serves the user's
@@ -40,7 +43,8 @@ interests. A local worker pause is distinct from on-chain permission revocation.
   be inventoried. Owner compromise or deliberate owner withdrawal is outside the
   agent-path reserve promise.
 - **Post-transfer invariant:** sum batch spending, reserve daily budget/IDs before
-  calls, use CEI/SafeERC20/account-scoped nonReentrant, then assert protected balance
+  calls, use CEI, account transfer return checks (SafeERC20 semantics) and a module
+  nonReentrant guard, then assert protected balance
   and exact token outflow. All failed items roll back the whole batch; gas is not
   rolled back. Token support is restricted to verified standard-behavior ERC-20.
 - **Limits:** daily means a UTC fixed window. A midnight burst is not prevented by
@@ -61,3 +65,49 @@ interests. A local worker pause is distinct from on-chain permission revocation.
 Detailed target design: [architecture](architecture.md). Acceptance matrix and model
 vs enforcement evaluation: [evaluation](evaluation.md). No audit or attack-resistance
 claim is made until implementation and evidence are reviewed.
+
+## Dependency review (October 16, 2026)
+
+`npm audit --omit=dev` reports **0 known runtime advisories** after overriding the
+SDK's transitive ethjs-unit/number-to-bn copies to bn.js 4.12.3. Vitest is upgraded to
+4.1.12; Vite stays pinned at 7.3.7 to avoid the npm 10 optional-peer resolver failure.
+The full audit still reports **4 moderate development-tool advisories** through the
+Drizzle/esbuild-kit chain (GHSA-67mh-4wv8-2f99). Migration tooling does not expose an
+esbuild development server in this project. A forced/breaking Drizzle downgrade was
+not applied. An advisory-free runtime scan is not proof of contract/model security.
+
+## Qwen and hosted database update
+
+The model runtime is native Ollama **qwen3:8b**, with JSON schema, Zod validation,
+thinking disabled, 4096-token context, <=256 output tokens, bounded single-flight
+inference, total timeout and no automatic transport retries. Invalid/truncated output
+is rejected. Live synthetic smoke evidence is saved separately from contract fixtures
+in [Qwen evaluation](evidence/qwen-local-evaluation.json); four selected passing cases
+do not establish broad model robustness.
+
+Supabase connection and both initial/RLS migrations have been applied. The seven
+server-internal public-schema tables have RLS enabled without public access policies.
+The API/worker use the privileged server DB connection; browser clients use the
+authenticated Fastify API. A PGlite public-role test verifies that an explicitly
+granted SELECT permission still cannot read task payloads through RLS.
+
+## Sponsored onboarding update
+
+The local coordinator accepts only the configured owner login and signature. Client
+requests cannot supply arbitrary calldata, factory, policy or gas values. Stored
+operations are rechecked against current intent/nonce/factory state and gas budget
+before submission. Runtime APIs never receive owner keys; session/provider keys are
+provisioned locally into separate ignored files and their private values are omitted
+from coordinator configuration/public responses.
+
+Worker sponsored mode pins the paymaster, persists all factory/paymaster hash fields,
+counts paymaster verification/post-op gas in the exposure limit and refuses missing/
+different paymasters. It requests native sponsorship, not ERC-20 gas withdrawal.
+Gas policy/credit/quota is controlled by the project; a successful quote does not
+prove free service or final inclusion. The local test paymaster is intentionally
+unrestricted and is never part of public deployment.
+
+Browser coverage uses an injected wallet/coordinator fixture. Fork coverage uses
+actual Kernel/EntryPoint with a fixture paymaster deposit. Both are explicitly
+different from the pending real-owner public transaction. The local signing service
+is not an Internet-facing/multi-instance production service.

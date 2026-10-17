@@ -1,19 +1,36 @@
 # Architecture
 
-Revision: October 16, 2026. Financial execution below is a **target design**, not an
-implemented or assessed capability. [Workflow](workflow.md) defines integration gates;
+Revision: October 16, 2026. The A+B initial slice is implemented; the detailed sections
+below also contain future design targets. [A+B handoff](ab-handoff.md) is the current
+implementation/limitation reference. [Workflow](workflow.md) defines integration gates;
 [demo script](demo-script.md) defines the enterprise AI-to-AI scenario.
 
-## Scaffold implemented
+## Foundation and implemented A+B additions
+
+Sponsored onboarding extends this slice: the local coordinator verifies browser
+owner signatures for a static CREATE2/bootstrap intent and a scoped Kernel session,
+persists signed payloads before submission, and synchronizes verified deployment
+settings. Owner keys stay in MetaMask. Native paymaster fields are persisted exactly
+and checked against an explicit paymaster allowlist; no native fallback is automatic.
+See [Sponsored Setup](SPONSORED_SETUP.md) for local-only operational boundaries.
 
 - `apps/web`: English-language project landing page and manual API health check.
 - `apps/api`: process health and explicit pending-capability status.
 - `apps/worker`: bounded heartbeat interval, execution disabled.
 - `packages/shared`: draft interfaces and task statuses.
-- `packages/planner`: interface and model SDK dependencies.
+- `packages/planner`: bounded decision planner, native Ollama/Qwen client and isolated parser.
 - `packages/wallet`: development public client and executor interface.
 - `packages/database`: draft Drizzle schema and connection factory.
 - `contracts`: local/testnet MockUSD and an Ignition deployment module.
+- Guardian is now an ERC-7579 **executor module**, with account-bound policy/accounting
+  storage in the module and token transfers performed by Kernel executeFromExecutor.
+  A global module reentrancy guard also blocks cross-account reentry. This replaces
+  the earlier tentative delegatecall-action integration design below.
+- SQL tasks/attempts/locks/worker controls, owner auth/task/planning API, bounded model
+  adapter and isolated parser, exact-operation persistence and reconciliation worker.
+- Actual Kernel 0.3.1/EntryPoint 0.7 local-fork integration includes a real worker
+  lost-response recovery using PGlite and a static-gas local bundler stub. Unit
+  harness, chain-fixture backend tests and fork evidence have distinct labels.
 
 ## Intended execution path
 
@@ -42,7 +59,8 @@ Task -> Astra planner <-> Provider agent / untrusted description
                           completed / service_pending
 ```
 
-These financial paths are not wired up yet. The planner proposes structured data;
+The initial single-invoice financial path is wired; provider fulfillment, scheduler
+batch aggregation and production deployment still require work. The planner proposes structured data;
 deterministic code resolves trusted recipients, amounts, and current policy. The
 executor holds only delegated signing authority. Owner-level policy changes require
 the owner's wallet authorization.
@@ -50,13 +68,12 @@ the owner's wallet authorization.
 Use string-encoded integer token units in JSON. Keep UserOperation hashes, transaction
 hashes, receipts, and business task completion as distinct facts.
 
-## Integration decisions still to prove
+## Integration/deployment work still to prove beyond the initial local slice
 
-- Compatible SDK, Kernel, EntryPoint, and permission-plugin versions.
-- Concrete execution-time protected-balance enforcement.
-- Cumulative spending, gas sponsorship budgets, and revocation semantics.
-- Authentication, database locking, and recovery behavior.
-- Model ID, structured schemas, and evaluation fixtures.
+- Public-network deployment compatibility, real bundler/gas pricing and evidence.
+- Hosted PostgreSQL/pooler and multi-process recovery behavior; multi-instance auth.
+- Cumulative gas budgets, sponsorship, queue batching and cost evaluation.
+- Broader Qwen/provider/human evaluations beyond the recorded local four-case smoke run.
 
 ## Authority and custody
 

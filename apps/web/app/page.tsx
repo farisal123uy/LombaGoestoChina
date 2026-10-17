@@ -17,7 +17,7 @@ export default function Home() {
         <a className="brand" href="/" aria-label="Guardian Wallet home">
           <span className="brand-mark" aria-hidden="true">G</span> Guardian<span>Wallet</span>
         </a>
-        <span className="badge">Development scaffold</span>
+        <span className="badge">Wallet & backend foundation</span>
       </header>
 
       <section className="hero">
@@ -28,14 +28,14 @@ export default function Home() {
         <div className="facts">
           <div><span className="label">Development network</span><strong>{developmentChain.name}</strong></div>
           <div><span className="label">Chain ID</span><strong>{developmentChain.id}</strong></div>
-          <div><span className="label">Execution</span><strong>Not implemented</strong></div>
+          <div><span className="label">Next step</span><strong>Owner setup</strong></div>
         </div>
       </section>
 
       <section className="section-header">
         <div><p className="eyebrow">THE FOUNDATION</p><h2>One connected workspace.</h2></div>
-        <p>Starter structure is ready. Wallet authorization, AI planning, and financial execution
-          are the next implementation milestones.</p>
+        <p>Policy-bound execution and Qwen planning are implemented. Connect the owner wallet
+          to authorize the deployed account and restricted agent session.</p>
       </section>
 
       <section className="cards" aria-label="Repository workspaces">
@@ -50,7 +50,7 @@ export default function Home() {
       <section className="next-step">
         <div><p className="eyebrow">FIRST MILESTONE</p><h2>Prove the permissioned transaction path.</h2>
           <p>Create the smart account, authorize a restricted session, confirm an allowed
-            transaction, and demonstrate rejection outside its scope.</p></div>
+            transaction, and demonstrate rejection outside its scope.</p><a className="setup-link" href="/setup">Open sponsored owner setup →</a><br /><a className="setup-link" href="/dashboard">Open Astra dashboard →</a></div>
         <ApiStatus />
       </section>
 

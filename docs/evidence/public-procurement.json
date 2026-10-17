@@ -1,0 +1,120 @@
+{
+  "verifiedAt": "2026-10-17T06:28:32.589Z",
+  "evidenceType": "public-base-sepolia-procurement-and-provider-delivery",
+  "sourceState": "uncommitted-working-tree-with-source-sha256",
+  "chainId": 84532,
+  "taskId": "34aef831-2851-4c5d-9eca-545925652091",
+  "requestId": "5a92de25-7c65-45c8-bea4-2407adc6f369",
+  "taskStatus": "completed",
+  "owner": "0x4217fb05408bfaBF9ed9d70f78bA13E07C94d634",
+  "kernel": "0x48eee3Bad8763BA05Cd694Eaf08e6020eD81DC65",
+  "guardian": "0x12F0F07B859276dC4021433AD120D90476507195",
+  "token": "0x231243df7Bfa354C63EF2D77cAa92099865f6d29",
+  "offerId": "database-small-1h",
+  "serviceKind": "postgres-jsonb-namespace",
+  "amountUnits": "260000",
+  "tokenDecimals": 6,
+  "tokenLabel": "MockUSD test token",
+  "recipient": "0x303815C049E06B1FF0F0D2497E19fCe146900606",
+  "invoiceId": "0x5a2f27c8cb5fae12f21533b98a9c695f50b9632e0c399e3107a82d8c5fd11435",
+  "paymentId": "0x1c51fde2179a2460f9674df37b8f8e9d1aedd4f3f4f0e8f38ba465b003c45860",
+  "serviceHash": "0x9c85230a89a43c6f02cd6f0de401dab3548f1c76562eec23edb9fd149ae7b600",
+  "quoteSignatureVerified": true,
+  "planOrigin": "live_model",
+  "model": {
+    "provider": "ollama",
+    "id": "qwen3:8b"
+  },
+  "exchange": [
+    {
+      "actor": "astra",
+      "stage": "service_request",
+      "modelId": "qwen3:8b",
+      "observedAt": "2026-10-17T06:24:19.686Z"
+    },
+    {
+      "actor": "provider_agent",
+      "stage": "offer_response",
+      "modelId": "qwen3:8b",
+      "observedAt": "2026-10-17T06:24:22.519Z"
+    },
+    {
+      "actor": "provider_signer",
+      "stage": "authenticated_invoice",
+      "observedAt": "2026-10-17T06:24:24.809Z"
+    },
+    {
+      "actor": "astra",
+      "stage": "payment_plan",
+      "modelId": "qwen3:8b",
+      "observedAt": "2026-10-17T06:24:24.809Z"
+    }
+  ],
+  "userOperationHash": "0x5a5799732c1c0874843d8f6d11abea9c7e509ef9aada68de670513c72ebeada0",
+  "transactionHash": "0x7cd8b34b835cb34b65d5d3484d81541874b225e7d5fb345f5c9514ad20fdd86d",
+  "explorer": "https://sepolia.basescan.org/tx/0x7cd8b34b835cb34b65d5d3484d81541874b225e7d5fb345f5c9514ad20fdd86d",
+  "blockNumber": "48225008",
+  "blockHash": "0xdf65d594aebb70cce2af15360993496fc85b1abf26ea5e3ca0a2141732967e74",
+  "settledAt": "2026-10-17T06:25:04.000Z",
+  "confirmations": "102",
+  "outerTransactionSuccess": true,
+  "userOperationSuccess": true,
+  "userOperationNonce": "456477216773592765562998204902776845702953535324338376489604109330819317760",
+  "matchedSettlementEventsInReceipt": 1,
+  "invoiceConsumedBeforeBlock": false,
+  "invoiceConsumedAtBlock": true,
+  "invoiceConsumedNow": true,
+  "paymaster": "0x777777777777AeC03fd955926DbF81597e66834C",
+  "entryPointGasUsed": "761716",
+  "entryPointGasChargeWei": "4570296000000",
+  "gasAccountingScope": "EntryPoint UserOperation charge paid by the paymaster; not a measured all-in L1-data/USD cost or project-pricing claim.",
+  "blockBoundarySnapshots": {
+    "beforeBlock": "48225007",
+    "afterBlock": "48225008",
+    "tokenBalanceBeforeUnits": "10000000",
+    "tokenBalanceAfterUnits": "9740000",
+    "utcDaySpentBeforeUnits": "0",
+    "utcDaySpentAfterUnits": "260000",
+    "kernelNativeBeforeWei": "0",
+    "kernelNativeAfterWei": "0"
+  },
+  "currentPolicy": {
+    "observedBlockNumber": "48225109",
+    "balanceUnits": "9740000",
+    "protectedBalanceUnits": "6000000",
+    "perPaymentLimitUnits": "1000000",
+    "dailyLimitUnits": "2000000",
+    "spentUnits": "260000",
+    "version": "1",
+    "modulePaused": false
+  },
+  "delivery": {
+    "namespaceId": "0ef2e9f4-aa5d-4a93-ac07-c2cabeb15a6e",
+    "signatureVerified": true,
+    "readyAt": 1792218304,
+    "expiresAt": 1792221904,
+    "expiresAtIso": "2026-10-17T07:25:04.000Z",
+    "deliveryAttempts": 1,
+    "status": "live_probe_verified",
+    "probeId": "f8e63723-370e-4b34-8a70-48bd0d3b131b",
+    "probeCount": 2,
+    "capacityBytes": 1048576,
+    "usedBytesAtProbe": 2,
+    "writeReadVerified": true,
+    "evidenceKey": "guardian-evidence-16fa6413-70eb-4268-83c7-0f28bf96b8ac",
+    "valueSha256": "660ffdc7bf950c41071204fbbfdfd6fdead7018120403e9943530d720f1ea66f"
+  },
+  "schedulerPaused": false,
+  "verificationUserOperationsSubmitted": 0,
+  "scope": "Existing public testnet settlement independently checked against canonical receipts/events, signed quote/delivery and consumed-ID state. Live service checks are explicitly labeled; service is an expiring provider-managed PostgreSQL JSONB namespace, not a dedicated cloud instance. Existing application values and all signing credentials are omitted.",
+  "sources": {
+    "contracts/contracts/GuardianPayments.sol": "e13121efc7efb7095589fbbd5d31697074ad292dc0d750bedeb4d8dd1aabbaa5",
+    "apps/api/src/app.ts": "24b407682bf4c5a041e6b596b58dd6022399713130965d93014fbf02cdd4f79a",
+    "apps/api/src/provider-agent.ts": "ded0e00856a492bc3800dff9de23f27f2ddc644769dd9bd04e0fb3ab62ad4392",
+    "apps/api/src/provider-signer.ts": "c70363591df8320a7b718bf3bb913aeaa6b43ebecd739982789a66c70d0c5457",
+    "apps/worker/src/worker.ts": "1a72cb8e975da942bc9d51c07497a3b00d33d7e3a72248bca310e28daf79edb3",
+    "packages/wallet/src/provider-client.ts": "24e267eaedf94bff08255a63b336b6e8b653e0700dec1365e49ffa6dbc441992",
+    "packages/database/src/payment-store.ts": "c7b32b8a65909a0b8a1d700fb6322ee5d834b9f790ec72bbb8255c602af8bcf6",
+    "packages/database/src/provider-store.ts": "a376ef4f81c74f901e7a8c7e7e0ea23194a70c92b6b67bd5081be8c680989972"
+  }
+}
