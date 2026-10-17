@@ -103,3 +103,13 @@ npm run test:e2e
 Coordinate changes to shared schemas, API routes and root `package-lock.json` with
 the backend owner. UI/UX work can build on the existing components while preserving
 owner authentication, explicit execution controls and the `paid`/`completed` distinction.
+
+## Evidence ledger
+
+`/evidence` is a static build-time ledger of committed `docs/evidence/*.json` artifacts;
+it performs no live API, wallet, explorer, or chain verification. Vercel builds must retain
+`docs/evidence/` in the repository build context. `apps/web/vercel.json` already runs from
+the repository root, but a deployment source filter must not exclude `docs/`.
+
+Security controls, evidence boundaries, and open backend-owner questions are in
+[security-self-assessment.md](security-self-assessment.md).
