@@ -17,7 +17,7 @@ function SourceState({ record }: { record: EvidenceRecord }) {
 }
 function Hashes({ hashes }: { hashes: HashRecord[] }) {
   if (!hashes.length) return null;
-  return <div className="evidence-hashes">{hashes.map((item) => <div className="evidence-hash" key={`${item.label}-${item.value}`}><span className="label">{item.label} · {item.kind}</span><code>{item.value}</code><CopyHashButton value={item.value} />
+  return <div className="evidence-hashes">{hashes.map((item, index) => <div className="evidence-hash" key={`${item.origin}-${index}`}><span className="label">{item.label} · {item.kind}</span><code>{item.value}</code><CopyHashButton value={item.value} />
     {item.explorerHref ? <a href={item.explorerHref} target="_blank" rel="noreferrer">Open public transaction ↗</a> : item.origin === "live-public" ? <span className="evidence-note">Public record; no explorer URL was recorded.</span> : <span className="evidence-note">{chainNote(item.origin)}</span>}</div>)}</div>;
 }
 function Sources({ record }: { record: EvidenceRecord }) {

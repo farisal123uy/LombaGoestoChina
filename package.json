@@ -44,6 +44,7 @@
     "build": "npm run build:packages && npm run build --workspace @guardian-wallet/api && npm run build --workspace @guardian-wallet/worker && npm run build --workspace @guardian-wallet/web && npm run compile --workspace @guardian-wallet/contracts",
     "lint": "eslint . --max-warnings 0",
     "typecheck": "npm run build:packages && npm run compile --workspace @guardian-wallet/contracts && npm run typecheck --workspaces --if-present",
+    "test:web": "npm run test -w @guardian-wallet/web",
     "test:contracts": "npm run build:packages && npm run test --workspace @guardian-wallet/contracts",
     "test:kernel": "node -e \"if (!process.env.KERNEL_FORK_RPC_URL) throw new Error('Set KERNEL_FORK_RPC_URL before running the fork suite')\" && npm run build:packages && npm run test --workspace @guardian-wallet/contracts -- nodejs test/Kernel.integration.ts",
     "test:integration": "npm run build:packages && vitest run --config vitest.config.ts",

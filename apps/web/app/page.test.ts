@@ -28,4 +28,13 @@ describe("landing page", () => {
     expect(content).not.toMatch(/\bapi-client\b/);
     expect(content).not.toMatch(/from ['"]@\/lib\/api['"]/);
   });
+
+  it("contains no hard-coded MockUSD amounts", async () => {
+    const pagePath = resolve(import.meta.dirname, "page.tsx");
+    const content = await readFile(pagePath, "utf8");
+
+    // Should not have any hard-coded amounts like "10.00 MockUSD" or "0.26 MockUSD"
+    expect(content).not.toMatch(/\d+\.\d{2}\s*MockUSD/);
+    expect(content).not.toMatch(/["'`]\d+\.\d+\s*MockUSD["'`]/);
+  });
 });
