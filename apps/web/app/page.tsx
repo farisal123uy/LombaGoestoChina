@@ -50,7 +50,7 @@ export default function Home() {
       <section className="next-step">
         <div><p className="eyebrow">FIRST MILESTONE</p><h2>Prove the permissioned transaction path.</h2>
           <p>Create the smart account, authorize a restricted session, confirm an allowed
-            transaction, and demonstrate rejection outside its scope.</p><a className="setup-link" href="/setup">Open sponsored owner setup →</a><br /><a className="setup-link" href="/dashboard">Open Astra dashboard →</a></div>
+            transaction, and demonstrate rejection outside its scope.</p><a className="setup-link" href="/setup">Open sponsored owner setup →</a><br /><a className="setup-link" href="/dashboard">Open Astra dashboard →</a><br /><a className="setup-link" href="/evidence">Open evidence ledger →</a></div>
         <ApiStatus />
       </section>
 
