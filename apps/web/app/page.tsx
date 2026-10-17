@@ -1,60 +1,32 @@
-import { developmentChain } from "@guardian-wallet/shared";
 import { ApiStatus } from "../components/api-status";
+import { loadLandingEvidence, originLabel } from "../lib/evidence";
+import "./landing.css";
 
-const workspaces = [
-  ["01", "Web", "apps/web", "Goals, permissions, and visible execution results."],
-  ["02", "API & planner", "apps/api · packages/planner", "Structured plans grounded in current financial state."],
-  ["03", "Executor", "apps/worker · packages/wallet", "Bounded authority, submission, and receipt reconciliation."],
-  ["04", "On-chain controls", "contracts", "Permission and protected-balance implementation."],
-  ["05", "Shared state", "packages/shared · packages/database", "Versioned types, task state, and durable records."],
-  ["06", "Evidence", "tests · docs", "Repeatable evaluation and verifiable execution evidence."],
-];
+function Origin({ value }: { value: Parameters<typeof originLabel>[0] }) {
+  return <span className={`origin origin-${value}`}>● {originLabel(value)}</span>;
+}
 
-export default function Home() {
-  return (
-    <main className="shell">
-      <header className="topbar">
-        <a className="brand" href="/" aria-label="Guardian Wallet home">
-          <span className="brand-mark" aria-hidden="true">G</span> Guardian<span>Wallet</span>
-        </a>
-        <span className="badge">Wallet & backend foundation</span>
-      </header>
+export default async function Home() {
+  const evidence = await loadLandingEvidence();
+  const { balances, settlement, compromised } = evidence;
+  return <main className="landing-shell">
+    <header className="landing-nav"><a className="brand" href="/" aria-label="Guardian Wallet home"><span className="brand-mark" aria-hidden="true">G</span> Guardian<span>Wallet</span></a><nav><a href="/evidence">Evidence</a><a href="/setup">Owner setup</a><a href="/dashboard">Dashboard</a></nav></header>
 
-      <section className="hero">
-        <p className="eyebrow">INTERNATIONAL TRACK / TOPIC F</p>
-        <h1>Your goals.<br /><span>Bounded autonomy.</span></h1>
-        <p className="intro">A workspace for building financial agents that act within human-defined
-          authority, adapt to changing conditions, and make their results verifiable.</p>
-        <div className="facts">
-          <div><span className="label">Development network</span><strong>{developmentChain.name}</strong></div>
-          <div><span className="label">Chain ID</span><strong>{developmentChain.id}</strong></div>
-          <div><span className="label">Next step</span><strong>Owner setup</strong></div>
-        </div>
-      </section>
+    <section className="landing-hero">
+      <div><p className="eyebrow">POLICY-BOUND AGENT WALLET</p><h1>AI proposes.<br /><span>The contract decides.</span></h1><p>Guardian Wallet separates model reasoning from spending authority. Recorded evidence shows the policy boundary; the live dashboard needs the full runtime and registered owner.</p><div className="landing-actions"><a className="action-primary" href="/evidence">View the evidence</a><a className="action-secondary" href="/setup">Owner setup</a></div></div>
+      <div className="authority-chain" aria-label="Authority chain"><span>Owner wallet</span><i>→</i><strong>Policy guard</strong><i>→</i><span>AI agent</span><i>→</i><span>Base Sepolia</span></div>
+    </section>
 
-      <section className="section-header">
-        <div><p className="eyebrow">THE FOUNDATION</p><h2>One connected workspace.</h2></div>
-        <p>Policy-bound execution and Qwen planning are implemented. Connect the owner wallet
-          to authorize the deployed account and restricted agent session.</p>
-      </section>
+    <section className="landing-section" aria-labelledby="bounded-title"><p className="section-index">01 / BOUNDED AUTHORITY</p><div className="section-heading"><h2 id="bounded-title">A proposal is not permission.</h2><p>Recorded local-fork fixture. Missing fixture details remain unrecorded.</p></div><div className="comparison-grid"><article className="comparison-card planner"><p className="eyebrow">PLANNER PROPOSAL</p><h3>Compromised planner fixture</h3><dl><div><dt>Proposed amount</dt><dd>{compromised.proposedAmount}</dd></div><div><dt>Decoded rejection</dt><dd>{compromised.rejection ?? "Not recorded"}</dd></div></dl><Origin value={compromised.origin} /></article><article className="comparison-card contract"><p className="eyebrow">CONTRACT RESULT</p><h3>Execution rejected</h3><dl><div><dt>Inner UserOperation</dt><dd>{compromised.innerSucceeded ? "Succeeded" : "Failed"}</dd></div><div><dt>Outer transaction</dt><dd>{compromised.outerSucceeded === undefined ? "Not recorded" : compromised.outerSucceeded ? "Succeeded" : "Failed"}</dd></div></dl><span className="status status-amber">▲ Local fork, not public chain</span></article></div></section>
 
-      <section className="cards" aria-label="Repository workspaces">
-        {workspaces.map(([number, title, location, description]) => (
-          <article className="card" key={number}>
-            <span className="card-number">{number}</span>
-            <h3>{title}</h3><p>{description}</p><code>{location}</code>
-          </article>
-        ))}
-      </section>
+    <section className="landing-section flow-section" aria-labelledby="flow-title"><p className="section-index">02 / VERIFIED PROCUREMENT</p><div className="section-heading"><h2 id="flow-title">Authority stays explicit.</h2><p>Recorded workflow, not a live transaction control panel.</p></div><div className="flow-grid"><article><span>Grant</span><h3>Bounded authority</h3><p>Owner configures the policy and authorizes a restricted session.</p></article><article><span>Propose</span><h3>Signed quote</h3><p>Agent requests a quote and proposes one policy-bound payment.</p></article><article><span>Settle</span><h3>Contract checks</h3><p>Contract checks policy, settles, then delivery evidence is verified.</p></article></div></section>
 
-      <section className="next-step">
-        <div><p className="eyebrow">FIRST MILESTONE</p><h2>Prove the permissioned transaction path.</h2>
-          <p>Create the smart account, authorize a restricted session, confirm an allowed
-            transaction, and demonstrate rejection outside its scope.</p><a className="setup-link" href="/setup">Open sponsored owner setup →</a><br /><a className="setup-link" href="/dashboard">Open Astra dashboard →</a><br /><a className="setup-link" href="/evidence">Open evidence ledger →</a></div>
-        <ApiStatus />
-      </section>
+    <section className="landing-section evidence-section" aria-labelledby="evidence-title"><p className="section-index">03 / EVIDENCE YOU CAN CHECK</p><div className="section-heading"><h2 id="evidence-title">Recorded balance boundary.</h2><p>Amounts are loaded from committed evidence at build time.</p></div><div className="evidence-widget"><div className="usage-block"><div><span>Recorded token balance</span><strong>{balances.balance}</strong><Origin value={balances.origin} /></div><div className="usage-line"><span>Protected balance</span><b>{balances.protected}</b><div className="usage-track"><i style={{ width: `${balances.protectedPercent}%` }} /></div></div><div className="usage-line"><span>UTC-day spend</span><b>{balances.spent} / {balances.daily}</b><div className="usage-track usage-track-violet"><i style={{ width: `${balances.spentPercent}%` }} /></div></div></div><div className="evidence-stats"><div><span>Settled amount</span><strong>{settlement.amount}</strong><Origin value={settlement.origin} /></div><div><span>Protected balance</span><strong>{balances.protected}</strong><Origin value={balances.origin} /></div><div><span>UTC-day limit</span><strong>{balances.daily}</strong><Origin value={balances.origin} /></div></div></div></section>
 
-      <footer>Guardian Wallet · 3 builders · 5-day execution plan</footer>
-    </main>
-  );
+    <section className="landing-section faq-section" aria-labelledby="faq-title"><p className="section-index">FAQ</p><h2 id="faq-title">Clear about boundaries.</h2><details open><summary>Can the AI drain the wallet?</summary><p>No claim of prompt-injection immunity. Recorded controls bound payment amount, recipient, protected balance, daily spend, signature, and replay state under the on-chain policy.</p></details><details><summary>What is not proven?</summary><p>{evidence.limitations}</p></details><details><summary>Is this live?</summary><p>These are recorded artifacts. The dashboard is live only when its full runtime is configured and a registered owner signs in.</p></details></section>
+
+    <section className="closing-band"><div><p className="eyebrow">START WITH THE RECORD</p><h2>Inspect the policy boundary.</h2></div><div className="landing-actions"><a className="action-primary" href="/evidence">View the evidence</a><a className="action-secondary" href="/setup">Owner setup</a></div></section>
+    <section className="api-band"><ApiStatus /></section>
+    <footer>MockUSD is a test token with no value. Recorded evidence is not live verification.</footer>
+  </main>;
 }

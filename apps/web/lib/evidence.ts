@@ -247,6 +247,55 @@ export async function loadEvidence(): Promise<EvidenceData> {
   return { deployment, procurement, localFork, preview, evaluation, hashLedger };
 }
 
+export interface LandingEvidence {
+  balances: { balance: string; protected: string; daily: string; spent: string; origin: Origin; protectedPercent: number; spentPercent: number };
+  settlement: { amount: string; origin: Origin };
+  compromised: { innerSucceeded: boolean; outerSucceeded?: boolean; proposedAmount?: string; rejection?: string; origin: Origin };
+  limitations: string;
+}
+
+function twoDecimals(value: string | boolean | undefined) {
+  if (typeof value !== "string") return "Not recorded";
+  const match = value.match(/^(\d+)(?:\.(\d+))? MockUSD$/);
+  if (!match) return value;
+  return `${match[1]}.${(match[2] ?? "").padEnd(2, "0").slice(0, 2)} MockUSD`;
+}
+function ratio(value: string | boolean | undefined, total: string | boolean | undefined) {
+  if (typeof value !== "string" || typeof total !== "string") return 0;
+  return Math.min(100, Math.max(0, (Number.parseFloat(value) / Number.parseFloat(total)) * 100));
+}
+
+export async function loadLandingEvidence(): Promise<LandingEvidence> {
+  const evidence = await loadEvidence();
+  const publicFacts = evidence.procurement.facts;
+  const deploymentFacts = evidence.deployment.facts;
+  const compromisedFacts = evidence.localFork.compromised.facts;
+  const balance = publicFacts["Token balance before"];
+  const protectedBalance = deploymentFacts["Protected balance"];
+  const daily = deploymentFacts["UTC-day limit"];
+  const spent = publicFacts["UTC spend after"];
+  return {
+    balances: {
+      balance: twoDecimals(balance),
+      protected: twoDecimals(protectedBalance),
+      daily: twoDecimals(daily),
+      spent: twoDecimals(spent),
+      origin: evidence.procurement.origin,
+      protectedPercent: ratio(protectedBalance, balance),
+      spentPercent: ratio(spent, daily),
+    },
+    settlement: { amount: twoDecimals(publicFacts.Amount), origin: evidence.procurement.origin },
+    compromised: {
+      innerSucceeded: evidence.localFork.compromised.success,
+      outerSucceeded: evidence.localFork.compromised.outerTransactionSucceeded,
+      proposedAmount: twoDecimals(compromisedFacts["Proposed amount"]),
+      rejection: typeof compromisedFacts["Decoded rejection"] === "string" ? compromisedFacts["Decoded rejection"] : undefined,
+      origin: evidence.localFork.compromised.origin,
+    },
+    limitations: typeof evidence.evaluation.facts.Limitations === "string" ? evidence.evaluation.facts.Limitations : "Not recorded",
+  };
+}
+
 export function originLabel(origin: Origin) {
   return origin === "live-public" ? "Live public" : origin === "local-fork" ? "Recorded local fork" : "Recorded local inference";
 }
