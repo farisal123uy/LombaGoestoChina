@@ -44,7 +44,7 @@ npm run dev:web
 ```
 
 On PowerShell, use `npm.cmd` if execution policy blocks `npm`.
-Open **http://localhost:3000/dashboard** or **http://localhost:3000/setup**.
+Judge flow: **http://localhost:3000/** → **/evidence** → recorded video. Owner flow: **/setup** → **/dashboard**. The owner runtime requires the registered wallet and running backend; reviewers should start at **/evidence**.
 
 ## Integration references
 

@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { OwnerRuntimeNotice, SiteFooter, SiteHeader } from "./site-chrome";
+import { plainErrorMessage } from "../lib/error-message";
 
 type Hex = `0x${string}`;
 interface WalletProvider {
@@ -81,7 +83,7 @@ export function OwnerSetup() {
 
   async function action(label: string, body: () => Promise<void>) {
     setBusy(label); setError("");
-    try { await body(); } catch (cause) { setError(cause instanceof Error ? cause.message : "Wallet/setup request failed."); }
+    try { await body(); } catch (cause) { setError(plainErrorMessage(cause instanceof Error ? cause.message : "Wallet/setup request failed.")); }
     finally { setBusy(""); }
   }
   async function assertOwner() {
@@ -127,13 +129,14 @@ export function OwnerSetup() {
   });
 
   return <main className="setup-shell">
-    <header className="setup-header"><a href="/" className="brand"><span className="brand-mark">G</span> Guardian Wallet</a><span className="badge">Base Sepolia · owner setup</span></header>
+    <SiteHeader current="/setup" />
+    <OwnerRuntimeNotice />
     <section className="setup-intro"><p className="eyebrow">OWNER-CONTROLLED ONBOARDING</p><h1>Authorize once.<br /><span>Keep authority bounded.</span></h1><p>Deploy the wallet and policy contracts with project-sponsored gas. Your owner wallet signs in MetaMask. Native ETH in the owner wallet is not required for a sponsored UserOperation.</p></section>
     {error && <div className="setup-error" role="alert">{error}</div>}
     {busy && <p role="status" className="setup-progress">{busy}…</p>}
     <div className="setup-columns">
       <section className="setup-panel"><p className="eyebrow">THREE STEPS</p>
-        <article className="setup-step"><span>01</span><div><h2>Connect owner</h2><p>Sign the domain-bound login message. This establishes access to the local coordinator.</p><button disabled={!!busy || !state} onClick={connect}>{login ? "Reconnect owner" : "Connect MetaMask & sign in"}</button>{login && <p className="setup-ok">Owner connected</p>}</div></article>
+        <article className="setup-step"><span>01</span><div><h2>Connect owner</h2><p>Sign the domain-bound login message. This establishes access to the local coordinator.</p><button disabled={!!busy || !state} onClick={connect}>{login ? "Reconnect owner" : "Connect MetaMask & sign in"}</button><p className="sign-in-note">Signing this message does not move funds and costs no gas.</p>{login && <p className="setup-ok">Owner connected</p>}</div></article>
         <article className="setup-step"><span>02</span><div><h2>Deploy with sponsored gas</h2><p>Create Kernel, deploy Guardian and the fixed-supply test token, then install the policy. Preparing can reserve project sponsorship quota; the displayed gas bound is not a fiat pricing guarantee.</p><div className="setup-buttons"><button disabled={!!busy || !login || state?.ready || (operationStatus !== undefined && activeStates.has(operationStatus))} onClick={prepare}>Prepare deployment</button><button disabled={!!busy || !login || operationStatus !== "prepared"} onClick={signAndDeploy}>Sign & submit deployment</button></div>{state?.operation && <p className="setup-detail">Operation: <strong>{state.operation.status}</strong><br />Maximum native gas exposure: {state.operation.maxGasCostEth} ETH<br />UserOperation hash: <code>{state.operation.hash}</code></p>}{state?.operation?.transactionHash && <a className="setup-link" target="_blank" rel="noreferrer" href={`https://sepolia.basescan.org/tx/${state.operation.transactionHash}`}>View transaction on explorer ↗</a>}</div></article>
         <article className="setup-step"><span>03</span><div><h2>Delegate to Astra</h2><p>Sign the scoped permission for the session address below. Direct transfers, approvals and administration are outside this session. The owner retains policy and revocation authority.</p><button disabled={!!busy || !login || !state?.ready || state.sessionAuthorized} onClick={authorize}>Authorize Astra session</button>{state?.sessionAuthorized && <p className="setup-ok">Session authorization recorded</p>}{state?.sessionAuthorized && !state.runtimeConfigured && <button disabled={!!busy || !login} onClick={() => action("Synchronize runtime", async () => setState(await call<SetupState>("/runtime/sync", login!.token, {})))}>Retry runtime synchronization</button>}{state?.runtimeConfigured && <div className="setup-success"><strong>Runtime configuration ready.</strong><p>Start or restart the API and worker to load the deployed addresses and session: <code>npm.cmd run dev:api</code> and <code>npm.cmd run dev:worker</code>. Scheduling starts paused until you sign in to the API and start the agent.</p></div>}</div></article>
         <div className="setup-buttons"><button className="secondary" disabled={!!busy} onClick={() => action("Refresh", refresh)}>Refresh status</button><button className="secondary" disabled={!!busy || !login} onClick={() => action("Check transaction", async () => setState(await call<SetupState>("/reconcile", login!.token, {})))}>Check transaction</button></div>
@@ -143,6 +146,6 @@ export function OwnerSetup() {
         <div className="setup-limits"><div><span>Initial test-token mint</span><strong>{units(state.limits.initialTokenUnits)}</strong></div><div><span>Protected balance</span><strong>{units(state.limits.protectedUnits)}</strong></div><div><span>Per-payment limit</span><strong>{units(state.limits.perPaymentUnits)}</strong></div><div><span>UTC-day limit</span><strong>{units(state.limits.dailyUnits)}</strong></div></div>
         <p className="setup-detail">Authority expires: {new Date(state.validUntil * 1000).toLocaleString()}<br />Policy: {state.installed ? "installed on-chain" : "planned, awaiting deployment"}<br />All amounts are MockUSD test units, not redeemable dollars.</p>
       </> : <p>Waiting for the local coordinator. In a second terminal, run <code>npm.cmd run onboarding</code>.</p>}</aside>
-    </div><footer>Guardian Wallet · owner keys remain in the wallet · session execution is policy-bound</footer>
+    </div><SiteFooter />
   </main>;
 }

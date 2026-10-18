@@ -6,26 +6,14 @@
 
 /* Header */
 .landing-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-lg);
-  padding: var(--space-lg) var(--space-xl);
-  border-bottom: 1px solid var(--border);
   max-width: 1200px;
   margin: 0 auto;
+  padding: 0 var(--space-xl);
   width: 100%;
 }
 
-.landing-nav nav {
-  display: flex;
-  gap: var(--space-lg);
-  font-size: 0.875rem;
-  color: var(--text-muted);
-}
-
-.landing-nav nav a:hover {
-  color: var(--accent);
+.landing-nav .site-header {
+  width: 100%;
 }
 
 /* Hero */
