@@ -107,7 +107,10 @@ owner authentication, explicit execution controls and the `paid`/`completed` dis
 ## Evidence ledger
 
 `/evidence` is a static build-time ledger of committed `docs/evidence/*.json` artifacts;
-it performs no live API, wallet, explorer, or chain verification. Vercel builds must retain
+it performs no live API, wallet, explorer, or chain verification. Judges should start with the
+six-claim table, verify the public purchase transaction, then read each record's `Proves` and
+`Does not prove` boundary. Only `Public chain · recorded` transaction records may link to an
+explorer; local-fork and local-inference hashes never do. Vercel builds must retain
 `docs/evidence/` in the repository build context. `apps/web/vercel.json` already runs from
 the repository root, but a deployment source filter must not exclude `docs/`.
 

@@ -6,13 +6,7 @@ import { loadLandingEvidence } from "../lib/evidence";
 describe("landing page", () => {
   it("loads all amounts from committed evidence", async () => {
     const evidence = await loadLandingEvidence();
-
-    // Verify loader returns all required fields
-    expect(evidence.balances.balance).toMatch(/^\d+\.\d{2} MockUSD$/);
-    expect(evidence.balances.protected).toMatch(/^\d+\.\d{2} MockUSD$/);
-    expect(evidence.balances.daily).toMatch(/^\d+\.\d{2} MockUSD$/);
-    expect(evidence.balances.spent).toMatch(/^\d+\.\d{2} MockUSD$/);
-    expect(evidence.settlement.amount).toMatch(/^\d+\.\d{2} MockUSD$/);
+    for (const value of [evidence.balances.before, evidence.balances.after, evidence.balances.protected, evidence.balances.daily, evidence.balances.spent, evidence.settlement.amount]) expect(value).toMatch(/^\d+\.\d{2} MockUSD$/);
     expect(typeof evidence.balances.protectedPercent).toBe("number");
     expect(typeof evidence.balances.spentPercent).toBe("number");
     expect(evidence.compromised.proposedAmount).toBeDefined();
@@ -20,21 +14,19 @@ describe("landing page", () => {
   });
 
   it("imports no fetch, wagmi, or API client", async () => {
-    const pagePath = resolve(import.meta.dirname, "page.tsx");
-    const content = await readFile(pagePath, "utf8");
-
+    const content = await readFile(resolve(import.meta.dirname, "page.tsx"), "utf8");
     expect(content).not.toMatch(/\bfetch\b/);
     expect(content).not.toMatch(/\bwagmi\b/);
     expect(content).not.toMatch(/\bapi-client\b/);
     expect(content).not.toMatch(/from ['"]@\/lib\/api['"]/);
   });
 
-  it("contains no hard-coded MockUSD amounts", async () => {
-    const pagePath = resolve(import.meta.dirname, "page.tsx");
-    const content = await readFile(pagePath, "utf8");
-
-    // Should not have any hard-coded amounts like "10.00 MockUSD" or "0.26 MockUSD"
+  it("contains no hard-coded MockUSD amounts or API widget", async () => {
+    const content = await readFile(resolve(import.meta.dirname, "page.tsx"), "utf8");
     expect(content).not.toMatch(/\d+\.\d{2}\s*MockUSD/);
-    expect(content).not.toMatch(/["'`]\d+\.\d+\s*MockUSD["'`]/);
+    expect(content).not.toContain("ApiStatus");
+    expect(content).toContain("balances.before");
+    expect(content).toContain("balances.after");
+    expect(content).toContain("usage-track-amber");
   });
 });

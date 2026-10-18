@@ -356,8 +356,8 @@
   transition: width 0.3s ease;
 }
 
-.usage-track-violet i {
-  background: var(--status-violet);
+.usage-track-amber i {
+  background: var(--status-amber);
 }
 
 .evidence-stats {
