@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { OwnerRuntimeNotice, SiteFooter, SiteHeader } from "./site-chrome";
 import { plainErrorMessage } from "../lib/error-message";
+import { coordinatorStatus } from "../lib/runtime-status";
 
 type Hex = `0x${string}`;
 interface WalletProvider {
@@ -55,8 +56,14 @@ export function OwnerSetup() {
   const [login, setLogin] = useState<{ address: Hex; token: string }>();
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
+  const [coordinatorUnavailable, setCoordinatorUnavailable] = useState(false);
   const refresh = useCallback(async () => { setState(await call<SetupState>("/state")); }, []);
-  useEffect(() => { refresh().catch(() => setError("Start the local coordinator with npm.cmd run onboarding, then refresh.")); }, [refresh]);
+  useEffect(() => {
+    refresh().then(() => setCoordinatorUnavailable(false)).catch(() => {
+      setCoordinatorUnavailable(true);
+      setError("The local onboarding coordinator is unavailable to this browser. Start it separately with npm run onboarding, then refresh.");
+    });
+  }, [refresh]);
   useEffect(() => {
     const wallet = (window as unknown as { ethereum?: WalletProvider }).ethereum;
     const changed = () => { setLogin(undefined); setError("Wallet account changed. Reconnect using the configured owner."); };
@@ -128,17 +135,19 @@ export function OwnerSetup() {
     setState(await call<SetupState>("/session/approve", login!.token, { signature }));
   });
 
+  const statusItems = coordinatorStatus({ available: !coordinatorUnavailable && Boolean(state), loggedIn: Boolean(login), ready: state?.ready, sessionAuthorized: state?.sessionAuthorized, operationStatus });
   return <main className="setup-shell">
     <SiteHeader current="/setup" />
     <OwnerRuntimeNotice />
+    <section className="runtime-panel" aria-labelledby="coordinator-title"><div><p className="eyebrow">ONBOARDING STATUS</p><h2 id="coordinator-title">Coordinator and owner prerequisites</h2></div><button className="secondary" disabled={!!busy} onClick={() => action("Refresh coordinator", async () => { try { await refresh(); setCoordinatorUnavailable(false); } catch (cause) { setCoordinatorUnavailable(true); throw cause; } })}>Refresh status</button><div className="runtime-statuses">{statusItems.map((item) => <article key={item.label}><span className="label">{item.label}</span><strong>{item.value}</strong><p>{item.detail}</p></article>)}</div></section>
     <section className="setup-intro"><p className="eyebrow">OWNER-CONTROLLED ONBOARDING</p><h1>Authorize once.<br /><span>Keep authority bounded.</span></h1><p>Deploy the wallet and policy contracts with project-sponsored gas. Your owner wallet signs in MetaMask. Native ETH in the owner wallet is not required for a sponsored UserOperation.</p></section>
     {error && <div className="setup-error" role="alert">{error}</div>}
     {busy && <p role="status" className="setup-progress">{busy}…</p>}
     <div className="setup-columns">
       <section className="setup-panel"><p className="eyebrow">THREE STEPS</p>
-        <article className="setup-step"><span>01</span><div><h2>Connect owner</h2><p>Sign the domain-bound login message. This establishes access to the local coordinator.</p><button disabled={!!busy || !state} onClick={connect}>{login ? "Reconnect owner" : "Connect MetaMask & sign in"}</button><p className="sign-in-note">Signing this message does not move funds and costs no gas.</p>{login && <p className="setup-ok">Owner connected</p>}</div></article>
-        <article className="setup-step"><span>02</span><div><h2>Deploy with sponsored gas</h2><p>Create Kernel, deploy Guardian and the fixed-supply test token, then install the policy. Preparing can reserve project sponsorship quota; the displayed gas bound is not a fiat pricing guarantee.</p><div className="setup-buttons"><button disabled={!!busy || !login || state?.ready || (operationStatus !== undefined && activeStates.has(operationStatus))} onClick={prepare}>Prepare deployment</button><button disabled={!!busy || !login || operationStatus !== "prepared"} onClick={signAndDeploy}>Sign & submit deployment</button></div>{state?.operation && <p className="setup-detail">Operation: <strong>{state.operation.status}</strong><br />Maximum native gas exposure: {state.operation.maxGasCostEth} ETH<br />UserOperation hash: <code>{state.operation.hash}</code></p>}{state?.operation?.transactionHash && <a className="setup-link" target="_blank" rel="noreferrer" href={`https://sepolia.basescan.org/tx/${state.operation.transactionHash}`}>View transaction on explorer ↗</a>}</div></article>
-        <article className="setup-step"><span>03</span><div><h2>Delegate to Astra</h2><p>Sign the scoped permission for the session address below. Direct transfers, approvals and administration are outside this session. The owner retains policy and revocation authority.</p><button disabled={!!busy || !login || !state?.ready || state.sessionAuthorized} onClick={authorize}>Authorize Astra session</button>{state?.sessionAuthorized && <p className="setup-ok">Session authorization recorded</p>}{state?.sessionAuthorized && !state.runtimeConfigured && <button disabled={!!busy || !login} onClick={() => action("Synchronize runtime", async () => setState(await call<SetupState>("/runtime/sync", login!.token, {})))}>Retry runtime synchronization</button>}{state?.runtimeConfigured && <div className="setup-success"><strong>Runtime configuration ready.</strong><p>Start or restart the API and worker to load the deployed addresses and session: <code>npm.cmd run dev:api</code> and <code>npm.cmd run dev:worker</code>. Scheduling starts paused until you sign in to the API and start the agent.</p></div>}</div></article>
+        <article className="setup-step"><span>01</span><div><h2>Connect owner</h2><p>Review and sign the domain-bound login message. It establishes access to the local coordinator; verify the displayed wallet prompt before signing.</p><button disabled={!!busy || !state} onClick={connect}>{login ? "Reconnect owner" : "Connect MetaMask & sign in"}</button><p className="sign-in-note">This is a login message, not a transaction. Review the wallet prompt before signing.</p>{login && <p className="setup-ok">Owner connected</p>}</div></article>
+        <article className="setup-step"><span>02</span><div><h2>Deploy with sponsored gas</h2><p>Prepare the Kernel, Guardian, fixed-supply test token, and policy operation. Then review the deployment signature in MetaMask before submission. Preparing can reserve project sponsorship quota; the displayed gas bound is not a fiat pricing guarantee.</p><div className="setup-buttons"><button disabled={!!busy || !login || state?.ready || (operationStatus !== undefined && activeStates.has(operationStatus))} onClick={prepare}>Prepare deployment</button><button disabled={!!busy || !login || operationStatus !== "prepared"} onClick={signAndDeploy}>Sign & submit deployment</button></div>{state?.operation && <p className="setup-detail">Operation: <strong>{state.operation.status}</strong><br />Maximum native gas exposure: {state.operation.maxGasCostEth} ETH<br />UserOperation hash: <code>{state.operation.hash}</code></p>}{state?.operation?.transactionHash && <a className="setup-link" target="_blank" rel="noreferrer" href={`https://sepolia.basescan.org/tx/${state.operation.transactionHash}`}>View transaction on explorer ↗</a>}</div></article>
+        <article className="setup-step"><span>03</span><div><h2>Delegate to Astra</h2><p>Review and sign the typed scoped permission for the session address below. Direct transfers, approvals and administration are outside this session. The owner retains policy and revocation authority.</p><button disabled={!!busy || !login || !state?.ready || state.sessionAuthorized} onClick={authorize}>Authorize Astra session</button>{state?.sessionAuthorized && <p className="setup-ok">Session authorization recorded</p>}{state?.sessionAuthorized && !state.runtimeConfigured && <button disabled={!!busy || !login} onClick={() => action("Synchronize runtime", async () => setState(await call<SetupState>("/runtime/sync", login!.token, {})))}>Retry runtime synchronization</button>}{state?.runtimeConfigured && <div className="setup-success"><strong>Runtime configuration ready.</strong><p>Start or restart the API and worker to load the deployed addresses and session: <code>npm.cmd run dev:api</code> and <code>npm.cmd run dev:worker</code>. Scheduling starts paused until you sign in to the API and start the agent.</p></div>}</div></article>
         <div className="setup-buttons"><button className="secondary" disabled={!!busy} onClick={() => action("Refresh", refresh)}>Refresh status</button><button className="secondary" disabled={!!busy || !login} onClick={() => action("Check transaction", async () => setState(await call<SetupState>("/reconcile", login!.token, {})))}>Check transaction</button></div>
       </section>
       <aside className="setup-panel"><p className="eyebrow">REVIEW BEFORE SIGNING</p>{state ? <>

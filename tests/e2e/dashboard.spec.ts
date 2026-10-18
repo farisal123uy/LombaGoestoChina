@@ -92,6 +92,7 @@ test("a lost procurement response reuses the same invoice request ID on retry", 
 test("an unavailable API provides the runtime startup command", async ({ page }) => {
   await page.route("http://localhost:4000/**", (route) => route.abort());
   await page.goto("/dashboard");
-  await expect(page.getByRole("alert").filter({ hasText: "npm.cmd run runtime:dev" })).toBeVisible();
+  await expect(page.getByRole("alert").filter({ hasText: "npm run runtime:dev" })).toBeVisible();
+  await expect(page.getByText("Unavailable", { exact: true }).first()).toBeVisible();
   await expect(page.getByRole("button", { name: "Connect owner & sign in" })).toBeDisabled();
 });

@@ -54,7 +54,8 @@ test("owner completes the visible sign/deploy/session flow without entering a pr
 test("coordinator outage gives a usable startup instruction", async ({ page }) => {
   await page.route("http://127.0.0.1:4100/**", (route) => route.abort());
   await page.goto("/setup");
-  await expect(page.getByRole("alert").filter({ hasText: "npm.cmd run onboarding" })).toBeVisible();
+  await expect(page.getByRole("alert").filter({ hasText: "npm run onboarding" })).toBeVisible();
+  await expect(page.getByText("Unavailable", { exact: true }).first()).toBeVisible();
   await expect(page.getByRole("button", { name: "Connect MetaMask & sign in" })).toBeDisabled();
 });
 

@@ -5,6 +5,7 @@ import type { AgentExchange, PaymentAttempt, PaymentTask, PolicySnapshot } from 
 import { ensureBaseSepolia, textToHex, tokenAmount, walletProvider } from "../lib/wallet";
 import { OwnerRuntimeNotice, SiteFooter, SiteHeader } from "./site-chrome";
 import { plainErrorMessage } from "../lib/error-message";
+import { dashboardStatus } from "../lib/runtime-status";
 
 const apiBase = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000").replace(/\/$/, "");
 interface Status { financialConfigured: boolean; providerConfigured: boolean; executionEnabled: boolean; ownerAddress?: `0x${string}`; accountAddress?: `0x${string}`; model: { provider: string; modelId: string | null }; }
@@ -29,6 +30,8 @@ export function FinancialDashboard() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [data, setData] = useState<Record<string, string>>({});
+  const [runtimeUnavailable, setRuntimeUnavailable] = useState(false);
+  const [walletAvailable, setWalletAvailable] = useState(false);
   const [key, setKey] = useState("project-note"), [value, setValue] = useState("Hello from Astra's database.");
   const pendingRequest = useRef<{ id: string; instruction: string } | undefined>(undefined);
   const selectedId = selected?.task.id;
@@ -40,7 +43,12 @@ export function FinancialDashboard() {
     setTasks(nextTasks.tasks); setPolicy(nextPolicy.policy);
     if (selectedId) setSelected(await request<TaskDetails>(`/v1/tasks/${selectedId}`, token));
   }, [selectedId]);
-  useEffect(() => { refresh(auth?.token).catch(() => setError("Start the financial runtime with npm.cmd run runtime:dev, then refresh/sign in.")); }, [refresh, auth?.token]);
+  useEffect(() => {
+    refresh(auth?.token).then(() => setRuntimeUnavailable(false)).catch(() => {
+      setRuntimeUnavailable(true);
+      setError("The local financial runtime is unavailable to this browser. Start it separately with npm run runtime:dev, then refresh.");
+    });
+  }, [refresh, auth?.token]);
   useEffect(() => {
     if (!auth) return;
     let stopped = false; let timer: ReturnType<typeof setTimeout>;
@@ -53,7 +61,7 @@ export function FinancialDashboard() {
   }, [auth, refresh, hasActiveTasks]);
   useEffect(() => {
     let provider;
-    try { provider = walletProvider(); } catch { return; }
+    try { provider = walletProvider(); setWalletAvailable(true); } catch { setWalletAvailable(false); return; }
     const changed = () => { setAuth(undefined); setPolicy(undefined); setTasks([]); setSelected(undefined); setExchange([]); setData({}); };
     provider.on?.("accountsChanged", changed);
     return () => provider.removeListener?.("accountsChanged", changed);
@@ -97,9 +105,11 @@ export function FinancialDashboard() {
     setData(values.values); setNotice(`Database read/write probe verified. Probe count: ${result.probeCount}`);
   });
 
+  const statusItems = dashboardStatus({ status, walletAvailable, authenticated: Boolean(auth), unreachable: runtimeUnavailable });
   return <main className="dashboard-shell">
     <SiteHeader current="/dashboard" />
     <OwnerRuntimeNotice />
+    <section className="runtime-panel" aria-labelledby="runtime-title"><div><p className="eyebrow">RUNTIME & AGENT STATUS</p><h2 id="runtime-title">What this browser can confirm</h2></div><button className="secondary" disabled={!!busy} onClick={() => action("Refresh runtime status", async () => { try { await refresh(auth?.token); setRuntimeUnavailable(false); } catch (cause) { setRuntimeUnavailable(true); throw cause; } })}>Refresh status</button><div className="runtime-statuses">{statusItems.map((item) => <article key={item.label}><span className="label">{item.label}</span><strong>{item.value}</strong><p>{item.detail}</p></article>)}</div></section>
     <section className="dashboard-heading"><div><p className="eyebrow">ASTRA · ENTERPRISE PROCUREMENT</p><h1>Goals to services.<br /><span>Inside your authority.</span></h1><p>Two model-backed agent runtimes exchange a request and quote. A separate signer authenticates catalog prices. Settlement and an independent service probe determine completion.</p></div><div className="dashboard-login"><span className="label">Model</span><strong>{status?.model.modelId || "Waiting for API"}</strong><p>{auth ? "Owner signed in" : "Owner sign-in required"}</p><button disabled={!!busy || !status?.financialConfigured} onClick={signIn}>{auth ? "Sign in again" : "Connect owner & sign in"}</button><p className="sign-in-note">Signing this message does not move funds and costs no gas.</p></div></section>
     {error && <div className="setup-error" role="alert">{error}</div>}{notice && <div className="dashboard-notice" role="status">{notice}</div>}{busy && <p className="setup-progress" role="status">{busy}…</p>}
     <section className="dashboard-stats">{[["Confirmed token balance", policy?.balanceUnits], ["Protected balance", policy?.protectedBalanceUnits], ["UTC-day limit", policy?.dailyLimitUnits], ["Spent this UTC day", policy?.spentUnits]].map(([name, amount]) => <article key={name}><span className="label">{name}</span><strong>{amount === undefined ? "—" : tokenAmount(amount)}</strong><small>MockUSD test units</small></article>)}</section>
