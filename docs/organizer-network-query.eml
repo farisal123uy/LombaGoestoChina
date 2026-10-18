@@ -1,0 +1,28 @@
+To: info@ican-x.com
+Subject: Topic F execution-evidence clarification - Base Sepolia public testnet
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+X-Unsent: 1
+
+Dear Organizing Committee,
+
+Our registered team is preparing Guardian Wallet - Astra for the 2026 International Track, Topic F (Agent Wallet / Autonomous On-chain Wallet).
+
+Section 5 of the International Track Topics & Rules requests "real on-chain transaction hashes" for the on-chain topic. Could you please confirm:
+
+1. Are confirmed transactions on public testnets, specifically Base Sepolia (chain ID 84532), accepted for this execution-evidence requirement, or is mainnet execution required?
+2. Are payments using a test ERC-20 token such as MockUSD acceptable, and are there any specific network or token restrictions for Topic F?
+
+Our agent has completed an actual public Base Sepolia smart-account payment of 0.26 MockUSD. The confirmed transaction is independently inspectable here:
+
+https://sepolia.basescan.org/tx/0x7cd8b34b835cb34b65d5d3484d81541874b225e7d5fb345f5c9514ad20fdd86d
+
+Our interactive reviewer sandbox separately uses isolated local forks and clearly labels them. We intend to provide the public Base Sepolia transaction above as the execution evidence, not the sandbox's local-fork hashes.
+
+We would appreciate written clarification so that our submission follows the accepted network and token requirements before the October 20 deadline.
+
+Thank you for your guidance.
+
+Best regards,
+Guardian Wallet - Astra team

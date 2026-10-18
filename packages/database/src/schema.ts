@@ -1,6 +1,6 @@
 import { taskStatuses } from "@guardian-wallet/shared";
 import { sql } from "drizzle-orm";
-import { bigint, boolean, check, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { bigint, boolean, check, index, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import type { PaymentTask, PaymentAttempt } from "@guardian-wallet/shared";
 
 export const taskStatusEnum = pgEnum("task_status", taskStatuses);
@@ -51,6 +51,10 @@ export const paymentAttempts = pgTable("payment_attempts", {
   record: jsonb("record").$type<PaymentAttempt>().notNull(),
   signedPayload: text("signed_payload").notNull(),
 }, (table) => [uniqueIndex("one_active_attempt_per_account").on(table.accountKey).where(sql`${table.status} NOT IN ('confirmed','failed')`), check("payment_attempt_record_object", sql`jsonb_typeof(${table.record}) = 'object'`)]).enableRLS();
+export const paymentAttemptMembers = pgTable("payment_attempt_members", {
+  taskId: uuid("task_id").primaryKey().references(() => paymentTasks.id),
+  attemptTaskId: uuid("attempt_task_id").notNull().references(() => paymentAttempts.taskId),
+}, (t) => [index("batch_members_by_attempt").on(t.attemptTaskId)]).enableRLS();
 export const executionLocks = pgTable("execution_locks", {
   accountKey: text("account_key").primaryKey(), workerId: text("worker_id").notNull(),
   fence: bigint("fence", { mode: "bigint" }).notNull(), leaseUntil: timestamp("lease_until", { withTimezone: true }).notNull(),

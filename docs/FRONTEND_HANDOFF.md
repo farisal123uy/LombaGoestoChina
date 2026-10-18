@@ -5,6 +5,24 @@ The branch includes the complete monorepo and working frontend reference, shared
 schemas, API, worker, provider processes, tests and sanitized public evidence.
 Current progress: [PROGRESS.md](PROGRESS.md).
 
+Integration update: frontend `origin/feat/enterprise-dashboard` at **`4e47b13`** is
+now ported into the local stage-two source with the assistant and reviewer flows.
+See [FRONTEND_INTEGRATION.md](FRONTEND_INTEGRATION.md). This is not a published merge;
+the owner explicitly deferred GitHub commit/push.
+
+Stage-two additive features (currently local `feat/batching-evaluation`): asset
+overview, payment drafting/queuing and wallet-policy risk checks. Integration contract:
+[WALLET_ASSISTANT.md](WALLET_ASSISTANT.md). The reference UI is isolated in
+`apps/web/components/wallet-assistant.tsx`, mounted from `financial-dashboard.tsx`.
+Preserve `draft` as non-executable and use shared `assistant.ts` types when merging
+the new capability into a redesigned frontend.
+
+The reviewer entry `/review` mounts `FinancialDashboard` with a scoped `reviewSession`
+and same-origin `/api/review/sessions/<id>` prefix. Preserve the optional API base,
+capability header on status/financial calls, no-MetaMask review path, expiry/close flow,
+and explicit local-fork receipt labels. Do not turn a local hash into a public explorer
+link. Model display uses the actual ID (candidate GPT-OSS 120B), not hard-coded Qwen.
+
 ## Get the code
 
 For a fresh clone:

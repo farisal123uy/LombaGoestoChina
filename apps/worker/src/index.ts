@@ -17,6 +17,8 @@ const environment = z.object({
   SESSION_ENABLE_SIGNATURE: z.string().regex(/^0x[0-9a-fA-F]+$/).transform((v) => v as `0x${string}`).optional(),
   MAX_GAS_COST_WEI: z.string().regex(/^[1-9][0-9]*$/).default("1000000000000000"),
   CONFIRMATIONS: z.coerce.number().int().min(1).default(2),
+  BATCH_MAX_SIZE: z.coerce.number().int().min(1).max(10).default(1),
+  BATCH_WINDOW_MS: z.coerce.number().int().min(0).max(30000).default(0),
   GAS_MODE: z.enum(["native", "sponsored"]).default("native"),
   APPROVED_PAYMASTER_ADDRESS: addressSchema.optional(),
   PROVIDER_SIGNER_URL: z.url().optional(), PROVIDER_SIGNER_TOKEN: z.string().min(32).optional(), PROVIDER_SIGNER_ADDRESS: addressSchema.optional(),
@@ -36,7 +38,7 @@ try {
     worker = new PaymentWorker(database.store, new BoundedPaymentPlanner(), createKernelPaymentDriver({
       client, account, guardianAddress: GUARDIAN_ADDRESS, bundlerUrl: ZERODEV_RPC_URL, maxGasCostWei: BigInt(environment.MAX_GAS_COST_WEI), confirmations: environment.CONFIRMATIONS,
       sponsorship: environment.GAS_MODE === "sponsored" ? { approvedPaymaster: environment.APPROVED_PAYMASTER_ADDRESS! } : undefined,
-    }), accountKey(84532, KERNEL_ACCOUNT_ADDRESS), randomUUID(), environment.PROVIDER_SIGNER_URL && environment.PROVIDER_SIGNER_TOKEN && environment.PROVIDER_SIGNER_ADDRESS ? createProviderFulfillment({ baseUrl: environment.PROVIDER_SIGNER_URL, token: environment.PROVIDER_SIGNER_TOKEN, guardian: GUARDIAN_ADDRESS, providerSigner: environment.PROVIDER_SIGNER_ADDRESS }) : undefined);
+    }), accountKey(84532, KERNEL_ACCOUNT_ADDRESS), randomUUID(), environment.PROVIDER_SIGNER_URL && environment.PROVIDER_SIGNER_TOKEN && environment.PROVIDER_SIGNER_ADDRESS ? createProviderFulfillment({ baseUrl: environment.PROVIDER_SIGNER_URL, token: environment.PROVIDER_SIGNER_TOKEN, guardian: GUARDIAN_ADDRESS, providerSigner: environment.PROVIDER_SIGNER_ADDRESS }) : undefined, { maxBatchSize: environment.BATCH_MAX_SIZE, batchWindowMs: environment.BATCH_WINDOW_MS });
   }
 } catch {
   await closeDatabase?.();

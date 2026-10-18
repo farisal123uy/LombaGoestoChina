@@ -10,7 +10,7 @@ try {
   const rows = await sql`SELECT t.tablename, t.rowsecurity,
     (SELECT count(*)::int FROM pg_policies p WHERE p.schemaname=t.schemaname AND p.tablename=t.tablename) AS policy_count
     FROM pg_tables t WHERE t.schemaname='public' AND t.tablename IN
-    ('goals','tasks','operations','payment_tasks','payment_attempts','execution_locks','worker_controls','provider_invoices','provider_databases')
+    ('goals','tasks','operations','payment_tasks','payment_attempts','payment_attempt_members','execution_locks','worker_controls','provider_invoices','provider_databases')
     ORDER BY tablename`;
   console.log(JSON.stringify({ applicationTables: rows }, null, 2));
 } catch {

@@ -1,0 +1,1 @@
+CREATE INDEX "batch_members_by_attempt" ON "payment_attempt_members" USING btree ("attempt_task_id");

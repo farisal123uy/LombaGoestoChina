@@ -3,21 +3,25 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AgentExchange, PaymentAttempt, PaymentTask, PolicySnapshot } from "@guardian-wallet/shared";
 import { ensureBaseSepolia, textToHex, tokenAmount, walletProvider } from "../lib/wallet";
+import { WalletAssistant } from "./wallet-assistant";
 
 const apiBase = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000").replace(/\/$/, "");
-interface Status { financialConfigured: boolean; providerConfigured: boolean; executionEnabled: boolean; ownerAddress?: `0x${string}`; accountAddress?: `0x${string}`; model: { provider: string; modelId: string | null }; }
+interface Status { financialConfigured: boolean; providerConfigured: boolean; assistantConfigured?: boolean; executionEnabled: boolean; ownerAddress?: `0x${string}`; accountAddress?: `0x${string}`; model: { provider: string; modelId: string | null }; }
 interface TaskDetails { task: PaymentTask; operation?: PaymentAttempt; }
-async function request<T>(path: string, token?: string, body?: object, method = body ? "POST" : "GET"): Promise<T> {
-  const response = await fetch(`${apiBase}${path}`, { method, cache: "no-store", signal: AbortSignal.timeout(path === "/v1/procure" ? 150000 : 20000),
+async function apiRequest<T>(base: string, path: string, token?: string, body?: object, method = body ? "POST" : "GET"): Promise<T> {
+  const response = await fetch(`${base}${path}`, { method, cache: "no-store", signal: AbortSignal.timeout(path === "/v1/procure" ? 150000 : 20000),
     headers: { ...(token ? { authorization: `Bearer ${token}` } : {}), ...(body ? { "content-type": "application/json" } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
   const value = await response.json();
   if (!response.ok) throw new Error(typeof value.error === "string" ? value.error : "API_REQUEST_FAILED");
   return value as T;
 }
 
-export function FinancialDashboard() {
+export function FinancialDashboard({ reviewSession }: { reviewSession?: { apiBase: string; token: string; ownerAddress: string } }) {
+  const base = reviewSession?.apiBase || apiBase;
+  const isReview = Boolean(reviewSession);
+  const request = useCallback(<T,>(path: string, token?: string, body?: object, method?: string) => apiRequest<T>(base, path, token, body, method), [base]);
   const [status, setStatus] = useState<Status>();
-  const [auth, setAuth] = useState<{ token: string; address: string }>();
+  const [auth, setAuth] = useState<{ token: string; address: string } | undefined>(reviewSession ? { token: reviewSession.token, address: reviewSession.ownerAddress } : undefined);
   const [policy, setPolicy] = useState<PolicySnapshot>();
   const [tasks, setTasks] = useState<PaymentTask[]>([]);
   const [selected, setSelected] = useState<TaskDetails>();
@@ -32,13 +36,13 @@ export function FinancialDashboard() {
   const selectedId = selected?.task.id;
   const hasActiveTasks = tasks.some((t) => ["planned", "executing", "paid", "service_pending"].includes(t.status));
   const refresh = useCallback(async (token?: string) => {
-    setStatus(await request<Status>("/v1/status"));
+    setStatus(await request<Status>("/v1/status", token));
     if (!token) return;
     const [nextTasks, nextPolicy] = await Promise.all([request<{ tasks: PaymentTask[] }>("/v1/tasks", token), request<{ policy: PolicySnapshot }>("/v1/policy", token)]);
     setTasks(nextTasks.tasks); setPolicy(nextPolicy.policy);
     if (selectedId) setSelected(await request<TaskDetails>(`/v1/tasks/${selectedId}`, token));
-  }, [selectedId]);
-  useEffect(() => { refresh(auth?.token).catch(() => setError("Start the financial runtime with npm.cmd run runtime:dev, then refresh/sign in.")); }, [refresh, auth?.token]);
+  }, [selectedId, request]);
+  useEffect(() => { refresh(auth?.token).catch(() => setError(isReview ? "The review workspace is expired or unavailable. Close it and start a new workspace." : "Start the financial runtime with npm.cmd run runtime:dev, then refresh/sign in.")); }, [refresh, auth?.token, isReview]);
   useEffect(() => {
     if (!auth) return;
     let stopped = false; let timer: ReturnType<typeof setTimeout>;
@@ -50,12 +54,13 @@ export function FinancialDashboard() {
     return () => { stopped = true; clearTimeout(timer); };
   }, [auth, refresh, hasActiveTasks]);
   useEffect(() => {
+    if (isReview) return;
     let provider;
     try { provider = walletProvider(); } catch { return; }
     const changed = () => { setAuth(undefined); setPolicy(undefined); setTasks([]); setSelected(undefined); setExchange([]); setData({}); };
     provider.on?.("accountsChanged", changed);
     return () => provider.removeListener?.("accountsChanged", changed);
-  }, []);
+  }, [isReview]);
   async function action(name: string, body: () => Promise<void>) {
     setBusy(name); setError(""); setNotice("");
     try { await body(); } catch (cause) { setError(cause instanceof Error ? cause.message : "REQUEST_FAILED"); }
@@ -96,14 +101,16 @@ export function FinancialDashboard() {
   });
 
   return <main className="dashboard-shell">
-    <header className="setup-header"><a className="brand" href="/"><span className="brand-mark">G</span> Guardian Wallet</a><nav><a href="/setup">Owner setup</a><span className="badge">Base Sepolia · test assets</span></nav></header>
-    <section className="dashboard-heading"><div><p className="eyebrow">ASTRA · ENTERPRISE PROCUREMENT</p><h1>Goals to services.<br /><span>Inside your authority.</span></h1><p>Two model-backed agent runtimes exchange a request and quote. A separate signer authenticates catalog prices. Settlement and an independent service probe determine completion.</p></div><div className="dashboard-login"><span className="label">Model</span><strong>{status?.model.modelId || "Waiting for API"}</strong><p>{auth ? "Owner signed in" : "Owner sign-in required"}</p><button disabled={!!busy || !status?.financialConfigured} onClick={signIn}>{auth ? "Sign in again" : "Connect owner & sign in"}</button></div></section>
+    <header className="setup-header"><a className="brand" href="/"><span className="brand-mark">G</span> Guardian Wallet</a><nav>{!reviewSession && <a href="/setup">Owner setup</a>}<span className="badge">{reviewSession ? "Isolated local fork · disposable assets" : "Base Sepolia · test assets"}</span></nav></header>
+    {reviewSession && <p className="dashboard-notice">Review sandbox: hosted AI inference and actual Kernel/Guardian execution on an isolated local fork. Transactions here are not public broadcasts. The owner and funds belong only to this disposable workspace.</p>}
+    <section className="dashboard-heading"><div><p className="eyebrow">ASTRA · ENTERPRISE PROCUREMENT</p><h1>Goals to services.<br /><span>Inside your authority.</span></h1><p>Two model-backed agent runtimes exchange a request and quote. A separate signer authenticates catalog prices. Settlement and an independent service probe determine completion.</p></div><div className="dashboard-login"><span className="label">Model</span><strong>{status?.model.modelId || "Waiting for API"}</strong><p>{reviewSession ? "Disposable review workspace" : auth ? "Owner signed in" : "Owner sign-in required"}</p>{!reviewSession && <button disabled={!!busy || !status?.financialConfigured} onClick={signIn}>{auth ? "Sign in again" : "Connect owner & sign in"}</button>}</div></section>
     {error && <div className="setup-error" role="alert">{error}</div>}{notice && <div className="dashboard-notice" role="status">{notice}</div>}{busy && <p className="setup-progress" role="status">{busy}…</p>}
     <section className="dashboard-stats">{[["Confirmed token balance", policy?.balanceUnits], ["Protected balance", policy?.protectedBalanceUnits], ["UTC-day limit", policy?.dailyLimitUnits], ["Spent this UTC day", policy?.spentUnits]].map(([name, amount]) => <article key={name}><span className="label">{name}</span><strong>{amount === undefined ? "—" : tokenAmount(amount)}</strong><small>MockUSD test units</small></article>)}</section>
     <div className="dashboard-columns"><section className="setup-panel"><p className="eyebrow">DELEGATE A TASK</p><h2>Ask Astra to rent a database</h2><p className="setup-detail">The provider supplies a real, expiring PostgreSQL key-value namespace for this demonstration. It is a test service on the configured database.</p><label htmlFor="goal" className="label">Project goal</label><textarea id="goal" value={goal} maxLength={4000} disabled={!!busy} onChange={(event) => setGoal(event.target.value)} /><button disabled={!!busy || !auth || !status?.providerConfigured || !goal.trim()} onClick={procure}>Ask Astra & request provider quote</button><div className="dashboard-agent-control"><strong>Scheduler: {status?.executionEnabled ? "running" : "paused"}</strong><div className="setup-buttons"><button disabled={!!busy || !auth || status?.executionEnabled} onClick={() => toggle(false)}>Start agent</button><button className="secondary" disabled={!!busy || !auth || !status?.executionEnabled} onClick={() => toggle(true)}>Pause worker</button></div><p className="setup-detail">Local pause stops new scheduling; on-chain policy, expiry and session revocation remain separate controls.</p></div></section>
       <section className="setup-panel"><p className="eyebrow">AI-TO-AI EXCHANGE</p><h2>Request → quote → plan</h2>{(exchange.length ? exchange : selected?.task.exchange || []).map((item, index) => <article className="exchange-event" key={`${item.stage}-${index}`}><span>{item.actor.replaceAll("_", " ")} {item.modelId && <small>· {item.modelId}</small>}</span><strong>{item.stage.replaceAll("_", " ")}</strong><p>{item.summary}</p></article>)}{!exchange.length && !selected?.task.exchange?.length && <p className="setup-detail">Actual exchange summaries appear after a request. No financial results are fabricated.</p>}</section></div>
+    {status?.assistantConfigured && <WalletAssistant key={auth?.token || "signed-out"} token={auth?.token} tasks={tasks} baseUrl={base} onChanged={() => refresh(auth?.token)} />}
     <section className="setup-panel dashboard-tasks"><div className="dashboard-section-title"><div><p className="eyebrow">DURABLE EXECUTION</p><h2>Tasks and service evidence</h2></div><button className="secondary" disabled={!!busy} onClick={() => action("Refresh", () => refresh(auth?.token))}>Refresh</button></div>{!tasks.length && <p className="setup-detail">Sign in and create a procurement task to begin.</p>}<div className="task-list">{tasks.map((task) => <button disabled={!!busy || !auth} className={`task-row ${selectedId === task.id ? "selected" : ""}`} key={task.id} onClick={() => action("Load task", async () => { setSelected(await request<TaskDetails>(`/v1/tasks/${task.id}`, auth!.token)); setExchange([]); setData({}); })}><span><strong>{task.offerId || "Authenticated invoice"}</strong><small>{task.id}</small></span><span>{tokenAmount(task.quote.amountUnits)} MockUSD</span><span className={`task-status status-${task.status}`}>{task.status.replaceAll("_", " ")}</span></button>)}</div>
-      {selected && <div className="task-detail"><div><span className="label">Task status</span><h3>{selected.task.status.replaceAll("_", " ")}</h3><p className="setup-detail">{selected.task.reason || selected.task.plan?.summary}</p><span className="label">Invoice ID</span><code>{selected.task.quote.invoiceId}</code>{selected.operation && <><span className="label">Operation · {selected.operation.status}</span><code>{selected.operation.userOperationHash}</code>{selected.operation.transactionHash && <a className="setup-link" target="_blank" rel="noreferrer" href={`https://sepolia.basescan.org/tx/${selected.operation.transactionHash}`}>Inspect public transaction ↗</a>}</>}</div>
+      {selected && <div className="task-detail"><div><span className="label">Task status</span><h3>{selected.task.status.replaceAll("_", " ")}</h3><p className="setup-detail">{selected.task.reason || selected.task.plan?.summary}</p><span className="label">Invoice ID</span><code>{selected.task.quote.invoiceId}</code>{selected.operation && <><span className="label">Operation · {selected.operation.status}</span><code>{selected.operation.userOperationHash}</code>{selected.operation.transactionHash && (reviewSession ? <><span className="label">Confirmed local-fork transaction</span><code>{selected.operation.transactionHash}</code></> : <a className="setup-link" target="_blank" rel="noreferrer" href={`https://sepolia.basescan.org/tx/${selected.operation.transactionHash}`}>Inspect public transaction ↗</a>)}</>}</div>
       {selected.task.delivery && <div><span className="label">Verified provider namespace</span><code>{selected.task.delivery.namespaceId}</code><p className="setup-detail">Expires {new Date(selected.task.delivery.expiresAt * 1000).toLocaleString()}. Completion requires a signed delivery receipt and a database write/read probe, after payment confirmation.</p><button disabled={!!busy || !auth} onClick={probe}>Verify database probe</button><div className="database-edit"><label className="label" htmlFor="db-key">Database key</label><input id="db-key" value={key} maxLength={64} onChange={(e) => setKey(e.target.value)} /><label className="label" htmlFor="db-value">Value</label><input id="db-value" value={value} maxLength={4096} onChange={(e) => setValue(e.target.value)} /><button disabled={!!busy || !auth} onClick={() => action("Write database value", async () => { await request(`/v1/tasks/${selected.task.id}/database`, auth!.token, { key, value }, "PUT"); setData((await request<{ values: Record<string, string> }>(`/v1/tasks/${selected.task.id}/database`, auth!.token)).values); })}>Write & read back</button></div><pre>{JSON.stringify(data, null, 2)}</pre></div>}</div>}
     </section><footer>Bounded authority · confirmed settlement · verifiable test-service delivery</footer>
   </main>;

@@ -45,20 +45,7 @@ try {
     }
   }
   if (selected("qwen")) {
-    const base = await ask("Endpoint Ollama (lokal: http://127.0.0.1:11434)", api.OLLAMA_BASE_URL || "http://127.0.0.1:11434", "ollama");
-    if (base) {
-      try {
-        const response = await fetch(`${base.replace(/\/$/, "")}/api/tags`, { signal: AbortSignal.timeout(3000) });
-        const data = await response.json();
-        const installed = (data.models ?? []).map((item) => item.name).filter((name) => typeof name === "string" && name.toLowerCase().includes("qwen"));
-        console.log(`Model Qwen terpasang: ${installed.join(", ") || "belum terdeteksi"}`);
-      } catch { console.log("Ollama belum terjangkau; konfigurasi bisa disimpan lalu diverifikasi setelah server aktif."); }
-      const model = await ask("Model Qwen", api.AI_MODEL_ID?.toLowerCase().includes("qwen") ? api.AI_MODEL_ID : "qwen3:8b", "qwen_model");
-      if (model) {
-        await writeEnvironment("api", { AI_PROVIDER: "ollama", OLLAMA_BASE_URL: base, AI_MODEL_ID: model, AI_REQUEST_TIMEOUT_MS: "45000", AI_CONTEXT_TOKENS: "4096" });
-        services.push("qwen_ollama");
-      }
-    }
+    console.log("\nAI sekarang memakai Groq Free, kandidat GPT-OSS 120B. Jalankan npm.cmd run setup:ai-cloud setelah wizard ini untuk input key tersembunyi dan verifikasi model. Konfigurasi Ollama lama tidak dipilih otomatis.");
   }
   if (selected("zerodev")) {
     const rpc = await ask("Execution RPC Base Sepolia (contoh https://sepolia.base.org)", api.BASE_SEPOLIA_RPC_URL || "https://sepolia.base.org", "url", true);
@@ -85,7 +72,7 @@ try {
   await savePublicSetup({ services, financialApiReady });
   console.log(`\nSelesai. File konfigurasi: ${Object.values(destinations).join(", ")}`);
   console.log("Jalankan npm.cmd run services:check, kemudian npm.cmd run services:check -- --network untuk verifikasi koneksi read-only.");
-  console.log("Login deployment terpisah: npm.cmd run cloud:vercel -- login dan npm.cmd run cloud:railway -- login --browserless.");
+  console.log("Batas proyek: layanan gratis tanpa upgrade billing. Panduan AI cloud: docs/AI_CLOUD.md.");
 } catch {
   // Do not print exception messages: providers/URLs may contain credentials.
   console.error("Penyiapan belum selesai. Periksa format input, file .gitignore, dan remote origin. Nilai rahasia tidak dicetak.");

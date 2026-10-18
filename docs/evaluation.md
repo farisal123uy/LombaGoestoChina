@@ -1,6 +1,12 @@
 # Evaluation plan
 
-No user study, provider benchmark or cost comparison has been conducted yet. A
+No user study or production provider benchmark has been conducted. COST-01 now
+compares actual Kernel/worker single vs 4/7 batches on an isolated fork, with three
+repetitions per mode: [batching/cost scope](BATCHING_AND_COST.md) and
+[`cost-fork.json`](evidence/cost-fork.json). Selected Qwen corpus improved from
+52/60 to 60/60 after prompt refinement on the same 30-case/two-repeat corpus;
+the initial failures remain preserved. This is in-sample regression, not independent
+robustness evidence. A
 four-case live Qwen smoke run now covers pay/wait/direct jailbreak/vendor parsing;
 [captured output and timings](evidence/qwen-local-evaluation.json) use synthetic
 financial state/quotes and do not claim signature, settlement or service delivery.

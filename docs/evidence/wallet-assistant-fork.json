@@ -1,0 +1,93 @@
+{
+  "capturedAt": "2026-10-18T02:31:58.264Z",
+  "evidenceType": "isolated-local-Base-Sepolia-fork-authenticated-API-PGlite-real-Kernel-EntryPoint-Guardian",
+  "intentModel": "qwen3:8b",
+  "paymentPlanner": "live-Qwen",
+  "sourceHashes": {
+    "apps/api/src/wallet-assistant.ts": "8c842aa37662c44502f64e0e655e69fd36a5761d8a0bbee4e54e81de61ae8396",
+    "packages/planner/src/wallet-assistant.ts": "8b02c46a8b6915df63f8463acc5d6dcd3f73436d7b8017c0e8be42fdc8bc3665",
+    "packages/database/src/payment-store.ts": "66c1e17b9aaf534b0ca59f0b7578ece8200bf30ab307967ad847eb753d1fd883",
+    "contracts/test/Kernel.integration.ts": "cdd12fa8bca46d1f82725feecce85ab895f0f615356ea9d56529d58f248acc2b"
+  },
+  "initialAssets": {
+    "account": "0x6e511d635d74bcaA8Af3E5B3f97DCeb502846349",
+    "chainId": 84532,
+    "token": {
+      "address": "0x255d5B41cCEF1Bb499b55249bADff5f932ffe467",
+      "symbol": "mUSD",
+      "decimals": 6,
+      "balanceUnits": "9740000",
+      "formattedBalance": "9.74"
+    },
+    "protectedBalanceUnits": "6000000",
+    "spendableBalanceUnits": "3740000",
+    "perPaymentLimitUnits": "1000000",
+    "dailyLimitUnits": "2000000",
+    "spentUnits": "260000",
+    "remainingDailyUnits": "1740000",
+    "committedUnits": "0",
+    "availableToPlanUnits": "1740000",
+    "queuedTaskCount": 0,
+    "draftTaskCount": 1,
+    "schedulerPaused": true,
+    "policyVersion": "1",
+    "observedAt": 1792147797,
+    "observedBlockNumber": "48189756",
+    "observedBlockHash": "0x729fef502970ff642854a4d1546f2999a3a0c9089d1a9b5edd2c25beeaec4157"
+  },
+  "finalAssets": {
+    "account": "0x6e511d635d74bcaA8Af3E5B3f97DCeb502846349",
+    "chainId": 84532,
+    "token": {
+      "address": "0x255d5B41cCEF1Bb499b55249bADff5f932ffe467",
+      "symbol": "mUSD",
+      "decimals": 6,
+      "balanceUnits": "9480000",
+      "formattedBalance": "9.48"
+    },
+    "protectedBalanceUnits": "6000000",
+    "spendableBalanceUnits": "3480000",
+    "perPaymentLimitUnits": "1000000",
+    "dailyLimitUnits": "2000000",
+    "spentUnits": "520000",
+    "remainingDailyUnits": "1480000",
+    "committedUnits": "0",
+    "availableToPlanUnits": "1480000",
+    "queuedTaskCount": 0,
+    "draftTaskCount": 0,
+    "schedulerPaused": false,
+    "policyVersion": "1",
+    "observedAt": 1792147804,
+    "observedBlockNumber": "48189757",
+    "observedBlockHash": "0x72ea15fc5bfbd8e3c25d10e21c207be155b592be32f05a8984659c587e9ec61a"
+  },
+  "taskId": "7090ed5a-fecc-4287-b914-4469abde77e8",
+  "taskStatus": "paid",
+  "sends": 1,
+  "recoveredOperation": {
+    "nonce": "5037610969153001340140518736540248460244228809744015108174993457200234497",
+    "sender": "0x6e511d635d74bcaA8Af3E5B3f97DCeb502846349",
+    "status": "confirmed",
+    "taskId": "7090ed5a-fecc-4287-b914-4469abde77e8",
+    "taskIds": [
+      "7090ed5a-fecc-4287-b914-4469abde77e8"
+    ],
+    "nonceKey": "273089437844624575781381244291156428602843336651309056",
+    "preparedAt": 1792290717605,
+    "validUntil": 1792147917,
+    "submissionBlock": "48189756",
+    "transactionHash": "0xdccca64a6304dfb3ee5e2b7f67219c3c645832386d579dc9eea23ae64515e521",
+    "userOperationHash": "0xab8ccd6b60d8279bb5e40a7ecd0a364467e6ba975f77cbe2fe528dcecd38036b"
+  },
+  "checks": [
+    "owner-signature-login",
+    "onchain-asset-overview",
+    "draft-preview-no-send",
+    "current-signature-and-policy-validation",
+    "queue-without-unpausing",
+    "actual-restricted-session-payment",
+    "lost-response-reconciliation",
+    "idempotent-execute-no-second-payment"
+  ],
+  "limitations": "Isolated fork with ephemeral assets and a local stub bundler; not a new public payment or commercial service purchase."
+}

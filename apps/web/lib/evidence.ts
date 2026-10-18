@@ -1,0 +1,122 @@
+// Evidence ledger integrated from feat/enterprise-dashboard (4e47b13).
+import { formatUnits } from "viem";
+import deploymentArtifact from "../../../docs/evidence/public-deployment.json";
+import procurementArtifact from "../../../docs/evidence/public-procurement.json";
+import forkArtifact from "../../../docs/evidence/2026-10-16-local-fork.json";
+import previewArtifact from "../../../docs/evidence/provider-live-preview.json";
+import qwenArtifact from "../../../docs/evidence/qwen-local-evaluation.json";
+import smokeArtifact from "../../../docs/evidence/cloud-model-smoke.json";
+import comparisonArtifact from "../../../docs/evidence/cloud-model-comparison.json";
+import securityArtifact from "../../../docs/evidence/security-cloud-model-evaluation.json";
+import securityBaselineArtifact from "../../../docs/evidence/security-cloud-model-baseline.json";
+import linuxArtifact from "../../../docs/evidence/reviewer-linux-cloud.json";
+
+export type Origin = "live-public" | "local-fork" | "local-inference";
+export type HashKind = "UserOperation" | "Transaction" | "Block" | "Invoice" | "Payment" | "Service" | "Source SHA-256";
+export interface HashRecord { label: string; value: string; kind: HashKind; origin: Origin; explorerHref?: string; }
+export interface EvidenceRecord { title: string; origin: Origin; fixture?: boolean; sourceState?: string; capturedAt?: string; sourceHashes: Record<string, string>; hashes: HashRecord[]; }
+export interface CompromisedPlannerRecord extends EvidenceRecord { success: boolean; outerTransactionSucceeded?: boolean; facts: Record<string, string | boolean | undefined>; }
+export interface EvidenceData {
+  deployment: EvidenceRecord & { facts: Record<string, string | boolean | undefined> };
+  procurement: EvidenceRecord & { facts: Record<string, string | boolean | undefined> };
+  localFork: EvidenceRecord & { facts: Record<string, string | boolean | undefined>; compromised: CompromisedPlannerRecord; revoke: EvidenceRecord; recovery: EvidenceRecord & { facts: Record<string, string | boolean | undefined> } };
+  preview: EvidenceRecord & { facts: Record<string, string | boolean | undefined> };
+  evaluation: EvidenceRecord & { facts: Record<string, string | boolean | undefined>; runs: Array<{ case: string; expected: string; actual: string; passed: boolean; elapsedMs?: number }> };
+  hashLedger: HashRecord[];
+}
+type Json = Record<string, unknown>;
+const requiredFiles = ["public-deployment.json", "public-procurement.json", "2026-10-16-local-fork.json", "provider-live-preview.json", "qwen-local-evaluation.json"] as const;
+const cloudFiles = ["cloud-model-smoke.json", "cloud-model-comparison.json", "security-cloud-model-evaluation.json", "security-cloud-model-baseline.json", "reviewer-linux-cloud.json"] as const;
+const requiredArtifacts = { "public-deployment.json": deploymentArtifact, "public-procurement.json": procurementArtifact, "2026-10-16-local-fork.json": forkArtifact, "provider-live-preview.json": previewArtifact, "qwen-local-evaluation.json": qwenArtifact };
+const cloudArtifacts = { "cloud-model-smoke.json": smokeArtifact, "cloud-model-comparison.json": comparisonArtifact, "security-cloud-model-evaluation.json": securityArtifact, "security-cloud-model-baseline.json": securityBaselineArtifact, "reviewer-linux-cloud.json": linuxArtifact };
+
+function object(value: unknown, name: string): Json { if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`Invalid evidence JSON object: ${name}`); return value as Json; }
+function text(value: unknown, name: string): string { if (typeof value !== "string") throw new Error(`Invalid evidence JSON field: ${name}`); return value; }
+function scalar(value: unknown, name: string): string { if (typeof value !== "string" && typeof value !== "number") throw new Error(`Invalid evidence JSON field: ${name}`); return String(value); }
+function bool(value: unknown, name: string): boolean { if (typeof value !== "boolean") throw new Error(`Invalid evidence JSON field: ${name}`); return value; }
+function strings(value: unknown, name: string): Record<string, string> { return Object.fromEntries(Object.entries(object(value, name)).map(([key, entry]) => [key, text(entry, `${name}.${key}`)])); }
+function optionalText(value: unknown): string | undefined { return typeof value === "string" ? value : undefined; }
+function optionalBool(value: unknown): boolean | undefined { return typeof value === "boolean" ? value : undefined; }
+function amount(units: unknown, decimals: unknown): string | undefined { if (typeof units !== "string" || typeof decimals !== "number") return undefined; return `${formatUnits(BigInt(units), decimals)} MockUSD`; }
+function nonPublicLabel(origin: Exclude<Origin, "live-public">) { return origin === "local-fork" ? "Local fork, not on public chain" : "Recorded local inference, not a chain transaction"; }
+function hash(label: string, value: unknown, kind: HashKind, origin: Origin, explorerHref?: string): HashRecord | undefined {
+  if (typeof value !== "string") return undefined;
+  let safeHref: string | undefined;
+  if (origin === "live-public" && kind === "Transaction" && explorerHref) {
+    try { const url = new URL(explorerHref); if (url.protocol === "https:" && url.hostname === "sepolia.basescan.org" && url.pathname.toLowerCase() === `/tx/${value.toLowerCase()}` && /^0x[0-9a-f]{64}$/i.test(value)) safeHref = url.toString(); } catch { /* A malformed link is never treated as a public receipt. */ }
+  }
+  return { label, value, kind, origin, ...(safeHref ? { explorerHref: safeHref } : {}) };
+}
+function only<T>(value: T | undefined): T[] { return value ? [value] : []; }
+async function readEvidence(name: typeof requiredFiles[number]): Promise<Json> {
+  return object(requiredArtifacts[name], name);
+}
+export async function readCloudEvidence(name: typeof cloudFiles[number]): Promise<Json | undefined> {
+  if (!cloudFiles.includes(name)) throw new Error("Evidence file is not allowlisted");
+  return object(cloudArtifacts[name], name);
+}
+
+export async function loadEvidence(): Promise<EvidenceData> {
+  const [deploymentJson, procurementJson, forkJson, previewJson, evaluationJson] = await Promise.all(requiredFiles.map(readEvidence));
+  const deploymentData = deploymentJson!, procurementData = procurementJson!, forkData = forkJson!, previewData = previewJson!, evaluationData = evaluationJson!;
+  const deployment: EvidenceData["deployment"] = {
+    title: "Owner-sponsored deployment", origin: "live-public", capturedAt: text(deploymentData.verifiedAt, "public-deployment.verifiedAt"), sourceState: optionalText(deploymentData.sourceState), sourceHashes: strings(deploymentData.sources ?? {}, "public-deployment.sources"),
+    hashes: [...only(hash("UserOperation", deploymentData.userOperationHash, "UserOperation", "live-public")), ...only(hash("Transaction", deploymentData.transactionHash, "Transaction", "live-public", text(deploymentData.explorer, "public-deployment.explorer"))), ...only(hash("Block", deploymentData.blockHash, "Block", "live-public"))],
+    facts: { "Owner signature verified": bool(deploymentData.ownerSignatureVerified, "public-deployment.ownerSignatureVerified"), "UserOperation succeeded": bool(deploymentData.userOperationSuccess, "public-deployment.userOperationSuccess"), "Initial token balance": amount(deploymentData.tokenBalanceUnits, deploymentData.tokenDecimals ?? 6), "Protected balance": amount(deploymentData.protectedBalanceUnits, deploymentData.tokenDecimals ?? 6), "UTC-day limit": amount(deploymentData.dailyLimitUnits, deploymentData.tokenDecimals ?? 6), "Policy version": text(deploymentData.policyVersion, "public-deployment.policyVersion") },
+  };
+  const snapshots = object(procurementData.blockBoundarySnapshots, "public-procurement.blockBoundarySnapshots"), policy = object(procurementData.currentPolicy, "public-procurement.currentPolicy"), delivery = object(procurementData.delivery, "public-procurement.delivery");
+  const procurement: EvidenceData["procurement"] = {
+    title: "Database procurement and delivery", origin: "live-public", capturedAt: text(procurementData.verifiedAt, "public-procurement.verifiedAt"), sourceState: optionalText(procurementData.sourceState), sourceHashes: strings(procurementData.sources ?? {}, "public-procurement.sources"),
+    hashes: [...only(hash("UserOperation", procurementData.userOperationHash, "UserOperation", "live-public")), ...only(hash("Transaction", procurementData.transactionHash, "Transaction", "live-public", text(procurementData.explorer, "public-procurement.explorer"))), ...only(hash("Settlement block", procurementData.blockHash, "Block", "live-public")), ...only(hash("Invoice", procurementData.invoiceId, "Invoice", "live-public")), ...only(hash("Payment", procurementData.paymentId, "Payment", "live-public")), ...only(hash("Service", procurementData.serviceHash, "Service", "live-public"))],
+    facts: { "Task status": text(procurementData.taskStatus, "public-procurement.taskStatus"), "Amount": amount(procurementData.amountUnits, procurementData.tokenDecimals), "Settlement": text(procurementData.settledAt, "public-procurement.settledAt"), "Token balance before": amount(snapshots.tokenBalanceBeforeUnits, procurementData.tokenDecimals), "Token balance after": amount(snapshots.tokenBalanceAfterUnits, procurementData.tokenDecimals), "UTC spend before": amount(snapshots.utcDaySpentBeforeUnits, procurementData.tokenDecimals), "UTC spend after": amount(snapshots.utcDaySpentAfterUnits, procurementData.tokenDecimals), "Quote signature verified": bool(procurementData.quoteSignatureVerified, "public-procurement.quoteSignatureVerified"), "Delivery signature verified": bool(delivery.signatureVerified, "public-procurement.delivery.signatureVerified"), "Recorded delivery status": text(delivery.status, "public-procurement.delivery.status"), "UTC spend at verification": amount(policy.spentUnits, procurementData.tokenDecimals), "Recorded source state": optionalText(procurementData.sourceState) },
+  };
+  if (!Array.isArray(forkData.operationResults)) throw new Error("Invalid local-fork.operationResults");
+  const operations = forkData.operationResults;
+  const operation = (label: string) => { const entry = operations.find((item) => object(item, "local-fork.operation").label === label); if (!entry) throw new Error(`Required local-fork operation is missing: ${label}`); return object(entry, label); };
+  const adversarial = operation("SEC-01-compromised-planner-fixture"), revoke = operation("owner-revokes-sessions"), revoked = operation("revoked-session-denied"), recovery = object(forkData.workerRecovery, "local-fork.workerRecovery");
+  const forkSourceState = text(forkData.sourceState, "local-fork.sourceState");
+  const compromised: CompromisedPlannerRecord = {
+    title: "Compromised planner fixture", origin: "local-fork", fixture: adversarial.outputOrigin === "adversarial_fixture", sourceState: forkSourceState, capturedAt: optionalText(forkData.capturedOn), sourceHashes: strings(forkData.sources ?? {}, "local-fork.sources"),
+    hashes: [...only(hash("Fixture UserOperation", adversarial.userOperationHash, "UserOperation", "local-fork")), ...only(hash("Fixture transaction", adversarial.transactionHash, "Transaction", "local-fork"))],
+    success: bool(adversarial.success, "local-fork.adversarial.success"), outerTransactionSucceeded: optionalBool(adversarial.outerTransactionSucceeded),
+    facts: { "Proposed amount": amount(adversarial.proposedAmountUnits, forkData.tokenDecimals), "Proposed recipient": optionalText(adversarial.proposedRecipient), "Decoded rejection": optionalText(adversarial.decodedRejection) ?? optionalText(adversarial.rejection), "Token balance before": amount(adversarial.tokenBalanceBeforeUnits, forkData.tokenDecimals), "Token balance after": amount(adversarial.tokenBalanceAfterUnits, forkData.tokenDecimals), "UTC spend before": amount(adversarial.utcDaySpentBeforeUnits, forkData.tokenDecimals), "UTC spend after": amount(adversarial.utcDaySpentAfterUnits, forkData.tokenDecimals), "Invoice consumed before": optionalBool(adversarial.invoiceConsumedBefore), "Invoice consumed after": optionalBool(adversarial.invoiceConsumedAfter) },
+  };
+  const localFork: EvidenceData["localFork"] = {
+    title: "Kernel and Guardian local fork", origin: "local-fork", sourceState: forkSourceState, capturedAt: text(forkData.capturedOn, "local-fork.capturedOn"), sourceHashes: strings(forkData.sources ?? {}, "local-fork.sources"), hashes: [],
+    facts: { "Fork block": scalar(forkData.forkBlock, "local-fork.forkBlock"), "Initial token balance": amount(forkData.initialBalanceUnits, forkData.tokenDecimals), "After first payment": amount(forkData.balanceAfterFirstPaymentUnits, forkData.tokenDecimals), "After recovered payment": amount(forkData.balanceAfterWorkerPaymentUnits, forkData.tokenDecimals) }, compromised,
+    revoke: { title: "Session revocation", origin: "local-fork", sourceState: forkSourceState, capturedAt: optionalText(forkData.capturedOn), sourceHashes: {}, hashes: [...only(hash("Owner revoke UserOperation", revoke.userOperationHash, "UserOperation", "local-fork")), ...only(hash("Owner revoke transaction", revoke.transactionHash, "Transaction", "local-fork")), ...only(hash("Revoked session UserOperation", revoked.userOperationHash, "UserOperation", "local-fork"))] },
+    recovery: { title: "Lost-response recovery", origin: "local-fork", sourceState: forkSourceState, capturedAt: optionalText(forkData.capturedOn), sourceHashes: {}, hashes: [...only(hash("Recovery UserOperation", recovery.userOperationHash, "UserOperation", "local-fork")), ...only(hash("Recovery transaction", recovery.transactionHash, "Transaction", "local-fork"))], facts: { "Status after lost response": text(recovery.statusAfterLostResponse, "local-fork.workerRecovery.statusAfterLostResponse"), "Status after restart reconciliation": text(recovery.statusAfterRestartReconciliation, "local-fork.workerRecovery.statusAfterRestartReconciliation"), "Send count": scalar(recovery.sendCount, "local-fork.workerRecovery.sendCount"), "Bundler": text(recovery.bundler, "local-fork.workerRecovery.bundler") } },
+  };
+  const preview: EvidenceData["preview"] = {
+    title: "Provider quote preview", origin: "local-inference", capturedAt: text(previewData.checkedAt, "provider-preview.checkedAt"), sourceState: optionalText(previewData.sourceState), sourceHashes: strings(previewData.sources, "provider-preview.sources"),
+    hashes: [...only(hash("Invoice", previewData.invoiceId, "Invoice", "local-inference")), ...only(hash("Observed block", previewData.observedBlockHash, "Block", "local-inference"))],
+    facts: { "Model": text(previewData.modelId, "provider-preview.modelId"), "Quote signature verified": bool(previewData.quoteSignatureVerified, "provider-preview.quoteSignatureVerified"), "Amount": amount(previewData.amountUnits, 6), "Tasks created": scalar(previewData.tasksCreated, "provider-preview.tasksCreated"), "UserOperations submitted": scalar(previewData.userOperationsSubmitted, "provider-preview.userOperationsSubmitted"), "Service provisioned": bool(previewData.serviceProvisioned, "provider-preview.serviceProvisioned") },
+  };
+  if (!Array.isArray(evaluationData.runs)) throw new Error("Invalid qwen-local-evaluation.runs");
+  const evaluation: EvidenceData["evaluation"] = {
+    title: "Historical Qwen smoke evaluation", origin: "local-inference", capturedAt: text(evaluationData.capturedAt, "qwen-local-evaluation.capturedAt"), sourceState: optionalText(evaluationData.sourceState), sourceHashes: strings(evaluationData.sourceHashes, "qwen-local-evaluation.sourceHashes"), hashes: [],
+    facts: { "Model": text(evaluationData.modelId, "qwen-local-evaluation.modelId"), "Evidence type": text(evaluationData.evidenceType, "qwen-local-evaluation.evidenceType"), "Limitations": text(evaluationData.limitations, "qwen-local-evaluation.limitations") },
+    runs: evaluationData.runs.map((run, index) => { const item = object(run, `evaluation.runs.${index}`), metrics = item.metrics && typeof item.metrics === "object" ? object(item.metrics, "evaluation.metrics") : undefined; return { case: text(item.case, "evaluation.case"), expected: JSON.stringify(item.expected), actual: JSON.stringify(item.actual), passed: bool(item.passed, "evaluation.passed"), elapsedMs: typeof metrics?.elapsedMs === "number" ? metrics.elapsedMs : undefined }; }),
+  };
+  const sourceHashes = (record: EvidenceRecord) => Object.entries(record.sourceHashes).map(([path, value]) => ({ label: path, value, kind: "Source SHA-256" as const, origin: record.origin }));
+  const hashLedger = [deployment, procurement, localFork, compromised, localFork.revoke, localFork.recovery, preview, evaluation].flatMap((record) => [...record.hashes, ...sourceHashes(record)]);
+  return { deployment, procurement, localFork, preview, evaluation, hashLedger };
+}
+
+export interface LandingEvidence {
+  balances: { balance: string; protected: string; daily: string; spent: string; origin: Origin; protectedPercent: number; spentPercent: number };
+  settlement: { amount: string; origin: Origin };
+  compromised: { innerSucceeded: boolean; outerSucceeded?: boolean; proposedAmount?: string; rejection?: string; origin: Origin };
+  limitations: string;
+}
+function twoDecimals(value: string | boolean | undefined) { if (typeof value !== "string") return "Not recorded"; const match = value.match(/^(\d+)(?:\.(\d+))? MockUSD$/); return match ? `${match[1]}.${(match[2] ?? "").padEnd(2, "0").slice(0, 2)} MockUSD` : value; }
+function ratio(value: string | boolean | undefined, total: string | boolean | undefined) { if (typeof value !== "string" || typeof total !== "string") return 0; return Math.min(100, Math.max(0, Number.parseFloat(value) / Number.parseFloat(total) * 100)); }
+export async function loadLandingEvidence(): Promise<LandingEvidence> {
+  const evidence = await loadEvidence(), publicFacts = evidence.procurement.facts, deploymentFacts = evidence.deployment.facts, compromisedFacts = evidence.localFork.compromised.facts;
+  const balance = publicFacts["Token balance after"], protectedBalance = deploymentFacts["Protected balance"], daily = deploymentFacts["UTC-day limit"], spent = publicFacts["UTC spend after"];
+  return { balances: { balance: twoDecimals(balance), protected: twoDecimals(protectedBalance), daily: twoDecimals(daily), spent: twoDecimals(spent), origin: evidence.procurement.origin, protectedPercent: ratio(protectedBalance, balance), spentPercent: ratio(spent, daily) }, settlement: { amount: twoDecimals(publicFacts.Amount), origin: evidence.procurement.origin },
+    compromised: { innerSucceeded: evidence.localFork.compromised.success, outerSucceeded: evidence.localFork.compromised.outerTransactionSucceeded, proposedAmount: twoDecimals(compromisedFacts["Proposed amount"]), rejection: typeof compromisedFacts["Decoded rejection"] === "string" ? compromisedFacts["Decoded rejection"] : undefined, origin: evidence.localFork.compromised.origin },
+    limitations: typeof evidence.evaluation.facts.Limitations === "string" ? evidence.evaluation.facts.Limitations : "Not recorded" };
+}
+export function originLabel(origin: Origin) { return origin === "live-public" ? "Recorded public chain" : origin === "local-fork" ? "Recorded local fork" : "Recorded local inference"; }
+export function chainNote(origin: Exclude<Origin, "live-public">) { return nonPublicLabel(origin); }

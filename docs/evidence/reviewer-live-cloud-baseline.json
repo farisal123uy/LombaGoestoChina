@@ -1,0 +1,232 @@
+{
+  "capturedAt": "2026-10-18T07:08:15.492Z",
+  "evidenceType": "live-Groq-API-actual-disposable-Kernel-fork-provider-service-HTTP-workflow",
+  "runtimePhase": "before-minimal-HRE-and-compact-database",
+  "runs": [
+    {
+      "modelId": "openai/gpt-oss-120b",
+      "passed": true,
+      "stage": "completed",
+      "initializationMs": 18244,
+      "procurementToCompletedAndProbeMs": 8000,
+      "taskId": "084a81d8-bcd9-4c61-9e7f-be242dc974e7",
+      "taskStatus": "completed",
+      "operationStatus": "confirmed",
+      "localTransactionHash": "0xed3b6687c27ab0b2cafb92fcdfccebafbe4ac36698355e6da3a74936f634b5bc",
+      "before": {
+        "balanceUnits": "10000000",
+        "spentUnits": "0"
+      },
+      "after": {
+        "balanceUnits": "9740000",
+        "spentUnits": "260000"
+      },
+      "checks": [
+        "real-model-asset-and-risk-interpretation",
+        "signed-provider-quote",
+        "draft-no-send",
+        "queue-keeps-pause",
+        "actual-Kernel-Guardian-settlement",
+        "independent-delivery-signature-check",
+        "service-probe-and-write-read",
+        "no-duplicate-payment",
+        "closed-capability-denied"
+      ],
+      "resourceObservation": {
+        "rssBeforeBytes": 239837184,
+        "initializedRssBytes": 806387712,
+        "scope": "Local checker process; later models may include retained prior allocations. Excludes separate Next.js process; not Linux hosting acceptance"
+      },
+      "modelCalls": [
+        {
+          "requestedModel": "openai/gpt-oss-120b",
+          "reportedModel": "openai/gpt-oss-120b",
+          "httpStatus": 200,
+          "elapsedMs": 504,
+          "inputTokens": 520,
+          "completionTokens": 69,
+          "reasoningTokens": 19
+        },
+        {
+          "requestedModel": "openai/gpt-oss-120b",
+          "reportedModel": "openai/gpt-oss-120b",
+          "httpStatus": 200,
+          "elapsedMs": 679,
+          "inputTokens": 514,
+          "completionTokens": 68,
+          "reasoningTokens": 22
+        },
+        {
+          "requestedModel": "openai/gpt-oss-120b",
+          "reportedModel": "openai/gpt-oss-120b",
+          "httpStatus": 200,
+          "elapsedMs": 873,
+          "inputTokens": 528,
+          "completionTokens": 88,
+          "reasoningTokens": 26
+        },
+        {
+          "requestedModel": "openai/gpt-oss-120b",
+          "reportedModel": "openai/gpt-oss-120b",
+          "httpStatus": 200,
+          "elapsedMs": 506,
+          "inputTokens": 379,
+          "completionTokens": 90,
+          "reasoningTokens": 28
+        },
+        {
+          "requestedModel": "openai/gpt-oss-120b",
+          "reportedModel": "openai/gpt-oss-120b",
+          "httpStatus": 200,
+          "elapsedMs": 583,
+          "inputTokens": 536,
+          "completionTokens": 69,
+          "reasoningTokens": 4
+        },
+        {
+          "requestedModel": "openai/gpt-oss-120b",
+          "reportedModel": "openai/gpt-oss-120b",
+          "httpStatus": 200,
+          "elapsedMs": 671,
+          "inputTokens": 484,
+          "completionTokens": 89,
+          "reasoningTokens": 37
+        },
+        {
+          "requestedModel": "openai/gpt-oss-120b",
+          "reportedModel": "openai/gpt-oss-120b",
+          "httpStatus": 200,
+          "elapsedMs": 545,
+          "inputTokens": 484,
+          "completionTokens": 88,
+          "reasoningTokens": 41
+        },
+        {
+          "requestedModel": "openai/gpt-oss-120b",
+          "reportedModel": "openai/gpt-oss-120b",
+          "httpStatus": 200,
+          "elapsedMs": 653,
+          "inputTokens": 484,
+          "completionTokens": 89,
+          "reasoningTokens": 37
+        }
+      ]
+    },
+    {
+      "modelId": "openai/gpt-oss-20b",
+      "passed": true,
+      "stage": "completed",
+      "initializationMs": 16329,
+      "procurementToCompletedAndProbeMs": 8169,
+      "taskId": "667e09ed-2f02-4b36-8ac3-709c869a8013",
+      "taskStatus": "completed",
+      "operationStatus": "confirmed",
+      "localTransactionHash": "0xba79cdd8cc44f4dbc4a384b5d0630c4dc9aa2e296fca5ba66a8cf551214229f5",
+      "before": {
+        "balanceUnits": "10000000",
+        "spentUnits": "0"
+      },
+      "after": {
+        "balanceUnits": "9740000",
+        "spentUnits": "260000"
+      },
+      "checks": [
+        "real-model-asset-and-risk-interpretation",
+        "signed-provider-quote",
+        "draft-no-send",
+        "queue-keeps-pause",
+        "actual-Kernel-Guardian-settlement",
+        "independent-delivery-signature-check",
+        "service-probe-and-write-read",
+        "no-duplicate-payment",
+        "closed-capability-denied"
+      ],
+      "resourceObservation": {
+        "rssBeforeBytes": 247910400,
+        "initializedRssBytes": 821596160,
+        "scope": "Local checker process; later models may include retained prior allocations. Excludes separate Next.js process; not Linux hosting acceptance"
+      },
+      "modelCalls": [
+        {
+          "requestedModel": "openai/gpt-oss-20b",
+          "reportedModel": "openai/gpt-oss-20b",
+          "httpStatus": 200,
+          "elapsedMs": 716,
+          "inputTokens": 520,
+          "completionTokens": 52,
+          "reasoningTokens": 6
+        },
+        {
+          "requestedModel": "openai/gpt-oss-20b",
+          "reportedModel": "openai/gpt-oss-20b",
+          "httpStatus": 200,
+          "elapsedMs": 649,
+          "inputTokens": 514,
+          "completionTokens": 48,
+          "reasoningTokens": 11
+        },
+        {
+          "requestedModel": "openai/gpt-oss-20b",
+          "reportedModel": "openai/gpt-oss-20b",
+          "httpStatus": 200,
+          "elapsedMs": 627,
+          "inputTokens": 528,
+          "completionTokens": 67,
+          "reasoningTokens": 13
+        },
+        {
+          "requestedModel": "openai/gpt-oss-20b",
+          "reportedModel": "openai/gpt-oss-20b",
+          "httpStatus": 200,
+          "elapsedMs": 238,
+          "inputTokens": 379,
+          "completionTokens": 76,
+          "reasoningTokens": 23
+        },
+        {
+          "requestedModel": "openai/gpt-oss-20b",
+          "reportedModel": "openai/gpt-oss-20b",
+          "httpStatus": 200,
+          "elapsedMs": 660,
+          "inputTokens": 536,
+          "completionTokens": 52,
+          "reasoningTokens": 5
+        },
+        {
+          "requestedModel": "openai/gpt-oss-20b",
+          "reportedModel": "openai/gpt-oss-20b",
+          "httpStatus": 200,
+          "elapsedMs": 505,
+          "inputTokens": 484,
+          "completionTokens": 160,
+          "reasoningTokens": 54
+        },
+        {
+          "requestedModel": "openai/gpt-oss-20b",
+          "reportedModel": "openai/gpt-oss-20b",
+          "httpStatus": 200,
+          "elapsedMs": 617,
+          "inputTokens": 484,
+          "completionTokens": 160,
+          "reasoningTokens": 54
+        },
+        {
+          "requestedModel": "openai/gpt-oss-20b",
+          "reportedModel": "openai/gpt-oss-20b",
+          "httpStatus": 200,
+          "elapsedMs": 635,
+          "inputTokens": 484,
+          "completionTokens": 155,
+          "reasoningTokens": 54
+        }
+      ]
+    }
+  ],
+  "sourceHashes": {
+    "tools/review/check-live.mjs": "7709adb61f5c4bdc82cf0f37f058365174d74bb7cf18ee515d541548e7d94749",
+    "tools/review/workspace.mjs": "e05fa99ec435378c4062c6cf9e572512907f59c8ac37f54ad490d81eee763577",
+    "apps/api/src/wallet-assistant.ts": "8c842aa37662c44502f64e0e655e69fd36a5761d8a0bbee4e54e81de61ae8396",
+    "packages/planner/src/model-profiles.ts": "4cbbdba325a53155a4437a2b18472cd532d2c06a6914f45e5ff90a17735f667b"
+  },
+  "limitations": "Real hosted model inference, but all token/gas transfers execute only on disposable local forks. No new public transaction or commercial service purchase. Runtime latency is measured on this host, excludes hosted cold starts and China browser network. Free account remains operator-confirmed."
+}

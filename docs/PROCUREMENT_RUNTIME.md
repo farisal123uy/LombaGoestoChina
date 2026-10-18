@@ -1,8 +1,18 @@
 # Procurement runtime
 
-The local `/dashboard` workflow connects Astra, a separate Qwen-backed provider
+The `/dashboard` workflow connects Astra, a separate model-backed provider
 agent, a deterministic signer, the restricted payment worker, and PostgreSQL service
 delivery. Current verified stage: [progress checkpoint](PROGRESS.md).
+
+Current cloud model/configuration: [AI_CLOUD.md](AI_CLOUD.md). The older Qwen public
+preview below is historical evidence; use a privately configured Groq Free key for
+the candidate GPT-OSS runtime. Disposable reviewer hosting is documented separately
+in [REVIEW_DEPLOYMENT.md](REVIEW_DEPLOYMENT.md).
+
+The dashboard also includes the [wallet assistant](WALLET_ASSISTANT.md) for assets,
+payment drafts/queueing and deterministic operational risk checks. Its procurement
+requests remain drafts until explicitly queued; the original workflow below retains
+its existing scheduling behavior.
 
 ## Start after completed owner setup
 

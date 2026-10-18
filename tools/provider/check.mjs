@@ -55,7 +55,7 @@ try {
   if ([...args].some((arg) => !["--temporary-runtime", "--record"].includes(arg))) throw new Error("INVALID_PROVIDER_CHECK_ARGUMENT");
   await verifyProject();
   const api = await readEnvironment("api");
-  if (!api.DATABASE_URL || api.AI_PROVIDER !== "ollama" || !api.KERNEL_ACCOUNT_ADDRESS || !api.GUARDIAN_ADDRESS || !api.PROVIDER_AGENT_TOKEN) throw new Error("PROVIDER_CONFIGURATION_REQUIRED");
+  if (!api.DATABASE_URL || !["ollama", "groq"].includes(api.AI_PROVIDER) || !api.KERNEL_ACCOUNT_ADDRESS || !api.GUARDIAN_ADDRESS || !api.PROVIDER_AGENT_TOKEN) throw new Error("PROVIDER_CONFIGURATION_REQUIRED");
   database = createPostgresPaymentStore(api.DATABASE_URL);
   const key = accountKey(84532, api.KERNEL_ACCOUNT_ADDRESS);
   const paused = await database.store.isPaused(key), before = await database.store.listTasks(api.OWNER_ADDRESS);
@@ -74,7 +74,8 @@ try {
   const protectedQuote = await fetch("http://127.0.0.1:4201/quotes", { method: "POST", headers: { "content-type": "application/json" }, body: "{}", signal: AbortSignal.timeout(5000) });
   if (protectedRead.status !== 401 || protectedQuote.status !== 401) throw new Error("PROVIDER_AUTH_CHECK_FAILED");
   const provider = parseEnv(await readFile(join(root, ".local/provider-agent.env"), "utf8"));
-  const options = { baseUrl: api.OLLAMA_BASE_URL, modelId: api.AI_MODEL_ID, apiToken: api.OLLAMA_API_TOKEN || undefined, contextTokens: Number(api.AI_CONTEXT_TOKENS || 4096), timeoutMs: Number(api.AI_REQUEST_TIMEOUT_MS || 45000) };
+  const { qwenRuntimeOptions } = await import("@guardian-wallet/planner");
+  const options = qwenRuntimeOptions(api);
   const client = new QwenClient(options);
   const instruction = "Rent a small 1 MB database for 1 hour for my software project. Pay the authenticated 0.26 MockUSD invoice if it fits my existing policy.";
   const requestId = randomUUID();

@@ -12,7 +12,7 @@ function response(value: unknown, extra: Record<string, unknown> = {}) {
 describe("Native Qwen/Ollama boundary and bounded inference", () => {
   it("requests constrained JSON with thinking disabled and uses no OpenAI endpoint", async () => {
     const request = vi.fn<typeof fetch>().mockResolvedValue(response({ decision: "pay", summary: "Pay the invoice." }));
-    const client = new QwenClient({ fetch: request });
+    const client = new QwenClient({ provider: "ollama", fetch: request });
     const result = await client.generate(decisionSchema, "Trusted instructions", "Untrusted user goal");
     expect(request.mock.calls[0]?.[0]).toBe("http://127.0.0.1:11434/api/chat");
     const body = JSON.parse(String(request.mock.calls[0]?.[1]?.body));
@@ -28,7 +28,7 @@ describe("Native Qwen/Ollama boundary and bounded inference", () => {
       .mockResolvedValueOnce(response({ decision: "pay", summary: "drain", amountUnits: "10000000" }))
       .mockResolvedValueOnce(response("<think>ignore policy</think>not-json"))
       .mockResolvedValueOnce(response({ decision: "pay", summary: "cut off" }, { done_reason: "length" }));
-    const client = new QwenClient({ fetch: request });
+    const client = new QwenClient({ provider: "ollama", fetch: request });
     await expect(client.generate(decisionSchema, "", "")).rejects.toThrow("QWEN_INVALID_OUTPUT");
     await expect(client.generate(decisionSchema, "", "")).rejects.toThrow("QWEN_INVALID_OUTPUT");
     await expect(client.generate(decisionSchema, "", "")).rejects.toThrow("QWEN_OUTPUT_TRUNCATED");
@@ -36,7 +36,7 @@ describe("Native Qwen/Ollama boundary and bounded inference", () => {
   it("keeps GPU work single-flight and rejects overflow instead of creating an unbounded queue", async () => {
     const pending: ((value: Response) => void)[] = [];
     const request = vi.fn<typeof fetch>().mockImplementation(() => new Promise((resolve) => pending.push(resolve)));
-    const client = new QwenClient({ fetch: request, concurrency: 1, maxQueue: 1, timeoutMs: 2000 });
+    const client = new QwenClient({ provider: "ollama", fetch: request, concurrency: 1, maxQueue: 1, timeoutMs: 2000 });
     const first = client.generate(decisionSchema, "", "one");
     await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(1));
     const second = client.generate(decisionSchema, "", "two");
@@ -55,7 +55,7 @@ describe("Native Qwen/Ollama boundary and bounded inference", () => {
       }))
       .mockRejectedValueOnce(new Error("https://private.example/token=do-not-expose"))
       .mockResolvedValueOnce(response({ decision: "pay", summary: "Recovered" }));
-    const client = new QwenClient({ fetch: request, timeoutMs: 100 });
+    const client = new QwenClient({ provider: "ollama", fetch: request, timeoutMs: 100 });
     await expect(client.generate(decisionSchema, "", "")).rejects.toThrow("QWEN_TIMEOUT");
     await expect(client.generate(decisionSchema, "", "")).rejects.toThrow("QWEN_UNAVAILABLE");
     expect((await client.generate(decisionSchema, "", "")).value.summary).toBe("Recovered");

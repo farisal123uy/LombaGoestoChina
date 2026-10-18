@@ -29,6 +29,20 @@
       "when": 1792217632628,
       "tag": "0003_json_object_payloads",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792221354372,
+      "tag": "0004_batch_attempt_members",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792222155787,
+      "tag": "0005_batch_member_lookup",
+      "breakpoints": true
     }
   ]
 }

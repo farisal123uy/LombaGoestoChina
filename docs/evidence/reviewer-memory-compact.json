@@ -1,0 +1,71 @@
+{
+  "capturedAt": "2026-10-18T07:19:22.898Z",
+  "evidenceType": "isolated-fork-startup-resource-profile-no-model-inference",
+  "platform": "win32",
+  "databaseProfile": "compact",
+  "stages": [
+    {
+      "stage": "module-baseline",
+      "elapsedMs": 0,
+      "rss": 145076224,
+      "heapTotal": 94085120,
+      "heapUsed": 61920328,
+      "external": 4827456,
+      "arrayBuffers": 1205938
+    },
+    {
+      "stage": "fork-created",
+      "elapsedMs": 854,
+      "rss": 195084288,
+      "heapTotal": 104579072,
+      "heapUsed": 74440640,
+      "external": 7844621,
+      "arrayBuffers": 4126184
+    },
+    {
+      "stage": "contracts-and-account-deployed",
+      "elapsedMs": 5475,
+      "rss": 204017664,
+      "heapTotal": 106938368,
+      "heapUsed": 73773320,
+      "external": 7936726,
+      "arrayBuffers": 4199207
+    },
+    {
+      "stage": "session-enabled-before-database",
+      "elapsedMs": 14379,
+      "rss": 161669120,
+      "heapTotal": 60555264,
+      "heapUsed": 57380144,
+      "external": 6745454,
+      "arrayBuffers": 3007991
+    },
+    {
+      "stage": "database-migrated",
+      "elapsedMs": 15607,
+      "rss": 681574400,
+      "heapTotal": 121049088,
+      "heapUsed": 84632888,
+      "external": 521567246,
+      "arrayBuffers": 226032564
+    },
+    {
+      "stage": "api-ready",
+      "elapsedMs": 16395,
+      "rss": 684515328,
+      "heapTotal": 123826176,
+      "heapUsed": 91495056,
+      "external": 521582350,
+      "arrayBuffers": 226028541
+    }
+  ],
+  "afterClose": {
+    "rss": 683319296,
+    "heapTotal": 124088320,
+    "heapUsed": 94034576,
+    "external": 521654444,
+    "arrayBuffers": 226100635
+  },
+  "peakRssKb": 691700,
+  "limitations": "One fresh Node process on this local host. Excludes the separate web process and cloud CPU throttling/cold start. No Groq request or public payment."
+}

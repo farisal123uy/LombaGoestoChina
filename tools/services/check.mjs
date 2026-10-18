@@ -8,8 +8,8 @@ export async function inspectServices(environments, origin) {
     github: origin && validateServiceValue("github", origin) ? "configured_access_not_verified" : "missing",
     database: database.DATABASE_URL ? "configured_connection_not_checked" : "missing",
     modelProvider: api.AI_PROVIDER || "baseline",
-    modelId: api.AI_PROVIDER === "ollama" && validateServiceValue("qwen_model", api.AI_MODEL_ID) ? api.AI_MODEL_ID : null,
-    model: api.AI_PROVIDER === "ollama" && api.AI_MODEL_ID && api.OLLAMA_BASE_URL ? "configured_qwen_not_verified" : "missing",
+    modelId: ["ollama", "groq"].includes(api.AI_PROVIDER) && validateServiceValue(api.AI_PROVIDER === "groq" ? "model" : "qwen_model", api.AI_MODEL_ID) ? api.AI_MODEL_ID : null,
+    model: api.AI_PROVIDER === "groq" ? (api.GROQ_API_KEY && api.GROQ_FREE_TIER_CONFIRMED === "true" ? "configured_cloud_free_account_not_independently_verified" : "missing") : api.AI_PROVIDER === "ollama" && api.AI_MODEL_ID && api.OLLAMA_BASE_URL ? "configured_qwen_not_verified" : "missing",
     executionRpc: api.BASE_SEPOLIA_RPC_URL || worker.BASE_SEPOLIA_RPC_URL ? "configured_chain_not_verified" : "missing",
     bundler: worker.ZERODEV_RPC_URL ? "configured_entrypoint_not_verified" : "missing",
     gasPaymentMode: worker.GAS_MODE === "sponsored" ? "project_paymaster_native_gas" : "account_funded_native_eth",
@@ -50,6 +50,15 @@ export function describeDatabaseFailure(error) {
   return "connection_failed_check_uri_password_ssl_and_network";
 }
 async function checkModel(api) {
+  if (api.AI_PROVIDER === "groq") {
+    if (!api.GROQ_API_KEY || api.GROQ_FREE_TIER_CONFIRMED !== "true") return "missing";
+    try {
+      const response = await fetch("https://api.groq.com/openai/v1/models", { headers: { authorization: `Bearer ${api.GROQ_API_KEY}` }, redirect: "error", signal: AbortSignal.timeout(12000) });
+      if (!response.ok) return "cloud_model_catalog_unavailable_or_unauthorized";
+      const body = await response.json();
+      return body.data?.some((model) => model.id === api.AI_MODEL_ID && ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b"].includes(model.id)) ? "cloud_model_available_inference_and_account_tier_not_verified" : "cloud_model_unavailable";
+    } catch { return "cloud_api_not_reachable"; }
+  }
   if (api.AI_PROVIDER !== "ollama" || !api.AI_MODEL_ID || !api.OLLAMA_BASE_URL) return "missing";
   try {
     if (!validateServiceValue("ollama", api.OLLAMA_BASE_URL) || !validateServiceValue("qwen_model", api.AI_MODEL_ID)) return "invalid_qwen_configuration";
@@ -77,7 +86,7 @@ async function main() {
   console.log(JSON.stringify(status, null, 2));
   if (process.argv.includes("--strict")) {
     if ([status.github, status.database, status.model, status.bundler, status.executionRpc].includes("missing")) process.exitCode = 1;
-    if (status.networkChecks && (status.networkChecks.database !== "connected_select_1_ok" || status.networkChecks.model !== "qwen_model_available_inference_not_verified" || status.networkChecks.executionRpc !== "base_sepolia_chain_84532_verified" || status.networkChecks.bundler !== "entrypoint_0.7_supported")) process.exitCode = 1;
+    if (status.networkChecks && (status.networkChecks.database !== "connected_select_1_ok" || !["qwen_model_available_inference_not_verified", "cloud_model_available_inference_and_account_tier_not_verified"].includes(status.networkChecks.model) || status.networkChecks.executionRpc !== "base_sepolia_chain_84532_verified" || status.networkChecks.bundler !== "entrypoint_0.7_supported")) process.exitCode = 1;
   }
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {

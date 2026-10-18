@@ -1,5 +1,155 @@
 # Guardian Wallet — catatan progres
 
+## Keputusan aktif — lanjut menggunakan jaringan yang ada
+
+- User mengonfirmasi identitas/eligibility tim sudah diselesaikan; dicatat sebagai
+  konfirmasi tim, bukan verifikasi dokumen personal oleh software.
+- User memilih lanjut memakai **Base Sepolia public testnet / MockUSD** dan membatalkan
+  pengiriman email ke panitia. Konfirmasi jaringan bukan lagi tugas kontak aktif.
+  Aturan yang diberikan menyebut real on-chain transaction hashes tanpa menetapkan
+  mainnet/testnet; penerimaan resmi tidak diklaim. Hasil fork reviewer tetap terpisah.
+- Aturan lokal dan brief International Track di situs/tautan IEEE sudah diperiksa;
+  belum ditemukan penerimaan Base Sepolia/testnet secara eksplisit. Draft pertanyaan
+  Inggris di `ORGANIZER_NETWORK_CONFIRMATION.md` dan `organizer-network-query.eml`
+  sekarang menjadi arsip yang tidak dikirim, bukan permintaan yang sedang menunggu jawaban.
+- Owner kini mengizinkan publikasi source ke branch GitHub `feat/batching-evaluation`;
+  branch `main` tidak diubah. Presentasi/video tetap menunggu izin terpisah.
+
+## Status aktif — sistem online dan frontend terintegrasi (18 Oktober)
+
+- **URL juri:** https://preview-95c94201191f7206.up.railway.app/review
+  Kode akses dibagikan privat; tautan lengkap ada di
+  `.local/linux-review/reviewer-link.private.txt`, bukan source publik.
+- **Build deployed:** `912063431ea05c663abd9df36bdff047687006d5cf8ea9fde87ba8b9b0f9d9c0`.
+  ZIP source persis versi ini disimpan di `.local/linux-review/deployed-source-<hash>.zip`.
+  Host Linux diklaim dan Free/Trial tanpa kartu dikonfirmasi user. Tidak ada upgrade
+  berbayar yang dijalankan; kuota/kredit dan masa layanan tetap perlu dipantau tim.
+- **Frontend `feat/enterprise-dashboard` revision `4e47b13` sudah diintegrasikan**
+  secara lokal: landing/theme/evidence, tetap tersambung ke wallet assistant dan review.
+- **GPT-OSS 120B Groq nyata**: smoke 4/4; perbandingan 120B/20B sama-sama 8/8. P50
+  675/580 ms; P95 1008/621 ms. Whole-flow keduanya sekitar 8 detik; 120B dipertahankan.
+- **Evaluasi keamanan cloud 60/60** pada 30 kasus × 2 setelah perbaikan schema offer
+  nonaktif. Baseline 54/60 dengan enam error API disimpan, tidak dihitung sebagai
+  keberhasilan blokir. Ini regresi in-sample, bukan kekebalan universal.
+- **Browser produksi melalui HTTPS publik lulus**: no-MetaMask, real API plan,
+  queue/start, completed/confirmed, signature delivery/probe/write-read, tutup sesi.
+  Procurement sampai write/read **11276 ms**; total uji **37703 ms**. Transaksi tetap
+  fork disposable, bukan pembayaran publik baru. Bukti: `reviewer-public-browser.json`.
+- **3 probe China lulus** (Beijing/Shanghai/Shenzhen): HTTPS valid, 200, ready dan
+  build ID sesuai; 1471/1779/2349 ms. Ini endpoint probe, bukan browser juri.
+- Pengujian lokal terbaru: **78 integration**, **7 web**, **13 browser**; checkpoint
+  **16 contract/fork**. Lint/typecheck/build dan pemeriksaan output
+  web lulus; key model/path runtime privat tidak ditemukan pada output/trace yang dicek.
+- Panduan aktif: [REVIEWER_GUIDE.md](REVIEWER_GUIDE.md),
+  [FRONTEND_INTEGRATION.md](FRONTEND_INTEGRATION.md),
+  [CLOUD-VALIDATION.md](evidence/CLOUD-VALIDATION.md), [release gates](RELEASE_CHECKLIST.md).
+- **Push source ke branch `feat/batching-evaluation` telah diizinkan owner; `main`
+  tidak diubah. Presentasi/video tetap menunggu izin.**
+  `submission/` tetap kosong. Sisa resmi: konfirmasi jaringan oleh panitia, identitas/
+  eligibility tim, uji jaringan juri sendiri, materi presentasi, dan upload/receipt
+  portal. Catatan di bawah adalah checkpoint historis, bukan status aktif.
+- Perintah `npm.cmd run release:readiness` memeriksa readiness/build publik, penolakan
+  akses tanpa capability/kode salah, hasil model/browser/China dan kecocokan **85 file
+  runtime** terhadap ZIP deployed. Report lokal: `.local/release/readiness-report.json`.
+
+## Checkpoint terbaru — GPT-OSS dan sandbox juri
+
+- Kandidat utama **`openai/gpt-oss-120b`**, pembanding eksplisit **`openai/gpt-oss-20b`**
+  melalui Groq Free. Profil GPT memakai reasoning low dan include_reasoning=false;
+  budget completion mencakup reasoning. Qwen tetap alternatif eksplisit, tanpa fallback.
+- Setup privat: `npm.cmd run setup:ai-cloud`. Benchmark `model:compare` memakai delapan
+  kasus sama/model, mencatat P50/P95/token dan berhenti saat kuota tercapai. **Key Free
+  belum tersedia; belum ada skor/latensi Groq nyata yang dinyatakan berhasil.**
+- **76 integration, 16 contract/fork, 10 browser cases**, lint, typecheck dan production
+  build lulus. Factory review diuji sampai `completed`, quote dan
+  delivery signature sah, probe/write/read DB berhasil, replay tidak membayar ulang,
+  wallet/DB kedua terisolasi. Bukti: `evidence/reviewer-workspace-fork.json`.
+  Model HTTP pada uji ini adalah fixture; kontrak dan database benar-benar dieksekusi
+  pada fork, tanpa transaksi/pembayaran publik baru.
+- Container `Dockerfile.review`, runtime `review:serve`, profil deployment dan dependency
+  boundary `apps/reviewer` disiapkan. Docker/cloud deployment belum dijalankan; batas
+  RAM/CPU/eligibility Free dan akses jaringan China tetap gate nyata.
+- Audit dependency produksi (termasuk dependency runtime reviewer): **0 advisory**.
+  Full development tree masih memiliki **4 moderate** pada rantai drizzle-kit/esbuild;
+  build-only tooling tersebut dipangkas dari image produksi. Ini bukan audit keamanan.
+- Panduan terbaru: [AI_CLOUD.md](AI_CLOUD.md), [REVIEW_DEPLOYMENT.md](REVIEW_DEPLOYMENT.md),
+  [technical documentation](technical-documentation.md), [release gates](RELEASE_CHECKLIST.md).
+- Frontend teman belum di-push/diintegrasikan; source stage dua belum di-commit/push.
+  Presentasi/video tetap menunggu izin. Status rilis resmi **belum 100%**.
+
+## Pembaruan aktif — API cloud gratis dan kesiapan juri
+
+- Batas biaya layanan **Rp0**, tanpa aktivasi billing. Presentasi/video menunggu izin
+  owner; frontend teman belum di-push sehingga integrasi frontend final belum selesai.
+- Qwen runtime dipindahkan ke adapter **Groq Free**, model pinned
+  `qwen/qwen3.8-27b`, strict JSON, reasoning none, batas token/request dan penanganan
+  quota tanpa paid fallback. Panduan: [QWEN_CLOUD.md](QWEN_CLOUD.md).
+- **75 integration cases lulus** (termasuk adapter cloud berbasis mock dan isolasi
+  host juri). Inferensi Groq/latensi aktual belum terverifikasi tanpa key akun Free.
+- Sandbox juri `/review` dan host capability-scoped sudah diimplementasikan. Runtime
+  membuat wallet/kontrak/DB disposable pada fork lokal; belum dinyatakan lolos alur
+  cloud lengkap. Pemilihan hosting publik mandiri yang gratis masih merupakan gate.
+- Percobaan gateway laptop sudah dihentikan sesuai revisi arah deployment. URL Quick
+  Tunnel sebelumnya bukan tautan rilis. Tidak ada transaksi publik/pembayaran baru.
+
+## Pembaruan 18 Oktober — wallet assistant
+
+Direktori kerja tetap **`guardian-wallet-stage2`**, branch lokal
+**`feat/batching-evaluation`**; belum di-commit/push. Panduan fitur dan kontrak API:
+[WALLET_ASSISTANT.md](WALLET_ASSISTANT.md).
+
+- Asset overview membaca saldo/token metadata, reserve, anggaran, native ETH dan
+  komitmen antrean; kalkulasi integer, bukan angka hasil karangan model.
+- Instruksi Inggris/Indonesia ditafsirkan Qwen menjadi overview, risk check, rencana
+  invoice, procurement draft atau unsupported. Draft tidak dieksekusi worker.
+- Queue release memakai owner auth, validasi ulang quote/policy dan transaksi DB
+  dengan account lock; tidak otomatis membuka pause atau mengubah izin owner.
+- Risk report mencakup policy/budget/operation/service state; bukan risiko pasar.
+- **66 integration, 15 contract/fork, 8 browser cases** lulus. Uji fork yang diperluas
+  menjalankan Qwen asli, API owner, PGlite, worker dan Kernel/Guardian sampai `paid`,
+  memulihkan respons hilang dan memastikan satu send. Bukti:
+  `evidence/wallet-assistant-fork.json`; ini fork lokal, bukan pembayaran publik baru.
+- Typecheck seluruh workspace, lint dan production build lulus.
+- Corpus intent Qwen baru: baseline **11/12**, sesudah perbaikan prompt **12/12** pada
+  kasus yang sama; kedua hasil disimpan. Corpus keamanan lama 60/60 adalah checkpoint
+  terpisah, bukan klaim pengujian ulang atau ketahanan universal.
+- **Seluruh isi `submission/` sudah dihapus atas permintaan tim untuk dirombak.**
+  Catatan paket/video/ZIP pada checkpoint di bawah adalah riwayat, bukan artefak yang
+  masih tersedia. Bukti teknis di `docs/evidence/` tetap tersedia.
+
+## Tahap kedua — batching, evaluasi, materi submission
+
+Direktori kerja: **`C:\ProjetLomba\guardian-wallet-stage2`**. Branch:
+**`feat/batching-evaluation`**, berbasis `e5ef81f`. Perubahan tahap dua belum
+di-commit/push. Snapshot frontend/backend yang dibagikan kepada teman tetap tersedia
+di branch `feat/wallet-agent-backend`.
+
+- Bounded batching 1–10 invoice, window sampai 30 detik, deadline tidak diperpanjang,
+  satu durable operation dengan membership tiap task, rekonsiliasi atomik dan
+  fulfillment terpisah sudah diimplementasikan.
+- Migration **0004/0005** sudah diuji lokal/fork; belum diterapkan pada Supabase
+  runtime publik. Default `BATCH_MAX_SIZE=1`; rollout batch bersifat opt-in.
+- **58 integration test, 15 contract/fork case, 6 browser test, typecheck, lint dan
+  production build** lulus. Runtime dependency audit: 0 advisory diketahui.
+- COST-01 membandingkan 4/7 invoice, tiga ulangan per mode dari snapshot warm yang
+  sama. Bukti: `docs/evidence/cost-fork.json`. Ini gas EVM lokal, bukan harga mainnet/USD.
+- Evaluasi Qwen: baseline **52/60**, setelah perbaikan prompt **60/60** pada corpus
+  yang sama (30 kasus × 2); baseline gagal disimpan. Ini regresi in-sample, bukan
+  bukti kebal prompt injection universal.
+- Reorg/nonce/partial-settlement/head-lag/timeout dan fee deadline saat RPC stalled
+  diuji. Fork menambahkan permit-selector, transferFrom, nested execute dan delegatecall.
+- Materi submission berbahasa Inggris sudah diekspor: dokumen teknis **2 halaman**,
+  risk report **5 halaman**, deck **9 slide PPTX/PDF**, dan video walkthrough bernarasi
+  Inggris **264.543 detik (4m24s)**. Sumber video adalah bukti rekaman yang diberi
+  label, bukan transaksi live baru. File berada di **`submission/generated/`**.
+- Arsip review: **`submission/generated/Guardian-Wallet-submission-review.zip`**,
+  berisi source snapshot, dokumen, video, evidence dan inventori SHA-256. Panduan:
+  **`submission/README.md`**. Identitas tim, persetujuan jaringan testnet dari panitia,
+  source freeze/commit/publish dan bukti unggah portal masih merupakan langkah rilis.
+- Tidak ada layanan berbayar atau transaksi publik baru untuk evaluasi tahap dua.
+
+## Checkpoint tahap pertama — publik
+
 Checkpoint: **17 Oktober 2026**. Branch lokal: `feat/wallet-agent-backend`.
 
 ## Posisi saat ini
