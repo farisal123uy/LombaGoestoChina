@@ -8,6 +8,40 @@ import { WalletAssistant } from "./wallet-assistant";
 const apiBase = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000").replace(/\/$/, "");
 interface Status { financialConfigured: boolean; providerConfigured: boolean; assistantConfigured?: boolean; executionEnabled: boolean; ownerAddress?: `0x${string}`; accountAddress?: `0x${string}`; model: { provider: string; modelId: string | null }; }
 interface TaskDetails { task: PaymentTask; operation?: PaymentAttempt; }
+const unsignedInteger = /^(0|[1-9][0-9]*)$/;
+const operationHash = /^0x[0-9a-fA-F]{64}$/;
+export function validUnsignedInteger(value: unknown): value is string { return typeof value === "string" && unsignedInteger.test(value); }
+export function validOperationHash(value: unknown): value is `0x${string}` { return typeof value === "string" && operationHash.test(value); }
+export function displayTokenAmount(value: unknown) { return validUnsignedInteger(value) ? `${tokenAmount(value)} MockUSD` : "Amount unavailable"; }
+export function operationHashes(operation?: PaymentAttempt) {
+  return { userOperationHash: validOperationHash(operation?.userOperationHash) ? operation.userOperationHash : undefined, transactionHash: validOperationHash(operation?.transactionHash) ? operation.transactionHash : undefined };
+}
+function OperationHashes({ operation, reviewSession }: { operation: PaymentAttempt; reviewSession?: unknown }) {
+  const hashes = operationHashes(operation);
+  return <><span className="label">Operation · {operation.status}</span><code>{hashes.userOperationHash || "UserOperation hash unavailable"}</code><span className="label">Transaction hash</span>{hashes.transactionHash ? reviewSession ? <><span className="label">Confirmed local-fork transaction</span><code>{hashes.transactionHash}</code></> : <a className="setup-link" target="_blank" rel="noreferrer" href={`https://sepolia.basescan.org/tx/${hashes.transactionHash}`}>Inspect public transaction ↗</a> : <span className="setup-detail">Transaction hash unavailable</span>}</>;
+}
+export function batchPresentation(tasks: PaymentTask[], selectedTask: PaymentTask, operation?: PaymentAttempt) {
+  const taskIds = operation?.taskIds;
+  if (!taskIds || taskIds.length < 2 || new Set(taskIds).size !== taskIds.length || !taskIds.includes(selectedTask.id)) return undefined;
+  const leaderTaskId = operation.leaderTaskId;
+  if (leaderTaskId && !taskIds.includes(leaderTaskId)) return undefined;
+  const byId = new Map(tasks.map((task) => [task.id, task]));
+  const members = taskIds.flatMap((id) => {
+    const task = byId.get(id);
+    return task ? [task] : [];
+  });
+  const amounts = members.map((task) => task.quote.amountUnits);
+  const totalUnits = members.length === taskIds.length && amounts.every(validUnsignedInteger)
+    ? amounts.reduce((total, amount) => total + BigInt(amount), BigInt(0)).toString()
+    : undefined;
+  return {
+    memberCount: taskIds.length,
+    members,
+    totalUnits,
+    role: leaderTaskId && leaderTaskId !== selectedTask.id ? "follower" as const : "leader" as const,
+    operation,
+  };
+}
 async function apiRequest<T>(base: string, path: string, token?: string, body?: object, method = body ? "POST" : "GET"): Promise<T> {
   const response = await fetch(`${base}${path}`, { method, cache: "no-store", signal: AbortSignal.timeout(path === "/v1/procure" ? 150000 : 20000),
     headers: { ...(token ? { authorization: `Bearer ${token}` } : {}), ...(body ? { "content-type": "application/json" } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
@@ -61,6 +95,7 @@ export function FinancialDashboard({ reviewSession }: { reviewSession?: { apiBas
     provider.on?.("accountsChanged", changed);
     return () => provider.removeListener?.("accountsChanged", changed);
   }, [isReview]);
+  const batch = selected && batchPresentation(tasks, selected.task, selected.operation);
   async function action(name: string, body: () => Promise<void>) {
     setBusy(name); setError(""); setNotice("");
     try { await body(); } catch (cause) { setError(cause instanceof Error ? cause.message : "REQUEST_FAILED"); }
@@ -110,7 +145,7 @@ export function FinancialDashboard({ reviewSession }: { reviewSession?: { apiBas
       <section className="setup-panel"><p className="eyebrow">AI-TO-AI EXCHANGE</p><h2>Request → quote → plan</h2>{(exchange.length ? exchange : selected?.task.exchange || []).map((item, index) => <article className="exchange-event" key={`${item.stage}-${index}`}><span>{item.actor.replaceAll("_", " ")} {item.modelId && <small>· {item.modelId}</small>}</span><strong>{item.stage.replaceAll("_", " ")}</strong><p>{item.summary}</p></article>)}{!exchange.length && !selected?.task.exchange?.length && <p className="setup-detail">Actual exchange summaries appear after a request. No financial results are fabricated.</p>}</section></div>
     {status?.assistantConfigured && <WalletAssistant key={auth?.token || "signed-out"} token={auth?.token} tasks={tasks} baseUrl={base} onChanged={() => refresh(auth?.token)} />}
     <section className="setup-panel dashboard-tasks"><div className="dashboard-section-title"><div><p className="eyebrow">DURABLE EXECUTION</p><h2>Tasks and service evidence</h2></div><button className="secondary" disabled={!!busy} onClick={() => action("Refresh", () => refresh(auth?.token))}>Refresh</button></div>{!tasks.length && <p className="setup-detail">Sign in and create a procurement task to begin.</p>}<div className="task-list">{tasks.map((task) => <button disabled={!!busy || !auth} className={`task-row ${selectedId === task.id ? "selected" : ""}`} key={task.id} onClick={() => action("Load task", async () => { setSelected(await request<TaskDetails>(`/v1/tasks/${task.id}`, auth!.token)); setExchange([]); setData({}); })}><span><strong>{task.offerId || "Authenticated invoice"}</strong><small>{task.id}</small></span><span>{tokenAmount(task.quote.amountUnits)} MockUSD</span><span className={`task-status status-${task.status}`}>{task.status.replaceAll("_", " ")}</span></button>)}</div>
-      {selected && <div className="task-detail"><div><span className="label">Task status</span><h3>{selected.task.status.replaceAll("_", " ")}</h3><p className="setup-detail">{selected.task.reason || selected.task.plan?.summary}</p><span className="label">Invoice ID</span><code>{selected.task.quote.invoiceId}</code>{selected.operation && <><span className="label">Operation · {selected.operation.status}</span><code>{selected.operation.userOperationHash}</code>{selected.operation.transactionHash && (reviewSession ? <><span className="label">Confirmed local-fork transaction</span><code>{selected.operation.transactionHash}</code></> : <a className="setup-link" target="_blank" rel="noreferrer" href={`https://sepolia.basescan.org/tx/${selected.operation.transactionHash}`}>Inspect public transaction ↗</a>)}</>}</div>
+      {selected && <div className="task-detail"><div><span className="label">Task status</span><h3>{selected.task.status.replaceAll("_", " ")}</h3><p className="setup-detail">{selected.task.reason || selected.task.plan?.summary}</p><span className="label">Invoice ID</span><code>{selected.task.quote.invoiceId}</code>{batch ? <><span className="label">Batch · {batch.role} · {batch.operation.status}</span><p className="setup-detail">{batch.memberCount} invoices{batch.totalUnits ? ` · ${tokenAmount(batch.totalUnits)} MockUSD` : " · aggregate amount awaiting member data"} · shared UserOperation</p><OperationHashes operation={batch.operation} reviewSession={reviewSession} /><div className="evidence-runs">{batch.members.map((task) => <div key={task.id}><strong>{task.offerId || task.quote.invoiceId}</strong><span>{displayTokenAmount(task.quote.amountUnits)}</span><span>{task.status.replaceAll("_", " ")}</span></div>)}</div></> : selected.operation && <OperationHashes operation={selected.operation} reviewSession={reviewSession} />}</div>
       {selected.task.delivery && <div><span className="label">Verified provider namespace</span><code>{selected.task.delivery.namespaceId}</code><p className="setup-detail">Expires {new Date(selected.task.delivery.expiresAt * 1000).toLocaleString()}. Completion requires a signed delivery receipt and a database write/read probe, after payment confirmation.</p><button disabled={!!busy || !auth} onClick={probe}>Verify database probe</button><div className="database-edit"><label className="label" htmlFor="db-key">Database key</label><input id="db-key" value={key} maxLength={64} onChange={(e) => setKey(e.target.value)} /><label className="label" htmlFor="db-value">Value</label><input id="db-value" value={value} maxLength={4096} onChange={(e) => setValue(e.target.value)} /><button disabled={!!busy || !auth} onClick={() => action("Write database value", async () => { await request(`/v1/tasks/${selected.task.id}/database`, auth!.token, { key, value }, "PUT"); setData((await request<{ values: Record<string, string> }>(`/v1/tasks/${selected.task.id}/database`, auth!.token)).values); })}>Write & read back</button></div><pre>{JSON.stringify(data, null, 2)}</pre></div>}</div>}
     </section><footer>Bounded authority · confirmed settlement · verifiable test-service delivery</footer>
   </main>;

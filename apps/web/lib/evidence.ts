@@ -10,18 +10,34 @@ import comparisonArtifact from "../../../docs/evidence/cloud-model-comparison.js
 import securityArtifact from "../../../docs/evidence/security-cloud-model-evaluation.json";
 import securityBaselineArtifact from "../../../docs/evidence/security-cloud-model-baseline.json";
 import linuxArtifact from "../../../docs/evidence/reviewer-linux-cloud.json";
+import costArtifact from "../../../docs/evidence/cost-fork.json";
 
 export type Origin = "live-public" | "local-fork" | "local-inference";
 export type HashKind = "UserOperation" | "Transaction" | "Block" | "Invoice" | "Payment" | "Service" | "Source SHA-256";
 export interface HashRecord { label: string; value: string; kind: HashKind; origin: Origin; explorerHref?: string; }
 export interface EvidenceRecord { title: string; origin: Origin; fixture?: boolean; sourceState?: string; capturedAt?: string; sourceHashes: Record<string, string>; hashes: HashRecord[]; }
 export interface CompromisedPlannerRecord extends EvidenceRecord { success: boolean; outerTransactionSucceeded?: boolean; facts: Record<string, string | boolean | undefined>; }
+export interface CostEvidence extends EvidenceRecord {
+  evidenceType: string;
+  result: {
+    invoiceCount: string;
+    invoiceAmountUnits: string;
+    totalServiceAmountUnits: string;
+    singleOperationCount: string;
+    batchOperationCount: string;
+    singleMedianEnclosingTransactionGas: string;
+    batchMedianEnclosingTransactionGas: string;
+    enclosingTransactionGasReductionPercent: string;
+  };
+  limitations: string[];
+}
 export interface EvidenceData {
   deployment: EvidenceRecord & { facts: Record<string, string | boolean | undefined> };
   procurement: EvidenceRecord & { facts: Record<string, string | boolean | undefined> };
   localFork: EvidenceRecord & { facts: Record<string, string | boolean | undefined>; compromised: CompromisedPlannerRecord; revoke: EvidenceRecord; recovery: EvidenceRecord & { facts: Record<string, string | boolean | undefined> } };
   preview: EvidenceRecord & { facts: Record<string, string | boolean | undefined> };
   evaluation: EvidenceRecord & { facts: Record<string, string | boolean | undefined>; runs: Array<{ case: string; expected: string; actual: string; passed: boolean; elapsedMs?: number }> };
+  cost: CostEvidence;
   hashLedger: HashRecord[];
 }
 type Json = Record<string, unknown>;
@@ -33,6 +49,7 @@ const cloudArtifacts = { "cloud-model-smoke.json": smokeArtifact, "cloud-model-c
 function object(value: unknown, name: string): Json { if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`Invalid evidence JSON object: ${name}`); return value as Json; }
 function text(value: unknown, name: string): string { if (typeof value !== "string") throw new Error(`Invalid evidence JSON field: ${name}`); return value; }
 function scalar(value: unknown, name: string): string { if (typeof value !== "string" && typeof value !== "number") throw new Error(`Invalid evidence JSON field: ${name}`); return String(value); }
+export function unsignedUnits(value: unknown, name: string): string { const units = text(value, name); if (!/^(0|[1-9][0-9]*)$/.test(units)) throw new Error(`Invalid evidence integer units: ${name}`); return units; }
 function bool(value: unknown, name: string): boolean { if (typeof value !== "boolean") throw new Error(`Invalid evidence JSON field: ${name}`); return value; }
 function strings(value: unknown, name: string): Record<string, string> { return Object.fromEntries(Object.entries(object(value, name)).map(([key, entry]) => [key, text(entry, `${name}.${key}`)])); }
 function optionalText(value: unknown): string | undefined { return typeof value === "string" ? value : undefined; }
@@ -98,9 +115,31 @@ export async function loadEvidence(): Promise<EvidenceData> {
     facts: { "Model": text(evaluationData.modelId, "qwen-local-evaluation.modelId"), "Evidence type": text(evaluationData.evidenceType, "qwen-local-evaluation.evidenceType"), "Limitations": text(evaluationData.limitations, "qwen-local-evaluation.limitations") },
     runs: evaluationData.runs.map((run, index) => { const item = object(run, `evaluation.runs.${index}`), metrics = item.metrics && typeof item.metrics === "object" ? object(item.metrics, "evaluation.metrics") : undefined; return { case: text(item.case, "evaluation.case"), expected: JSON.stringify(item.expected), actual: JSON.stringify(item.actual), passed: bool(item.passed, "evaluation.passed"), elapsedMs: typeof metrics?.elapsedMs === "number" ? metrics.elapsedMs : undefined }; }),
   };
+  if (!Array.isArray(costArtifact.results)) throw new Error("Invalid cost-fork.results");
+  const costResult = costArtifact.results.map((result, index) => object(result, `cost-fork.results.${index}`)).find((result) => result.invoiceCount === 4);
+  if (!costResult) throw new Error("Required cost-fork four-invoice result is missing");
+  const costSamples = costResult.samples;
+  if (!Array.isArray(costSamples)) throw new Error("Invalid cost-fork four-invoice samples");
+  const costSample = (mode: string) => {
+    const sample = costSamples.map((item, index) => object(item, `cost-fork.samples.${index}`)).find((item) => item.mode === mode);
+    if (!sample) throw new Error(`Required cost-fork ${mode} sample is missing`);
+    return sample;
+  };
+  if (!Array.isArray(costArtifact.limitations) || !costArtifact.limitations.every((item) => typeof item === "string")) throw new Error("Invalid cost-fork.limitations");
+  const costEvidenceType = text(costArtifact.evidenceType, "cost-fork.evidenceType");
+  const cost: CostEvidence = {
+    title: "COST-01 batching gas record", origin: "local-fork", capturedAt: text(costArtifact.measuredAt, "cost-fork.measuredAt"), sourceState: costEvidenceType, sourceHashes: strings(costArtifact.sources ?? {}, "cost-fork.sources"), hashes: [],
+    evidenceType: costEvidenceType,
+    result: {
+      invoiceCount: scalar(costResult.invoiceCount, "cost-fork.invoiceCount"), invoiceAmountUnits: unsignedUnits(costResult.invoiceAmountUnits, "cost-fork.invoiceAmountUnits"), totalServiceAmountUnits: unsignedUnits(costResult.totalServiceAmountUnits, "cost-fork.totalServiceAmountUnits"),
+      singleOperationCount: scalar(costSample("single").operationCount, "cost-fork.single.operationCount"), batchOperationCount: scalar(costSample("batch").operationCount, "cost-fork.batch.operationCount"),
+      singleMedianEnclosingTransactionGas: text(costResult.singleMedianEnclosingTransactionGas, "cost-fork.singleMedianEnclosingTransactionGas"), batchMedianEnclosingTransactionGas: text(costResult.batchMedianEnclosingTransactionGas, "cost-fork.batchMedianEnclosingTransactionGas"), enclosingTransactionGasReductionPercent: scalar(costResult.enclosingTransactionGasReductionPercent, "cost-fork.enclosingTransactionGasReductionPercent"),
+    },
+    limitations: costArtifact.limitations,
+  };
   const sourceHashes = (record: EvidenceRecord) => Object.entries(record.sourceHashes).map(([path, value]) => ({ label: path, value, kind: "Source SHA-256" as const, origin: record.origin }));
-  const hashLedger = [deployment, procurement, localFork, compromised, localFork.revoke, localFork.recovery, preview, evaluation].flatMap((record) => [...record.hashes, ...sourceHashes(record)]);
-  return { deployment, procurement, localFork, preview, evaluation, hashLedger };
+  const hashLedger = [deployment, procurement, localFork, compromised, localFork.revoke, localFork.recovery, preview, evaluation, cost].flatMap((record) => [...record.hashes, ...sourceHashes(record)]);
+  return { deployment, procurement, localFork, preview, evaluation, cost, hashLedger };
 }
 
 export interface LandingEvidence {

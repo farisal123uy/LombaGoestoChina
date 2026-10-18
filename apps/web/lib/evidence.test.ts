@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chainNote, loadEvidence, loadLandingEvidence } from "./evidence";
+import { chainNote, loadEvidence, loadLandingEvidence, unsignedUnits } from "./evidence";
 
 describe("evidence ledger", () => {
   it("loads every required committed artifact", async () => {
@@ -9,6 +9,15 @@ describe("evidence ledger", () => {
     expect(evidence.localFork.compromised.hashes).not.toHaveLength(0);
     expect(evidence.preview.hashes).not.toHaveLength(0);
     expect(evidence.evaluation.runs).not.toHaveLength(0);
+    expect(evidence.cost.result.totalServiceAmountUnits).toBe("1040000");
+    expect(evidence.cost.result.enclosingTransactionGasReductionPercent).toBe("58.59");
+    expect(evidence.cost.result.singleOperationCount).toBe("4");
+    expect(evidence.cost.result.batchOperationCount).toBe("1");
+    expect(evidence.cost.origin).toBe("local-fork");
+    expect(evidence.cost.limitations).not.toHaveLength(0);
+  });
+  it.each(["invalid", "1.2", "-1", ""])("rejects malformed integer unit %j", (value) => {
+    expect(() => unsignedUnits(value, "fixture.units")).toThrow("Invalid evidence integer units");
   });
   it("formats recorded amounts with two decimals", async () => {
     const landing = await loadLandingEvidence();
