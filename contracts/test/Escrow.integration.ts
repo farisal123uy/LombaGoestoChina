@@ -23,9 +23,9 @@ it("locks a quote in Guardian escrow, releases only with provider attestation, a
   await client.waitForTransactionReceipt({ hash: await payer.sendTransaction({ to: factory.factory, data: factory.factoryData, gas: 5000000n }) });
   await token.write.transfer([ownerAccount.address, 10000000n]);
   await connection.provider.request({ method: "hardhat_setBalance", params: [ownerAccount.address, "0xDE0B6B3A7640000"] });
-  const sessionAuth = await getGuardianSessionAuthorization(client, ownerAccount.address, owner.address, sessionSigner.address, guardian.address, validUntil);
+  const sessionAuth = await getGuardianSessionAuthorization(client, ownerAccount.address, owner.address, sessionSigner.address, guardian.address, validUntil, true);
   const enableSignature = await owner.signTypedData(sessionAuth.typedData);
-  const agent = await createAgentKernel(client, ownerAccount.address, sessionSigner, guardian.address, validUntil, enableSignature);
+  const agent = await createAgentKernel(client, ownerAccount.address, sessionSigner, guardian.address, validUntil, enableSignature, true);
   let invoice = 0;
 
   async function makeQuote(): Promise<ServiceQuote> {
