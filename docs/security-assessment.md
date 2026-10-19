@@ -8,6 +8,12 @@ Actual Linux and public HTTPS browser flows reach completed, verified delivery a
 write/read. China readiness probes are network checks, not an audit. Guides/results:
 [CLOUD-VALIDATION.md](evidence/CLOUD-VALIDATION.md), [MODEL_SELECTION.md](MODEL_SELECTION.md).
 
+An **isolated contract escrow proof of concept** has since been added and tested on a
+local fork. It holds one quoted amount pending a provider-signed delivery attestation
+or a bounded timeout refund. It is not connected to the API/worker or existing owner
+session. The quote signer is a trusted delivery attester; the contract cannot itself
+observe the off-chain service probe. See [ESCROW_PROTOTYPE.md](ESCROW_PROTOTYPE.md).
+
 ## Current cloud/reviewer additions
 
 - Candidate model: GPT-OSS 120B on an operator-confirmed Groq Free account; 20B is an

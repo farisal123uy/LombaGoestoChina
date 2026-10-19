@@ -10,6 +10,11 @@ export const guardianAbi = parseAbi([
   "struct Policy { PolicyInput rules; uint64 version; bool installed; bool paused; }",
   "struct ServiceQuote { address account; bytes32 providerId; bytes32 invoiceId; bytes32 serviceHash; address token; address recipient; uint256 amount; uint48 validUntil; }",
   "function executePayments(ServiceQuote[] quotes, bytes[] signatures, uint64 expectedPolicyVersion, uint48 validUntil)",
+  "function lockPayment(ServiceQuote quote, bytes signature, uint64 expectedPolicyVersion, uint48 validUntil, uint48 refundAfter)",
+  "function releaseEscrow(bytes32 paymentId, bytes32 transactionHash, uint48 readyAt, uint48 serviceExpiresAt, bytes signature)",
+  "function refundEscrow(bytes32 paymentId)",
+  "function pendingEscrows(address account) view returns (uint256)",
+  "function escrows(bytes32 paymentId) view returns ((address account,address token,address recipient,address quoteSigner,bytes32 invoiceId,bytes32 serviceHash,uint256 amount,uint256 utcDay,uint48 lockedAt,uint48 refundAfter,uint64 policyVersion,uint8 status))",
   "function getPolicy(address account) view returns (Policy)",
   "function isRecipientAllowed(address account, address recipient) view returns (bool)",
   "function spent(address account, address token, uint256 day) view returns (uint256)",
@@ -17,10 +22,14 @@ export const guardianAbi = parseAbi([
   "function configurePolicy(PolicyInput rules, address[] recipients)",
   "function setPaused(address account, bool pause)",
   "event PaymentSettled(address indexed account, bytes32 indexed paymentId, address indexed recipient, uint256 amount, uint64 policyVersion)",
+  "event EscrowLocked(address indexed account, bytes32 indexed paymentId, address indexed recipient, uint256 amount, uint48 refundAfter, uint64 policyVersion)",
+  "event EscrowReleased(address indexed account, bytes32 indexed paymentId, bytes32 indexed transactionHash, uint48 readyAt, uint48 serviceExpiresAt)",
+  "event EscrowRefunded(address indexed account, bytes32 indexed paymentId, uint256 amount)",
   "error NotInstalled()", "error AlreadyInstalled()", "error InvalidPolicy()", "error Unauthorized()",
   "error Paused()", "error Expired()", "error StalePolicy()", "error InvalidBatch()", "error InvalidQuote()",
   "error RecipientDenied()", "error PaymentLimit()", "error DailyLimit()", "error ProtectedBalance()",
-  "error DuplicatePayment()", "error InvalidTransfer()",
+  "error DuplicatePayment()", "error InvalidTransfer()", "error InvalidEscrowWindow()",
+  "error EscrowNotFound()", "error EscrowNotExpired()", "error InvalidDeliveryAttestation()", "error PendingEscrows()",
 ]);
 
 export const quoteTypes = { ServiceQuote: [
@@ -71,6 +80,32 @@ export function encodeGuardianPayments(plan: PaymentPlan) {
     abi: guardianAbi, functionName: "executePayments",
     args: [parsed.quotes.map(toContractQuote), parsed.quotes.map((q) => q.signature), BigInt(parsed.policyVersion), parsed.validUntil],
   });
+}
+
+export function encodeGuardianEscrowPayment(plan: PaymentPlan, refundAfter: number) {
+  const parsed = paymentPlanSchema.parse(plan);
+  if (parsed.quotes.length !== 1 || !Number.isSafeInteger(refundAfter) || refundAfter <= parsed.observedAt) throw new Error("INVALID_ESCROW_PLAN");
+  return encodeFunctionData({
+    abi: guardianAbi, functionName: "lockPayment",
+    args: [toContractQuote(parsed.quotes[0]!), parsed.quotes[0]!.signature, BigInt(parsed.policyVersion), parsed.validUntil, refundAfter],
+  });
+}
+
+export function escrowDeliveryTypedData(chainId: number, guardianAddress: Address, receipt: {
+  paymentId: `0x${string}`; account: Address; invoiceId: `0x${string}`; serviceHash: `0x${string}`;
+  transactionHash: `0x${string}`; readyAt: number; serviceExpiresAt: number;
+}) {
+  return {
+    domain: { name: "GuardianPayments", version: "1", chainId, verifyingContract: guardianAddress },
+    types: { EscrowDelivery: [
+      { name: "paymentId", type: "bytes32" }, { name: "account", type: "address" },
+      { name: "invoiceId", type: "bytes32" }, { name: "serviceHash", type: "bytes32" },
+      { name: "transactionHash", type: "bytes32" }, { name: "readyAt", type: "uint48" },
+      { name: "serviceExpiresAt", type: "uint48" },
+    ] },
+    primaryType: "EscrowDelivery" as const,
+    message: receipt,
+  };
 }
 
 export async function readPolicySnapshot(client: PublicClient, guardianAddress: Address, account: Address): Promise<PolicySnapshot> {

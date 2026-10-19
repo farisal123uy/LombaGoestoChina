@@ -11,6 +11,7 @@ export const kernelVersion = "0.3.1" as const;
 export const entryPoint = { address: entryPoint07Address, version: "0.7" } as const;
 type KernelClient = Parameters<typeof createKernelAccount>[0];
 export const guardianPaymentSelector = toFunctionSelector("executePayments((address,bytes32,bytes32,bytes32,address,address,uint256,uint48)[],bytes[],uint64,uint48)");
+export const guardianEscrowSelector = toFunctionSelector("lockPayment((address,bytes32,bytes32,bytes32,address,address,uint256,uint48),bytes,uint64,uint48,uint48)");
 
 export async function createGuardianPermission(client: KernelClient, signer: Signer, guardian: Address, validUntil: number) {
   return toPermissionValidator(client, {
@@ -20,6 +21,7 @@ export async function createGuardianPermission(client: KernelClient, signer: Sig
     policies: [
       toCallPolicy({ policyVersion: CallPolicyVersion.V0_0_4, permissions: [
         { target: guardian, selector: guardianPaymentSelector, callType: CallType.CALL, valueLimit: 0n },
+        { target: guardian, selector: guardianEscrowSelector, callType: CallType.CALL, valueLimit: 0n },
       ] }),
       toTimestampPolicy({ validUntil }),
     ],
