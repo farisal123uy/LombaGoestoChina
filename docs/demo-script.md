@@ -1,6 +1,12 @@
 # Astra enterprise demo — five-minute storyboard
 
-Status: **planned; not recorded or executed**. Astra is the buyer agent's product name,
+Status: **live-UI storyboard for team rehearsal; a separate 4m24s English-narrated
+recorded-evidence walkthrough is prepared** at
+`submission/generated/Guardian-Wallet-demo.webm`. Presentation PPTX/PDF and notes
+are in the same directory; [submission review guide](../submission/README.md).
+Public AI-01, local COST-01 and selected security results are linked in execution
+evidence. This storyboard does not imply every scene was performed live on camera.
+Astra is the buyer agent's product name,
 not a model ID. Record the actual model configuration for every AI runtime used.
 
 ## Story and fixture
@@ -82,4 +88,6 @@ The working phrase **Air-Gapped AI Guardian Wallet** describes separated authori
 Use **authority-separated AI with on-chain enforcement** as the technical description:
 this networked application does not implement a physical network air gap. XML tags,
 Dual-LLM parsing and one blocked prompt do not prove universal injection resistance.
-All results remain planned until recorded in [execution evidence](execution-evidence.md).
+Use only results actually recorded in [execution evidence](execution-evidence.md).
+Public payment/service liveness is historical after the one-hour rental; local/fork
+and browser-fixture scenes retain their own explicit labels in any final recording.

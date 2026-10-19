@@ -1,0 +1,129 @@
+{
+  "capturedAt": "2026-10-18T12:39:24.915Z",
+  "evidenceType": "live-Groq-API-actual-disposable-Kernel-fork-provider-service-HTTP-workflow",
+  "runs": [
+    {
+      "modelId": "openai/gpt-oss-120b",
+      "passed": true,
+      "stage": "completed",
+      "initializationMs": 18040,
+      "procurementToCompletedAndProbeMs": 8268,
+      "taskId": "0cc47a6e-7dfb-4e30-bdf3-dbb0a4238f1e",
+      "taskStatus": "completed",
+      "operationStatus": "confirmed",
+      "localTransactionHash": "0x96ac87c7bd00d6b701d9e54837c93a35d3959145f6bc22964f9943372d96de41",
+      "before": {
+        "balanceUnits": "10000000",
+        "spentUnits": "0"
+      },
+      "after": {
+        "balanceUnits": "9740000",
+        "spentUnits": "260000"
+      },
+      "checks": [
+        "real-model-asset-and-risk-interpretation",
+        "signed-provider-quote",
+        "draft-no-send",
+        "queue-keeps-pause",
+        "actual-Kernel-Guardian-settlement",
+        "independent-delivery-signature-check",
+        "service-probe-and-write-read",
+        "no-duplicate-payment",
+        "closed-capability-denied"
+      ],
+      "resourceObservation": {
+        "rssBeforeBytes": 328880128,
+        "initializedRssBytes": 907218944,
+        "scope": "Local checker process; later models may include retained prior allocations. Excludes separate Next.js process; not Linux hosting acceptance"
+      },
+      "modelCalls": [
+        {
+          "requestedModel": "openai/gpt-oss-120b",
+          "reportedModel": "openai/gpt-oss-120b",
+          "httpStatus": 200,
+          "elapsedMs": 720,
+          "inputTokens": 520,
+          "completionTokens": 69,
+          "reasoningTokens": 19
+        },
+        {
+          "requestedModel": "openai/gpt-oss-120b",
+          "reportedModel": "openai/gpt-oss-120b",
+          "httpStatus": 200,
+          "elapsedMs": 559,
+          "inputTokens": 514,
+          "completionTokens": 68,
+          "reasoningTokens": 22
+        },
+        {
+          "requestedModel": "openai/gpt-oss-120b",
+          "reportedModel": "openai/gpt-oss-120b",
+          "httpStatus": 200,
+          "elapsedMs": 647,
+          "inputTokens": 528,
+          "completionTokens": 88,
+          "reasoningTokens": 26
+        },
+        {
+          "requestedModel": "openai/gpt-oss-120b",
+          "reportedModel": "openai/gpt-oss-120b",
+          "httpStatus": 200,
+          "elapsedMs": 641,
+          "inputTokens": 433,
+          "completionTokens": 93,
+          "reasoningTokens": 34
+        },
+        {
+          "requestedModel": "openai/gpt-oss-120b",
+          "reportedModel": "openai/gpt-oss-120b",
+          "httpStatus": 200,
+          "elapsedMs": 465,
+          "inputTokens": 536,
+          "completionTokens": 69,
+          "reasoningTokens": 4
+        },
+        {
+          "requestedModel": "openai/gpt-oss-120b",
+          "reportedModel": "openai/gpt-oss-120b",
+          "httpStatus": 200,
+          "elapsedMs": 545,
+          "inputTokens": 484,
+          "completionTokens": 104,
+          "reasoningTokens": 47
+        },
+        {
+          "requestedModel": "openai/gpt-oss-120b",
+          "reportedModel": "openai/gpt-oss-120b",
+          "httpStatus": 200,
+          "elapsedMs": 562,
+          "inputTokens": 484,
+          "completionTokens": 110,
+          "reasoningTokens": 60
+        },
+        {
+          "requestedModel": "openai/gpt-oss-120b",
+          "reportedModel": "openai/gpt-oss-120b",
+          "httpStatus": 200,
+          "elapsedMs": 541,
+          "inputTokens": 484,
+          "completionTokens": 97,
+          "reasoningTokens": 47
+        }
+      ]
+    }
+  ],
+  "sourceHashes": {
+    "tools/review/check-live.mjs": "056f663cc40c9e5b17e1883d05acc7b933714d74c78e3c8241b01185964282e4",
+    "tools/review/workspace.mjs": "af0db365a77f6ecfa9acf5105e4a6ea5136f5cf9258683a481cf2df103a2ced8",
+    "tools/review/network-runtime.mjs": "cb99dccf1aded9f54b602be546de375760623404555439ec91ba475ed5665969",
+    "apps/api/src/wallet-assistant.ts": "8c842aa37662c44502f64e0e655e69fd36a5761d8a0bbee4e54e81de61ae8396",
+    "packages/planner/src/model-profiles.ts": "4cbbdba325a53155a4437a2b18472cd532d2c06a6914f45e5ff90a17735f667b"
+  },
+  "limitations": "Real hosted model inference, but all token/gas transfers execute only on disposable local forks. No new public transaction or commercial service purchase. Runtime latency is measured on this host, excludes hosted cold starts and China browser network. Free account remains operator-confirmed.",
+  "executionHost": {
+    "platform": "linux",
+    "node": "v24.22.0",
+    "arch": "x64",
+    "hosting": "operator-confirmed-Free-Trial-Linux-VM"
+  }
+}

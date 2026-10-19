@@ -31,7 +31,9 @@ export class OwnerAuth {
     // Consume synchronously before async verification to stop concurrent replay.
     this.challenges.delete(nonce);
     if (!challenge || challenge.address.toLowerCase() !== address.toLowerCase() || challenge.expires <= this.clock()) throw new ApiError(401, "INVALID_NONCE");
-    if (!await verifyMessage({ address, message: challenge.message, signature })) throw new ApiError(401, "INVALID_SIGNATURE");
+    let verified = false;
+    try { verified = await verifyMessage({ address, message: challenge.message, signature }); } catch { /* Invalid curve/signature encoding is an authentication rejection. */ }
+    if (!verified) throw new ApiError(401, "INVALID_SIGNATURE");
     if (this.sessions.size >= 64) throw new ApiError(429, "TOO_MANY_SESSIONS");
     const token = randomBytes(32).toString("hex");
     this.sessions.set(createHash("sha256").update(token).digest("hex"), { address, expires: this.clock() + 900000 });

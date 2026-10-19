@@ -34,11 +34,12 @@ export const paymentPlanSchema = z.strictObject({
   quotes: z.array(serviceQuoteSchema).min(1).max(10),
   summary: z.string().min(1).max(1000),
   origin: z.enum(["deterministic_baseline", "live_model", "adversarial_fixture"]),
-  model: z.strictObject({ provider: z.literal("ollama"), id: z.string().min(1).max(120) }).optional(),
+  model: z.strictObject({ provider: z.enum(["ollama", "groq"]), id: z.string().min(1).max(120) }).optional(),
+  batchTaskIds: z.array(z.string().uuid()).min(1).max(10).optional(),
 });
 export type PaymentPlan = z.infer<typeof paymentPlanSchema>;
 
-export const paymentTaskStatuses = ["queued", "planned", "waiting", "needs_owner", "rejected", "executing", "paid", "service_pending", "completed"] as const;
+export const paymentTaskStatuses = ["draft", "queued", "planned", "waiting", "needs_owner", "rejected", "executing", "paid", "service_pending", "completed", "cancelled"] as const;
 export type PaymentTaskStatus = typeof paymentTaskStatuses[number];
 export const operationStatuses = ["prepared", "submitting", "submitted", "unknown", "confirmed", "failed", "needs_review"] as const;
 export type OperationStatus = typeof operationStatuses[number];
@@ -58,11 +59,15 @@ export interface PaymentTask {
   exchange?: AgentExchange[];
   delivery?: DeliveryReceipt;
   deliveryAttempts?: number;
+  deliveryTotalAttempts?: number;
+  deliveryRetryCycles?: number;
   quoteSigner?: `0x${string}`;
 }
 
 export interface PaymentAttempt {
   taskId: string;
+  taskIds?: string[];
+  leaderTaskId?: string;
   sender: `0x${string}`;
   userOperationHash: `0x${string}`;
   nonce: string;

@@ -21,3 +21,6 @@ Thumbs.db
 .local/
 .vercel/
 .railway/
+submission/generated/narration/
+submission/generated/*submission*.zip
+submission/generated/Guardian-Wallet-evidence-walkthrough.webm

@@ -11,6 +11,10 @@ async function request(config: ProviderTransport, path: string, body?: object, m
     ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(path === "/request" ? 60000 : 20000),
   });
   if (!response.ok) {
+    if (response.status === 429) {
+      const retry = Math.min(86400, Math.max(1, Number(response.headers.get("retry-after")) || 60));
+      throw Object.assign(new Error("QWEN_RATE_LIMITED"), { retryAfterSeconds: retry });
+    }
     let code = "PROVIDER_UNAVAILABLE_OR_REJECTED";
     try { const body = await response.json() as { error?: unknown }; if (typeof body.error === "string" && /^(QWEN|PROVIDER|SERVICE)_[A-Z0-9_]{1,80}$/.test(body.error)) code = body.error; } catch { /* Keep transport errors sanitized. */ }
     throw new Error(code);

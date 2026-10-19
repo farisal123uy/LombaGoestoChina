@@ -5,6 +5,42 @@ bounded agent authority. International Track, Topic F.
 
 ## Current stage
 
+**Selected AI:** **GPT-OSS 120B via Groq Free**, with bounded structured output and
+no automatic fallback. Real API smoke, 120B/20B comparison, selected security regression,
+Linux production workflow and public HTTPS browser verification have passed.
+See [MODEL_SELECTION.md](docs/MODEL_SELECTION.md), [AI_CLOUD.md](docs/AI_CLOUD.md) and
+[recorded cloud evidence](docs/evidence/CLOUD-VALIDATION.md). Earlier Ollama evidence
+below remains historical and separate.
+
+**Reviewer URL:** https://preview-95c94201191f7206.up.railway.app/review
+(private access code supplied by the team; [quick start](docs/REVIEWER_GUIDE.md)).
+The claimed Linux host uses a real cloud model and executes actual contracts on
+disposable forks through settlement, verified delivery and database write/read.
+The teammate frontend `4e47b13` is integrated locally with the assistant/reviewer.
+[Deployment guide](docs/REVIEW_DEPLOYMENT.md),
+[technical documentation](docs/technical-documentation.md),
+[release gates](docs/RELEASE_CHECKLIST.md). The review container is `Dockerfile.review`;
+native Linux deployment is verified; the Docker image itself has not been built here.
+The owner confirmed Free/Trial hosting without payment method. Credit/entitlement
+duration must cover judging; this is not unlimited free hosting or an uptime SLA.
+
+The dashboard now includes the [Astra wallet assistant](docs/WALLET_ASSISTANT.md):
+English/Indonesian asset overview, authenticated invoice drafting/payment planning,
+explicit queue release, and deterministic wallet-policy/operation risk checks.
+See the API contract and [frontend integration record](docs/FRONTEND_INTEGRATION.md).
+The `submission/` directory was emptied at the team's request for a rebuild.
+
+Stage two is on **`feat/batching-evaluation`**: bounded queue batching with shared
+durable attempts, fee deadlines, expanded reconciliation/security evaluation and
+the new wallet assistant. Current integration checks: **78 cases**, plus **7 web tests**.
+Contract/fork checkpoint: **16 cases**; **13 browser cases** cover the integrated
+frontend/reviewer. Lint/typecheck/build passed. Real GPT-OSS regression **60/60** after
+fixing six baseline API/schema errors; the failing baseline is preserved. Historical
+Qwen corpus **60/60** after prompt
+refinement (preserved baseline 52/60, in-sample). Batch evaluation is local/fork;
+public AI-01 below remains the original single-invoice run. Read
+[progress](docs/PROGRESS.md) and [batching/cost guide](docs/BATCHING_AND_COST.md).
+
 The A+B wallet/backend foundation is implemented on `feat/wallet-agent-backend`:
 Guardian ERC-7579 executor, restricted Kernel/session helpers, provider-signed quotes,
 bounded planner, owner API, SQL-backed task queue and a persist-before-send worker.
@@ -13,14 +49,16 @@ procurement at `/dashboard`. See the [progress checkpoint](docs/PROGRESS.md),
 [runtime guide](docs/PROCUREMENT_RUNTIME.md) and [A+B API handoff](docs/ab-handoff.md).
 Teammate frontend setup: [Frontend handoff](docs/FRONTEND_HANDOFF.md).
 
-Verification: 36 integration tests, 14 contract/fork cases and six browser cases
+Foundation checkpoint verification: 36 integration tests, 14 contract/fork cases and six browser cases
 passed. Supabase is migrated through `0003`, and real local Qwen/provider quote
 preview succeeded. Public deployment and the first **0.26 MockUSD procurement with
 verified service delivery** are confirmed: [AI-01 evidence](docs/evidence/AI-01-public-procurement.md).
 Broader evaluation, queue batching economics and final demo remain.
 Local fork and browser-fixture evidence is labeled separately from public execution.
 
-The configured model is **Qwen `qwen3:8b` via local Ollama**. Supabase connection,
+The historical public checkpoint used **Qwen `qwen3:8b` via local Ollama**. The current
+runtime is GPT-OSS 120B via Groq Free with privately configured key and recorded live checks.
+Checkpoint Supabase connection,
 migrations and RLS on nine internal tables are verified. See the synthetic
 [Qwen smoke evaluation](docs/evidence/qwen-local-evaluation.json) and real
 [provider quote preview](docs/evidence/provider-live-preview.json).
@@ -121,6 +159,8 @@ separate lockfile in each workspace.
 | `npm run typecheck` | Build shared types and type-check all workspaces. |
 | `npm run build` | Build applications and compile contracts. |
 | `npm run test:contracts` | Run policy tests; fork case is opt-in. |
+| `npm run test:cost` | Record actual Kernel/worker single-vs-4/7-batch comparison on an isolated fork. |
+| `npm run model:security` | Record selected live local Qwen adversarial/benign corpus with synthetic finances. |
 | `npm run test:kernel` | Require RPC and run actual Kernel/EntryPoint local-fork integration. |
 | `npm run test:integration` | Run SQL/owner API/planner/worker recovery tests. |
 | `npm run test:e2e` | Run browser tests as they are implemented. |

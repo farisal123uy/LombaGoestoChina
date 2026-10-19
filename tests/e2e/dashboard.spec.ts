@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import type { PaymentTask } from "@guardian-wallet/shared";
+import type { PaymentTask, WalletOverview } from "@guardian-wallet/shared";
 
 const owner = "0x4217fb05408bfaBF9ed9d70f78bA13E07C94d634";
 const account = "0x1111111111111111111111111111111111111111";
@@ -7,7 +7,7 @@ const hash = `0x${"ab".repeat(32)}` as const;
 const taskId = "11111111-1111-4111-8111-111111111111";
 
 // Browser/API/wallet fixtures. Real signatures, SQL and settlement are covered separately.
-async function dashboard(page: Page, loseFirstResponse = false) {
+async function dashboard(page: Page, loseFirstResponse = false, assistant = false) {
   let running = false, startCount = 0, task: PaymentTask | undefined;
   const requests: { requestId: string; instruction: string }[] = [], values: Record<string, string> = {};
   await page.addInitScript((address) => {
@@ -20,17 +20,32 @@ async function dashboard(page: Page, loseFirstResponse = false) {
   }, owner);
   await page.route("http://localhost:4000/**", async (route) => {
     const request = route.request(), path = new URL(request.url()).pathname;
-    const headers = { "access-control-allow-origin": "http://localhost:3000", "access-control-allow-headers": "content-type,authorization", "access-control-allow-methods": "GET,POST,PUT,OPTIONS" };
+    const headers = { "access-control-allow-origin": request.headers().origin || "http://localhost:3000", "access-control-allow-headers": "content-type,authorization", "access-control-allow-methods": "GET,POST,PUT,OPTIONS" };
     if (request.method() === "OPTIONS") return route.fulfill({ status: 204, headers });
     let body: unknown;
-    if (path === "/v1/status") body = { financialConfigured: true, providerConfigured: true, executionEnabled: running, ownerAddress: owner, accountAddress: account, model: { provider: "ollama", modelId: "qwen3:8b" } };
+    const overview: WalletOverview = { account, chainId: 84532, token: { address: account, symbol: "MockUSD", decimals: 6, balanceUnits: running ? "9740000" : "10000000", formattedBalance: running ? "9.74" : "10" }, protectedBalanceUnits: "6000000", spendableBalanceUnits: "4000000", perPaymentLimitUnits: "1000000", dailyLimitUnits: "2000000", spentUnits: running ? "260000" : "0", remainingDailyUnits: running ? "1740000" : "2000000", committedUnits: task?.status === "planned" ? "260000" : "0", availableToPlanUnits: running || task?.status === "planned" ? "1740000" : "2000000", queuedTaskCount: task?.status === "planned" ? 1 : 0, draftTaskCount: task?.status === "draft" ? 1 : 0, schedulerPaused: !running, policyVersion: "1", observedAt: 1800000000, observedBlockNumber: "100", observedBlockHash: hash };
+    const risk = { level: "low", scope: "wallet-policy-and-payment-operations", observedAt: 1800000000, checks: [{ code: "POLICY_CHECKS_CLEAR", severity: "info", message: "Fixture wallet policy checks clear." }] };
+    if (path === "/v1/status") body = { financialConfigured: true, providerConfigured: true, assistantConfigured: assistant, executionEnabled: running, ownerAddress: owner, accountAddress: account, model: { provider: "ollama", modelId: "qwen3:8b" } };
     else if (path === "/auth/nonce") body = { nonce: "a".repeat(48), message: "Owner API login browser fixture" };
     else if (path === "/auth/verify") body = { token: "browser-test-session" };
     else {
       expect(request.headers().authorization).toBe("Bearer browser-test-session");
       if (path === "/v1/policy") body = { policy: { balanceUnits: running ? "9740000" : "10000000", protectedBalanceUnits: "6000000", dailyLimitUnits: "2000000", spentUnits: running ? "260000" : "0" } };
       else if (path === "/v1/tasks") body = { tasks: task ? [task] : [] };
-      else if (path === "/v1/procure") {
+      else if (path === "/v1/risk") body = { overview, risk };
+      else if (path === "/v1/assistant") {
+        const input = request.postDataJSON() as { requestId: string; instruction: string };
+        const base = { interpretation: "Interpretation from the browser model fixture.", origin: "live_model", modelId: "qwen3:8b", overview, risk };
+        if (/swap|staking/i.test(input.instruction)) body = { ...base, intent: "unsupported" };
+        else if (/database/i.test(input.instruction)) {
+          task = { id: taskId, chainId: 84532, owner, paymentId: hash, instruction: input.instruction, offerId: "database-small-1h", status: "draft", createdAt: new Date().toISOString(), quote: { account, providerId: hash, invoiceId: hash, serviceHash: hash, token: account, recipient: owner, amountUnits: "260000", validUntil: 1900000000, signature: `0x${"11".repeat(65)}` } };
+          body = { ...base, intent: "procure_database", task, paymentReview: { status: "ready", taskIds: [taskId], totalUnits: "260000", balanceAfterUnits: "9740000", remainingDailyAfterUnits: "1740000", blockers: [], items: [{ taskId, recipient: owner, amountUnits: "260000", invoiceId: hash }] } };
+        } else body = { ...base, intent: /risk|risiko/i.test(input.instruction) ? "risk_check" : "asset_overview" };
+      } else if (path === "/v1/assistant/execute") {
+        expect(request.postDataJSON()).toMatchObject({ taskIds: [taskId] });
+        if (task) task = { ...task, status: "planned" };
+        body = { status: "queued", tasks: [task], schedulerPaused: !running };
+      } else if (path === "/v1/procure") {
         requests.push(request.postDataJSON());
         task ||= { id: taskId, chainId: 84532, owner, paymentId: hash, instruction: requests[0]!.instruction, offerId: "database-small-1h", status: "planned", createdAt: new Date().toISOString(),
           quote: { account, providerId: hash, invoiceId: hash, serviceHash: hash, token: account, recipient: account, amountUnits: "260000", validUntil: 1900000000, signature: `0x${"11".repeat(65)}` },
@@ -95,4 +110,32 @@ test("an unavailable API provides the runtime startup command", async ({ page })
   await expect(page.getByRole("alert").filter({ hasText: "npm run runtime:dev" })).toBeVisible();
   await expect(page.getByText("Unavailable", { exact: true }).first()).toBeVisible();
   await expect(page.getByRole("button", { name: "Connect owner & sign in" })).toBeDisabled();
+});
+
+test("wallet assistant shows assets, obtains a draft, queues reviewed payments and follows worker confirmation", async ({ page }) => {
+  const state = await dashboard(page, false, true);
+  const assistant = page.getByRole("region", { name: "Wallet assistant" });
+  await expect(assistant.getByText("Available for new plans", { exact: true })).toBeVisible();
+  await assistant.getByLabel("Wallet instruction").fill("Rent a small database for 1 hour within my existing limits.");
+  await assistant.getByRole("button", { name: "Ask wallet assistant", exact: true }).click();
+  await expect(assistant.getByRole("heading", { name: "Payment preview: ready" })).toBeVisible();
+  await expect(assistant.getByRole("checkbox")).toBeVisible();
+  expect(state.starts()).toBe(0);
+  await assistant.getByRole("button", { name: "Queue reviewed payments" }).click();
+  await expect(assistant.getByRole("status")).toContainText("Scheduler is paused");
+  await page.getByRole("button", { name: "Start agent", exact: true }).click();
+  await expect(page.getByRole("button", { name: /database-small-1h.*completed/ })).toBeVisible();
+  await assistant.getByRole("button", { name: "Check wallet risk" }).click();
+  await expect(assistant.getByText("AI interpretation · qwen3:8b · risk check")).toBeVisible();
+  expect(state.starts()).toBe(1);
+});
+
+test("unsupported wallet actions show capability guidance and never expose a queue action", async ({ page }) => {
+  const state = await dashboard(page, false, true);
+  const assistant = page.getByRole("region", { name: "Wallet assistant" });
+  await assistant.getByLabel("Wallet instruction").fill("Swap half my balance into ETH and start staking.");
+  await assistant.getByRole("button", { name: "Ask wallet assistant", exact: true }).click();
+  await expect(assistant.getByText(/Available actions: wallet overview/)).toBeVisible();
+  await expect(assistant.getByRole("button", { name: "Queue reviewed payments" })).toHaveCount(0);
+  expect(state.starts()).toBe(0);
 });

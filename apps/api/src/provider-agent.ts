@@ -1,6 +1,6 @@
 import Fastify from "fastify";
 import { z } from "zod";
-import { decideProviderOffer, QwenClient, type QwenOptions } from "@guardian-wallet/planner";
+import { decideProviderOffer, QwenClient, QwenRateLimitError, type QwenOptions } from "@guardian-wallet/planner";
 import { offerIdSchema, serviceCatalog, serviceQuoteSchema } from "@guardian-wallet/shared";
 import { requireProviderToken } from "./provider-auth.js";
 
@@ -9,6 +9,7 @@ export async function buildProviderAgent(options: { accessToken: string; signerT
   const client = new QwenClient(options.qwen);
   app.addHook("onRequest", async (request) => { if (request.url !== "/health") requireProviderToken(options.accessToken, request.headers.authorization); });
   app.setErrorHandler((error, _request, reply) => {
+    if (error instanceof QwenRateLimitError) return reply.header("retry-after", String(error.retryAfterSeconds)).code(429).send({ error: error.message, retryAfterSeconds: error.retryAfterSeconds });
     const code = error instanceof z.ZodError ? "INVALID_PROVIDER_REQUEST" : error instanceof Error && /^(QWEN|PROVIDER)_[A-Z0-9_]{1,80}$/.test(error.message) ? error.message : "PROVIDER_AGENT_REQUEST_FAILED";
     return reply.code(error instanceof z.ZodError ? 400 : code === "PROVIDER_AUTH_REQUIRED" ? 401 : 503).send({ error: code });
   });
