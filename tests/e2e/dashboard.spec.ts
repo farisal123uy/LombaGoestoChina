@@ -7,7 +7,7 @@ const hash = `0x${"ab".repeat(32)}` as const;
 const taskId = "11111111-1111-4111-8111-111111111111";
 
 // Browser/API/wallet fixtures. Real signatures, SQL and settlement are covered separately.
-async function dashboard(page: Page, loseFirstResponse = false, assistant = false) {
+async function dashboard(page: Page, loseFirstResponse = false, assistant = false, escrow = false) {
   let running = false, startCount = 0, task: PaymentTask | undefined;
   const requests: { requestId: string; instruction: string }[] = [], values: Record<string, string> = {};
   await page.addInitScript((address) => {
@@ -55,13 +55,14 @@ async function dashboard(page: Page, loseFirstResponse = false, assistant = fals
       } else if (path === "/agent/start") {
         startCount++; running = true;
         if (task) task = { ...task, status: "completed", delivery: { account, invoiceId: hash, paymentId: hash, serviceHash: hash, namespaceId: "22222222-2222-4222-8222-222222222222", transactionHash: hash, readyAt: 1800000000, expiresAt: 1900000000, signature: `0x${"11".repeat(65)}` } };
+        if (task && escrow) task.escrow = { status: "released", lockedAt: 1800000000, refundAfter: 1800000600, lockTransactionHash: hash, releaseTransactionHash: `0x${"cd".repeat(32)}` };
         body = { locallyPaused: false };
       } else if (path === "/agent/pause") { running = false; body = { locallyPaused: true }; }
       else if (path.endsWith("/probe")) body = { ready: true, probeCount: 2 };
       else if (path.endsWith("/database")) {
         if (request.method() === "PUT") { const input = request.postDataJSON() as { key: string; value: string }; values[input.key] = input.value; }
         body = { values };
-      } else if (path === `/v1/tasks/${taskId}`) body = { task, ...(task?.delivery ? { operation: { status: "confirmed", userOperationHash: hash, transactionHash: hash } } : {}) };
+       } else if (path === `/v1/tasks/${taskId}`) body = { task, ...(task?.delivery ? { operation: { status: "confirmed", userOperationHash: hash, transactionHash: hash, settlementMode: escrow ? "escrow" : "direct" } } : {}) };
       else throw new Error(`Unexpected fixture API route: ${path}`);
     }
     return route.fulfill({ headers, contentType: "application/json", body: JSON.stringify(body) });
@@ -81,7 +82,7 @@ test("owner reviews a quote before explicit scheduling and can inspect delivered
   expect(state.starts()).toBe(0);
   await page.getByRole("button", { name: "Start agent", exact: true }).click();
   await expect(page.getByRole("heading", { name: "completed", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Inspect public transaction ↗" })).toHaveAttribute("href", `https://sepolia.basescan.org/tx/${hash}`);
+  await expect(page.getByRole("link", { name: "Inspect public transaction ↗" })).toHaveAttribute("href", `https://base-sepolia.blockscout.com/tx/${hash}`);
   await page.getByRole("button", { name: "Verify database probe" }).click();
   await expect(page.getByRole("status")).toContainText("probe verified");
   await page.getByLabel("Database key", { exact: true }).fill("project-note");
@@ -137,4 +138,30 @@ test("unsupported wallet actions show capability guidance and never expose a que
   await expect(assistant.getByText(/Available actions: wallet overview/)).toBeVisible();
   await expect(assistant.getByRole("button", { name: "Queue reviewed payments" })).toHaveCount(0);
   expect(state.starts()).toBe(0);
+});
+
+test("owner wallet sign-in survives internal navigation without resuming the scheduler", async ({ page }) => {
+  const state = await dashboard(page);
+  await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Evidence", exact: true }).click();
+  await expect(page).toHaveURL(/\/evidence$/);
+  await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Wallet", exact: true }).click();
+  await expect(page.getByText("Owner signed in", { exact: true })).toBeVisible();
+  await expect(page.getByText("Scheduler: paused", { exact: true })).toBeVisible();
+  expect(state.starts()).toBe(0);
+});
+
+test("escrow receipts keep distinct public hashes and task filters work on mobile", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await dashboard(page, false, false, true);
+  await page.getByRole("button", { name: "Ask Astra & request provider quote" }).click();
+  await page.getByRole("button", { name: "Start agent", exact: true }).click();
+  await expect(page.getByText("Service escrow · released", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "View escrow lock on Base Sepolia ↗" })).toHaveAttribute("href", `https://base-sepolia.blockscout.com/tx/${hash}`);
+  await expect(page.getByRole("link", { name: "View escrow release on Base Sepolia ↗" })).toHaveAttribute("href", `https://base-sepolia.blockscout.com/tx/0x${"cd".repeat(32)}`);
+  await expect(page.getByLabel("Settlement progress")).toContainText("Service verified");
+  await page.getByRole("button", { name: /^Active/ }).click();
+  await expect(page.getByText("No matching tasks", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: /^Completed/ }).click();
+  await expect(page.getByRole("button", { name: /database-small-1h.*completed/ })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });

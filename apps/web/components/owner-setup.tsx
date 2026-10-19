@@ -1,6 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { developmentChain } from "@guardian-wallet/shared";
+import Link from "next/link";
+import { UiIcon } from "./ui-icon";
+import { useOwnerSession } from "./owner-session";
 
 type Hex = `0x${string}`;
 interface WalletProvider {
@@ -11,6 +15,7 @@ interface WalletProvider {
 interface SetupState {
   chainId: number; owner: Hex; kernel: Hex; guardian: Hex; token: Hex;
   providerSigner: Hex; recipient: Hex; sessionSigner: Hex; validUntil: number;
+  settlementMode: "direct" | "escrow"; kernelIndex: string; escrowWindowSeconds: number;
   installed: boolean; ready: boolean; sessionAuthorized: boolean; runtimeConfigured: boolean;
   gasMode: string; paymaster: Hex;
   limits: { initialTokenUnits: string; protectedUnits: string; perPaymentUnits: string; dailyUnits: string; decimals: number };
@@ -43,14 +48,14 @@ async function switchNetwork(wallet: WalletProvider) {
   try { await wallet.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x14a34" }] }); }
   catch (error) {
     if ((error as { code?: number }).code !== 4902) throw error;
-    await wallet.request({ method: "wallet_addEthereumChain", params: [{ chainId: "0x14a34", chainName: "Base Sepolia", rpcUrls: ["https://sepolia.base.org"], nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 }, blockExplorerUrls: ["https://sepolia.basescan.org"] }] });
+    await wallet.request({ method: "wallet_addEthereumChain", params: [{ chainId: "0x14a34", chainName: "Base Sepolia", rpcUrls: ["https://sepolia.base.org"], nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 }, blockExplorerUrls: [developmentChain.explorerUrl] }] });
     await wallet.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x14a34" }] });
   }
 }
 
 export function OwnerSetup() {
   const [state, setState] = useState<SetupState>();
-  const [login, setLogin] = useState<{ address: Hex; token: string }>();
+  const { setupSession: login, setSetupSession: setLogin } = useOwnerSession();
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const refresh = useCallback(async () => { setState(await call<SetupState>("/state")); }, []);
@@ -127,21 +132,25 @@ export function OwnerSetup() {
   });
 
   return <main className="setup-shell">
-    <header className="setup-header"><a href="/" className="brand"><span className="brand-mark">G</span> Guardian Wallet</a><span className="badge">Base Sepolia · owner setup</span></header>
-    <section className="setup-intro"><p className="eyebrow">OWNER-CONTROLLED ONBOARDING</p><h1>Authorize once.<br /><span>Keep authority bounded.</span></h1><p>Deploy the wallet and policy contracts with project-sponsored gas. Your owner wallet signs in MetaMask. Native ETH in the owner wallet is not required for a sponsored UserOperation.</p></section>
+    <div className="setup-context-bar"><span className="setup-context-kicker">OWNER ONBOARDING</span><span className="setup-context-mode">Base Sepolia · owner setup · {state?.settlementMode || "direct"}</span>{state && <span className="setup-context-index">Kernel index {state.kernelIndex}</span>}</div>
+    <section className="setup-intro"><p className="eyebrow">YOUR WALLET STARTS HERE</p><h1>Authorize once.<br /><span>Keep authority bounded.</span></h1><p>Three steps to a policy-bound wallet. Connect your owner account, deploy with sponsored gas, then delegate a scoped session to Astra.</p></section>
+    <ol className="onboarding-progress" aria-label="Setup progress">
+      {[{ label: "Owner sign-in", done: Boolean(login), icon: "wallet" as const }, { label: "Policy deployed", done: Boolean(state?.ready), icon: "shield" as const }, { label: "Astra authorized", done: Boolean(state?.sessionAuthorized), icon: "spark" as const }].map((step, index) => <li className={step.done ? "is-complete" : ""} key={step.label}><span className="progress-step-icon"><UiIcon name={step.done ? "check" : step.icon} /></span><div><small>STEP 0{index + 1}</small><strong>{step.label}</strong></div><span className="progress-step-status">{step.done ? "Complete" : "Pending"}</span></li>)}
+    </ol>
+    {state?.runtimeConfigured && <div className="next-action"><span className="next-action-icon"><UiIcon name="check" /></span><div><strong>Your wallet setup is complete.</strong><p>Continue to the wallet workspace to sign in, review a service quote and follow its settlement.</p></div><Link className="action-primary" href="/dashboard">Open wallet workspace <UiIcon name="arrow" /></Link></div>}
     {error && <div className="setup-error" role="alert">{error}</div>}
     {busy && <p role="status" className="setup-progress">{busy}…</p>}
     <div className="setup-columns">
-      <section className="setup-panel"><p className="eyebrow">THREE STEPS</p>
+      <section className="setup-panel"><div className="panel-title"><span className="panel-icon"><UiIcon name="shield" /></span><div><p className="eyebrow">OWNER AUTHORITY</p><h2>Set up your delegation</h2></div></div>
         <article className="setup-step"><span>01</span><div><h2>Connect owner</h2><p>Sign the domain-bound login message. This establishes access to the local coordinator.</p><button disabled={!!busy || !state} onClick={connect}>{login ? "Reconnect owner" : "Connect MetaMask & sign in"}</button>{login && <p className="setup-ok">Owner connected</p>}</div></article>
-        <article className="setup-step"><span>02</span><div><h2>Deploy with sponsored gas</h2><p>Create Kernel, deploy Guardian and the fixed-supply test token, then install the policy. Preparing can reserve project sponsorship quota; the displayed gas bound is not a fiat pricing guarantee.</p><div className="setup-buttons"><button disabled={!!busy || !login || state?.ready || (operationStatus !== undefined && activeStates.has(operationStatus))} onClick={prepare}>Prepare deployment</button><button disabled={!!busy || !login || operationStatus !== "prepared"} onClick={signAndDeploy}>Sign & submit deployment</button></div>{state?.operation && <p className="setup-detail">Operation: <strong>{state.operation.status}</strong><br />Maximum native gas exposure: {state.operation.maxGasCostEth} ETH<br />UserOperation hash: <code>{state.operation.hash}</code></p>}{state?.operation?.transactionHash && <a className="setup-link" target="_blank" rel="noreferrer" href={`https://sepolia.basescan.org/tx/${state.operation.transactionHash}`}>View transaction on explorer ↗</a>}</div></article>
+        <article className="setup-step"><span>02</span><div><h2>Deploy with sponsored gas</h2><p>Create Kernel, deploy Guardian and the fixed-supply test token, then install the policy. Preparing can reserve project sponsorship quota; the displayed gas bound is not a fiat pricing guarantee.</p><div className="setup-buttons"><button disabled={!!busy || !login || state?.ready || (operationStatus !== undefined && activeStates.has(operationStatus))} onClick={prepare}>Prepare deployment</button><button disabled={!!busy || !login || operationStatus !== "prepared"} onClick={signAndDeploy}>Sign & submit deployment</button></div>{state?.operation && <p className="setup-detail">Operation: <strong>{state.operation.status}</strong><br />Maximum native gas exposure: {state.operation.maxGasCostEth} ETH<br />UserOperation hash: <code>{state.operation.hash}</code></p>}{state?.operation?.transactionHash && <a className="setup-link" target="_blank" rel="noreferrer" href={`${developmentChain.explorerUrl}/tx/${state.operation.transactionHash}`}>View transaction on Blockscout ↗</a>}</div></article>
         <article className="setup-step"><span>03</span><div><h2>Delegate to Astra</h2><p>Sign the scoped permission for the session address below. Direct transfers, approvals and administration are outside this session. The owner retains policy and revocation authority.</p><button disabled={!!busy || !login || !state?.ready || state.sessionAuthorized} onClick={authorize}>Authorize Astra session</button>{state?.sessionAuthorized && <p className="setup-ok">Session authorization recorded</p>}{state?.sessionAuthorized && !state.runtimeConfigured && <button disabled={!!busy || !login} onClick={() => action("Synchronize runtime", async () => setState(await call<SetupState>("/runtime/sync", login!.token, {})))}>Retry runtime synchronization</button>}{state?.runtimeConfigured && <div className="setup-success"><strong>Runtime configuration ready.</strong><p>Start or restart the API and worker to load the deployed addresses and session: <code>npm.cmd run dev:api</code> and <code>npm.cmd run dev:worker</code>. Scheduling starts paused until you sign in to the API and start the agent.</p></div>}</div></article>
         <div className="setup-buttons"><button className="secondary" disabled={!!busy} onClick={() => action("Refresh", refresh)}>Refresh status</button><button className="secondary" disabled={!!busy || !login} onClick={() => action("Check transaction", async () => setState(await call<SetupState>("/reconcile", login!.token, {})))}>Check transaction</button></div>
       </section>
-      <aside className="setup-panel"><p className="eyebrow">REVIEW BEFORE SIGNING</p>{state ? <>
+      <aside className="setup-panel setup-policy-panel"><div className="panel-title"><span className="panel-icon"><UiIcon name="lock" /></span><div><p className="eyebrow">REVIEW BEFORE SIGNING</p><h2>Your policy boundary</h2></div></div>{state ? <>
         <dl className="setup-addresses">{[["Owner", state.owner], ["Kernel account", state.kernel], ["Guardian executor", state.guardian], ["MockUSD test token", state.token], ["Provider / recipient", state.recipient], ["Astra session signer", state.sessionSigner], ["Gas paymaster", state.paymaster]].map(([name, value]) => <div key={name}><dt>{name}</dt><dd><code>{value}</code></dd></div>)}</dl>
         <div className="setup-limits"><div><span>Initial test-token mint</span><strong>{units(state.limits.initialTokenUnits)}</strong></div><div><span>Protected balance</span><strong>{units(state.limits.protectedUnits)}</strong></div><div><span>Per-payment limit</span><strong>{units(state.limits.perPaymentUnits)}</strong></div><div><span>UTC-day limit</span><strong>{units(state.limits.dailyUnits)}</strong></div></div>
-        <p className="setup-detail">Authority expires: {new Date(state.validUntil * 1000).toLocaleString()}<br />Policy: {state.installed ? "installed on-chain" : "planned, awaiting deployment"}<br />All amounts are MockUSD test units, not redeemable dollars.</p>
+        <p className="setup-detail">Settlement mode: <strong>{state.settlementMode}</strong>{state.settlementMode === "escrow" && <> · refund window {state.escrowWindowSeconds}s · new isolated Kernel index {state.kernelIndex}</>}<br />Authority expires: {new Date(state.validUntil * 1000).toLocaleString()}<br />Policy: {state.installed ? "installed on-chain" : "planned, awaiting deployment"}<br />All amounts are MockUSD test units, not redeemable dollars.</p>
       </> : <p>Waiting for the local coordinator. In a second terminal, run <code>npm.cmd run onboarding</code>.</p>}</aside>
     </div><footer>Guardian Wallet · owner keys remain in the wallet · session execution is policy-bound</footer>
   </main>;

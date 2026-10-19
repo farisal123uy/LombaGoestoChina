@@ -40,12 +40,15 @@ export class OnboardingJournal {
 export interface OnboardingOptions {
   client: PublicClient;
   configuration: BootstrapConfiguration;
+  settlementMode?: "direct" | "escrow";
+  escrowWindowSeconds?: number;
   bundlerUrl: string;
   sponsorship: NativeSponsorship;
   maxGasCostWei: bigint;
   journal: OnboardingJournal;
   confirmations?: number;
-  syncRuntime?: (deployment: { kernel: Hex; guardian: Hex; token: Hex }, sessionSignature: Hex) => Promise<void>;
+  assertEscrowSchema?: () => Promise<void>;
+  syncRuntime?: (deployment: { kernel: Hex; guardian: Hex; token: Hex }, sessionSignature: Hex, settlementMode: "direct" | "escrow", escrowWindowSeconds: number) => Promise<void>;
 }
 
 /** Single-owner, single-process LOCAL coordinator. No owner private key is accepted. */
@@ -64,10 +67,21 @@ export class OnboardingService {
     const bundler = createExecutionClient(this.options.client, bootstrap.account, this.options.bundlerUrl, this.options.sponsorship);
     return { ...bootstrap, bundler };
   }
+  private async assertEscrowSchema() {
+    if ((this.options.settlementMode ?? "direct") !== "escrow") return;
+    try {
+      if (!this.options.assertEscrowSchema) throw new Error("ESCROW_SCHEMA_PREFLIGHT_NOT_CONFIGURED");
+      await this.options.assertEscrowSchema();
+    } catch {
+      throw new ApiError(503, "ONBOARDING_ESCROW_SCHEMA_REQUIRED");
+    }
+  }
   private view(state: Journal, context: Awaited<ReturnType<OnboardingService["context"]>>) {
     const operation = state.operation;
     return {
       chainId: 84532, owner: this.options.configuration.owner, kernel: context.account.address,
+      settlementMode: this.options.settlementMode ?? "direct", kernelIndex: (this.options.configuration.kernelIndex ?? 0n).toString(),
+      escrowWindowSeconds: this.options.escrowWindowSeconds ?? 600,
       guardian: context.guardianAddress, token: context.tokenAddress,
       providerSigner: this.options.configuration.providerSigner, recipient: this.options.configuration.recipient,
       sessionSigner: this.options.configuration.sessionSigner, validUntil: this.options.configuration.validUntil,
@@ -82,13 +96,14 @@ export class OnboardingService {
         maxGasCostWei: operation.maxGasCostWei, maxGasCostEth: formatEther(BigInt(operation.maxGasCostWei)),
         transactionHash: operation.transactionHash, reason: operation.reason,
       } : undefined,
-      actions: ["Create the owner's Kernel account if needed", "Deploy Guardian and fixed-supply MockUSD through CREATE2", "Install Guardian with reserve and daily/per-payment limits"],
+      actions: ["Create the owner's Kernel account if needed", "Deploy Guardian and fixed-supply MockUSD through CREATE2", "Install Guardian with reserve and daily/per-payment limits", ...(this.options.settlementMode === "escrow" ? ["Authorize escrow lock, release and refund selectors for the session"] : [])],
     };
   }
   async status() { return this.serial(async () => this.view(await this.options.journal.load(), await this.context())); }
 
   async prepare() {
     return this.serial(async () => {
+      await this.assertEscrowSchema();
       const state = await this.options.journal.load();
       const context = await this.context();
       if (state.operation && ["submitting", "submitted", "unknown"].includes(state.operation.status)) throw new ApiError(409, "ONBOARDING_RECONCILE_FIRST");
@@ -188,7 +203,8 @@ export class OnboardingService {
     return this.serial(async () => {
       const state = await this.options.journal.load(), context = await this.context();
       if (!context.installed || state.operation?.status !== "confirmed") throw new ApiError(409, "ONBOARDING_DEPLOY_FIRST");
-      return getGuardianSessionAuthorization(this.options.client, context.account.address, this.options.configuration.owner, this.options.configuration.sessionSigner, context.guardianAddress, this.options.configuration.validUntil);
+      await this.assertEscrowSchema();
+      return getGuardianSessionAuthorization(this.options.client, context.account.address, this.options.configuration.owner, this.options.configuration.sessionSigner, context.guardianAddress, this.options.configuration.validUntil, this.options.settlementMode === "escrow");
     });
   }
   async authorizeSession(signature: Hex) {
@@ -196,11 +212,12 @@ export class OnboardingService {
     return this.serial(async () => {
       const state = await this.options.journal.load(), context = await this.context();
       if (!context.installed || state.operation?.status !== "confirmed") throw new ApiError(409, "ONBOARDING_DEPLOY_FIRST");
-      const { typedData } = await getGuardianSessionAuthorization(this.options.client, context.account.address, this.options.configuration.owner, this.options.configuration.sessionSigner, context.guardianAddress, this.options.configuration.validUntil);
+      await this.assertEscrowSchema();
+      const { typedData } = await getGuardianSessionAuthorization(this.options.client, context.account.address, this.options.configuration.owner, this.options.configuration.sessionSigner, context.guardianAddress, this.options.configuration.validUntil, this.options.settlementMode === "escrow");
       if (!await verifyTypedData({ ...typedData, address: this.options.configuration.owner, signature })) throw new ApiError(401, "ONBOARDING_SESSION_SIGNATURE_INVALID");
       state.sessionSignature = signature;
       await this.options.journal.save(state);
-      await this.options.syncRuntime?.({ kernel: context.account.address, guardian: context.guardianAddress, token: context.tokenAddress }, signature);
+      await this.options.syncRuntime?.({ kernel: context.account.address, guardian: context.guardianAddress, token: context.tokenAddress }, signature, this.options.settlementMode ?? "direct", this.options.escrowWindowSeconds ?? 600);
       state.runtimeSynced = Boolean(this.options.syncRuntime);
       await this.options.journal.save(state);
       return this.view(state, context);
@@ -211,7 +228,8 @@ export class OnboardingService {
       const state = await this.options.journal.load(), context = await this.context();
       if (!state.sessionSignature || !context.installed || state.operation?.status !== "confirmed") throw new ApiError(409, "ONBOARDING_AUTHORIZE_SESSION_FIRST");
       if (!this.options.syncRuntime) throw new ApiError(503, "ONBOARDING_RUNTIME_SYNC_NOT_CONFIGURED");
-      await this.options.syncRuntime({ kernel: context.account.address, guardian: context.guardianAddress, token: context.tokenAddress }, state.sessionSignature);
+      await this.assertEscrowSchema();
+      await this.options.syncRuntime({ kernel: context.account.address, guardian: context.guardianAddress, token: context.tokenAddress }, state.sessionSignature, this.options.settlementMode ?? "direct", this.options.escrowWindowSeconds ?? 600);
       state.runtimeSynced = true;
       await this.options.journal.save(state);
       return this.view(state, context);

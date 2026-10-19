@@ -1,5 +1,5 @@
 import postgres from "postgres";
-import type { DeliveryReceipt, PaymentAttempt, PaymentPlan, PaymentTask, PaymentTaskStatus } from "@guardian-wallet/shared";
+import type { DeliveryReceipt, EscrowActionAttempt, PaymentAttempt, PaymentPlan, PaymentTask, PaymentTaskStatus } from "@guardian-wallet/shared";
 
 type Parameter = string | number | boolean | null;
 // JSON parameters are encoded strings: cast through text so postgres.js does not
@@ -17,11 +17,17 @@ export interface PaymentClaim {
   signedPayload?: string;
   batchCandidates?: PaymentTask[];
 }
+export interface EscrowOperationRecord { id: string; action: "release" | "refund"; record: EscrowActionAttempt; signedPayload: string; }
 export const accountKey = (chainId: number, account: string) => `${chainId}:${account.toLowerCase()}`;
 
 /** SQL-backed queue. One durable in-flight attempt per account survives lease loss. */
 export class PaymentStore {
   constructor(private readonly db: QueryDatabase, private readonly clock = Date.now) {}
+
+  async assertEscrowSchema() {
+    await this.db.query("SELECT id,task_id,action,status,record,signed_payload FROM escrow_operations LIMIT 0");
+    await this.db.query("SELECT ready,activated_by_transaction FROM provider_databases LIMIT 0");
+  }
 
   async createTask(task: PaymentTask): Promise<PaymentTask> {
     await this.db.query("INSERT INTO execution_locks (account_key,worker_id,fence,lease_until) VALUES ($1,'',0,to_timestamp(0)) ON CONFLICT (account_key) DO NOTHING", [accountKey(task.chainId, task.quote.account)]);
@@ -152,6 +158,9 @@ export class PaymentStore {
       let [row] = await db.query<{ payload: PaymentTask; record?: PaymentAttempt; signed_payload?: string }>(`SELECT t.payload,a.record,a.signed_payload FROM payment_attempts a
         JOIN payment_tasks t ON t.id=a.task_id WHERE a.account_key=$1 AND a.status NOT IN ('confirmed','failed') LIMIT 1`, [key]);
       if (!row) {
+        [row] = await db.query<{ payload: PaymentTask }>("SELECT payload FROM payment_tasks WHERE account_key=$1 AND status='escrowed' AND next_action_at<=to_timestamp($2::double precision/1000) ORDER BY created_at,id LIMIT 1 FOR UPDATE SKIP LOCKED", [key, now]);
+      }
+      if (!row) {
         [row] = await db.query<{ payload: PaymentTask }>("SELECT payload FROM payment_tasks WHERE account_key=$1 AND status IN ('paid','service_pending') AND payload->>'offerId' IS NOT NULL AND next_action_at <= to_timestamp($2::double precision/1000) ORDER BY created_at LIMIT 1 FOR UPDATE SKIP LOCKED", [key, now]);
       }
       if (!row) {
@@ -210,19 +219,79 @@ export class PaymentStore {
     });
   }
 
-  async finish(claim: PaymentClaim, attempt: PaymentAttempt, status: "paid" | "needs_owner") {
+  async finish(claim: PaymentClaim, attempt: PaymentAttempt, status: "paid" | "escrowed" | "needs_owner") {
     await this.fenced(claim, async (db) => {
       if (attempt.taskId !== claim.task.id || attempt.userOperationHash !== claim.attempt?.userOperationHash || !["confirmed", "failed"].includes(attempt.status)) throw new Error("ATTEMPT_BINDING");
-      if ((status === "paid") !== (attempt.status === "confirmed")) throw new Error("TERMINAL_STATUS_MISMATCH");
+      if ((status === "paid" || status === "escrowed") !== (attempt.status === "confirmed")) throw new Error("TERMINAL_STATUS_MISMATCH");
+      if (status === "escrowed" && (attempt.settlementMode !== "escrow" || !attempt.escrowRefundAfter || !attempt.escrowLockedAt || !attempt.transactionHash)) throw new Error("ESCROW_ATTEMPT_BINDING");
       const record = { ...attempt, taskIds: claim.attempt?.taskIds || [claim.task.id] };
       await db.query("UPDATE payment_attempts SET status=$2,record=$3::text::jsonb WHERE task_id=$1", [attempt.taskId, attempt.status, JSON.stringify(record)]);
       const rows = await db.query<{ payload: PaymentTask }>("SELECT t.payload FROM payment_tasks t JOIN payment_attempt_members m ON m.task_id=t.id WHERE m.attempt_task_id=$1 FOR UPDATE OF t", [claim.task.id]);
       for (const task of rows.length ? rows.map((row) => row.payload) : [claim.task]) {
-        const payload = { ...task, status, reason: attempt.reason };
+        const payload: PaymentTask = { ...task, status, reason: attempt.reason,
+          ...(status === "escrowed" ? { escrow: { status: "locked" as const, lockedAt: attempt.escrowLockedAt!, refundAfter: attempt.escrowRefundAfter!, lockTransactionHash: attempt.transactionHash } } : {}) };
         await db.query("UPDATE payment_tasks SET payload=$2::text::jsonb,status=$3 WHERE id=$1", [task.id, JSON.stringify(payload), status]);
         if (task.id === claim.task.id) claim.task = payload;
       }
       claim.attempt = record;
+    });
+  }
+
+  async getEscrowOperation(id: string, owner: string): Promise<EscrowOperationRecord | undefined> {
+    const [row] = await this.db.query<EscrowOperationRecord>(`SELECT e.id,e.action,e.record,e.signed_payload AS "signedPayload"
+      FROM escrow_operations e JOIN payment_tasks t ON t.id=e.task_id
+      WHERE e.task_id=$1 AND t.owner_address=$2 ORDER BY e.created_at DESC LIMIT 1`, [id, owner.toLowerCase()]);
+    return row;
+  }
+
+  async prepareEscrowOperation(claim: PaymentClaim, action: "release" | "refund", record: EscrowActionAttempt, signedPayload: string) {
+    await this.fenced(claim, async (db) => {
+      if (claim.task.status !== "escrowed" || record.taskId !== claim.task.id || record.status !== "prepared" || record.action !== action) throw new Error("INVALID_ESCROW_OPERATION");
+      const [payment] = await db.query<{ record: PaymentAttempt }>("SELECT record FROM payment_attempts WHERE task_id=$1 AND status='confirmed' FOR UPDATE", [claim.task.id]);
+      if (payment?.record.settlementMode !== "escrow") throw new Error("ESCROW_LOCK_NOT_CONFIRMED");
+      const active = await db.query("SELECT id FROM escrow_operations WHERE task_id=$1 AND status NOT IN ('confirmed','failed') FOR UPDATE", [claim.task.id]);
+      if (active.length) throw new Error("ESCROW_OPERATION_BUSY");
+      const [previous] = await db.query<{ record: EscrowActionAttempt }>("SELECT record FROM escrow_operations WHERE task_id=$1 ORDER BY created_at DESC LIMIT 1 FOR UPDATE", [claim.task.id]);
+      if (previous && previous.record.action === action && previous.record.status !== "failed") throw new Error("ESCROW_ACTION_ALREADY_ATTEMPTED");
+      await db.query("INSERT INTO escrow_operations (task_id,account_key,action,status,record,signed_payload) VALUES ($1,$2,$3,$4,$5::text::jsonb,$6)",
+        [claim.task.id, claim.accountKey, action, record.status, JSON.stringify(record), signedPayload]);
+    });
+  }
+
+  async updateEscrowOperation(claim: PaymentClaim, id: string, record: EscrowActionAttempt) {
+    await this.fenced(claim, async (db) => {
+      const [row] = await db.query<{ record: EscrowActionAttempt }>("SELECT record FROM escrow_operations WHERE id=$1 AND task_id=$2 FOR UPDATE", [id, claim.task.id]);
+      if (!row || record.taskId !== claim.task.id || record.action !== row.record.action || record.userOperationHash !== row.record.userOperationHash) throw new Error("ESCROW_OPERATION_BINDING");
+      await db.query("UPDATE escrow_operations SET status=$2,record=$3::text::jsonb WHERE id=$1", [id, record.status, JSON.stringify(record)]);
+    });
+  }
+
+  async completeEscrowOperation(claim: PaymentClaim, id: string, record: EscrowActionAttempt, delivery?: DeliveryReceipt) {
+    await this.fenced(claim, async (db) => {
+      const [operation] = await db.query<{ record: EscrowActionAttempt }>("SELECT record FROM escrow_operations WHERE id=$1 AND task_id=$2 FOR UPDATE", [id, claim.task.id]);
+      if (!operation || record.action !== operation.record.action || record.userOperationHash !== operation.record.userOperationHash || record.status !== "confirmed") throw new Error("ESCROW_OPERATION_BINDING");
+      const finalizedDelivery = delivery || record.delivery;
+      if ((record.action === "release") !== Boolean(finalizedDelivery)) throw new Error("ESCROW_DELIVERY_BINDING");
+      await db.query("UPDATE escrow_operations SET status=$2,record=$3::text::jsonb WHERE id=$1", [id, record.status, JSON.stringify(record)]);
+      if (record.action === "release" && !finalizedDelivery) throw new Error("ESCROW_DELIVERY_BINDING");
+      const status = record.action === "release" ? "completed" : "refunded";
+      if (!claim.task.escrow) throw new Error("ESCROW_TASK_STATE_MISSING");
+      const escrow: NonNullable<PaymentTask["escrow"]> = { ...claim.task.escrow,
+        status: record.action === "release" ? "released" : "refunded",
+        ...(record.action === "release" ? { releaseTransactionHash: record.transactionHash } : { refundTransactionHash: record.transactionHash }) };
+      const payload: PaymentTask = { ...claim.task, status, reason: undefined, escrow, ...(finalizedDelivery ? { delivery: finalizedDelivery } : {}) };
+      await db.query("UPDATE payment_tasks SET payload=$2::text::jsonb,status=$3 WHERE id=$1", [claim.task.id, JSON.stringify(payload), status]);
+      claim.task = payload;
+    });
+  }
+
+  async deferEscrowTask(claim: PaymentClaim, reason: string, delayMs = 5000) {
+    await this.fenced(claim, async (db) => {
+      if (claim.task.status !== "escrowed") throw new Error("TASK_NOT_ESCROWED");
+      const payload = { ...claim.task, reason: /^[A-Z0-9_]{1,100}$/.test(reason) ? reason : "ESCROW_FULFILLMENT_PENDING" };
+      await db.query("UPDATE payment_tasks SET payload=$2::text::jsonb,status='escrowed',next_action_at=to_timestamp($3::double precision/1000) WHERE id=$1",
+        [claim.task.id, JSON.stringify(payload), this.clock() + Math.max(1000, Math.min(60000, delayMs))]);
+      claim.task = payload;
     });
   }
 

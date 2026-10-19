@@ -9,7 +9,7 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { entryPoint07Abi, getUserOperationHash, toPackedUserOperation } from "viem/account-abstraction";
 import { PaymentStore, ProviderStore, accountKey } from "@guardian-wallet/database";
 import { QwenClient, BoundedPaymentPlanner, createQwenPlanner } from "@guardian-wallet/planner";
-import { createOwnerKernel, createAgentKernel, getGuardianSessionAuthorization, encodeGuardianInstall, encodeGuardianPolicyData, encodeGuardianPayments, entryPoint, quoteTypedData, getPaymentId, readPolicySnapshot, validatePaymentPlan, createKernelPaymentDriver, createProviderAgentClient, createProviderServiceClient, createProviderFulfillment } from "@guardian-wallet/wallet";
+import { createOwnerKernel, createAgentKernel, getGuardianSessionAuthorization, encodeGuardianInstall, encodeGuardianPolicyData, encodeGuardianPayments, entryPoint, quoteTypedData, getPaymentId, readPolicySnapshot, validatePaymentPlan, createKernelPaymentDriver, createProviderAgentClient, createProviderServiceClient, createProviderEscrowFulfillment } from "@guardian-wallet/wallet";
 import { buildApp } from "../../apps/api/dist/app.js";
 import { buildProviderAgent } from "../../apps/api/dist/provider-agent.js";
 import { buildProviderSigner } from "../../apps/api/dist/provider-signer.js";
@@ -50,8 +50,8 @@ export async function createReviewWorkspace(qwenOptions = {}, diagnostics = {}) 
     await token.write.transfer([ownerAccount.address, 10000000n]);
     trace("contracts-and-account-deployed");
     await connection.provider.request({ method: "hardhat_setBalance", params: [ownerAccount.address, "0xDE0B6B3A7640000"] });
-    const auth = await getGuardianSessionAuthorization(client, ownerAccount.address, owner.address, signer.address, guardian.address, until);
-    const enabling = await createAgentKernel(client, ownerAccount.address, signer, guardian.address, until, await owner.signTypedData(auth.typedData));
+    const auth = await getGuardianSessionAuthorization(client, ownerAccount.address, owner.address, signer.address, guardian.address, until, true);
+    const enabling = await createAgentKernel(client, ownerAccount.address, signer, guardian.address, until, await owner.signTypedData(auth.typedData), true);
     // Enable the restricted session using a genuine 1-base-unit setup payment on
     // the historical fork day, then restore tokens and advance to today's UTC day.
     const q = { account: ownerAccount.address, providerId: keccak256(toBytes("review-bootstrap")), invoiceId: keccak256(toBytes(randomUUID())), serviceHash: keccak256(toBytes("review-bootstrap")), token: token.address, recipient: provider.address, amountUnits: "1", validUntil: until };
@@ -68,7 +68,7 @@ export async function createReviewWorkspace(qwenOptions = {}, diagnostics = {}) 
     if (Math.floor(wallTime / 86400) <= Math.floor(firstTime / 86400)) throw new Error("REVIEW_FORK_DATE_MUST_PRECEDE_TODAY");
     await connection.provider.request({ method: "evm_setNextBlockTimestamp", params: [wallTime] });
     await connection.provider.request({ method: "evm_mine", params: [] });
-    const agent = await createAgentKernel(client, ownerAccount.address, signer, guardian.address, until);
+    const agent = await createAgentKernel(client, ownerAccount.address, signer, guardian.address, until, undefined, true);
     trace("session-enabled-before-database");
     const db = new PGlite(diagnostics.databaseProfile !== "default" ? {
       initialMemory: 128 * 1024 * 1024,
@@ -120,8 +120,8 @@ export async function createReviewWorkspace(qwenOptions = {}, diagnostics = {}) 
     const login = await financial.inject({ method: "POST", url: "/auth/verify", payload: { address: owner.address, nonce: challenge.nonce, signature: await owner.signMessage({ message: challenge.message }) } });
     assert.equal(login.statusCode, 200);
     trace("api-ready");
-    const driver = createKernelPaymentDriver({ client, account: agent, guardianAddress: guardian.address, bundlerUrl: `http://127.0.0.1:${bundler.server.address().port}`, maxGasCostWei: 100000000000000000n, confirmations: 1 });
-    const worker = new PaymentWorker(store, baseline, driver, key, randomUUID(), createProviderFulfillment({ baseUrl: signerUrl, token: providerToken, guardian: guardian.address, providerSigner: provider.address }), { maxBatchSize: 7, batchWindowMs: 1000 });
+    const driver = createKernelPaymentDriver({ client, account: agent, guardianAddress: guardian.address, bundlerUrl: `http://127.0.0.1:${bundler.server.address().port}`, maxGasCostWei: 100000000000000000n, confirmations: 1, settlementMode: "escrow", escrowWindowSeconds: 600, sessionValidUntil: until });
+    const worker = new PaymentWorker(store, baseline, driver, key, randomUUID(), createProviderEscrowFulfillment({ baseUrl: signerUrl, token: providerToken, guardian: guardian.address, providerSigner: provider.address }), { maxBatchSize: 1, batchWindowMs: 0, settlementMode: "escrow", escrowWindowSeconds: 600 });
     await store.setPaused(key, true);
     loop = (async () => {
       while (!stopped) {

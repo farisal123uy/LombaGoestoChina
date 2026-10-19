@@ -32,7 +32,10 @@ No MetaMask, personal funds, model installation or judge-owned API account is ne
    budget and risk checks. A draft is not submitted automatically.
 5. Choose **Queue reviewed payments**, then **Start agent** if scheduling is paused.
 6. Wait for the task to become **completed**, select it and inspect the confirmed
-   operation/transaction hash and signed provider namespace.
+   escrow-lock/release operation hashes and signed provider namespace. Funds are
+   locked in Guardian first, then released after provider attestation; if the provider
+   does not deliver before the escrow deadline, timeout recovery returns funds on the
+   isolated fork.
 7. Choose **Verify database probe**. Enter a key/value and choose **Write & read back**.
 8. Close the workspace when finished. A new workspace has its own wallet/database.
 

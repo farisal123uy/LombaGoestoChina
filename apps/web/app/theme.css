@@ -1,21 +1,39 @@
-/* Guardian Wallet — teammate's dark + green design system (4e47b13). */
+/* Guardian Wallet — ivory, slate and emerald application system. */
 :root {
-  --bg: #070d0a;
-  --surface-1: #0c1511;
-  --surface-2: #111d18;
-  --border: #1e2f27;
-  --text: #e9f3ee;
-  --text-muted: #8aa398;
-  --accent: #34d399;
-  --accent-strong: #10b981;
-  --accent-deep: #065f46;
-  --glow: rgba(52, 211, 153, 0.16);
-  --status-amber: #fbbf24;
-  --status-amber-bg: rgba(251, 191, 36, 0.1);
-  --status-red: #ef4444;
-  --status-red-bg: rgba(239, 68, 68, 0.1);
-  --status-violet: #8b5cf6;
-  --status-violet-bg: rgba(139, 92, 246, 0.1);
+  --bg: #f7f8f5;
+  --surface-1: #ffffff;
+  --surface-2: #f2f5f3;
+  --surface-3: #e8efeb;
+  --border: #dce5df;
+  --border-strong: #a6b7b0;
+  --text: #223238;
+  --text-muted: #5e706b;
+  --accent: #087f68;
+  --accent-strong: #066351;
+  --accent-deep: #175b4c;
+  --accent-soft: #e9f5ef;
+  --accent-border: #bbdccc;
+  --on-accent: #ffffff;
+  --glow: rgba(8, 127, 104, 0.08);
+  --status-amber: #865713;
+  --status-amber-bg: #fff5e0;
+  --status-amber-border: #ecd5a6;
+  --status-red: #b13747;
+  --status-red-bg: #fff0f2;
+  --status-red-border: #edc2c9;
+  --status-violet: #6c50a3;
+  --status-violet-bg: #f3effa;
+  --status-violet-border: #dcd2ed;
+  --status-blue: #2b6587;
+  --status-blue-bg: #edf5fb;
+  --status-blue-border: #c8deeb;
+  --nav-surface: rgba(255, 255, 255, .92);
+  --nav-fade: rgba(247, 248, 245, .9);
+  --wash-mint: rgba(176, 220, 199, .27);
+  --wash-blue: rgba(199, 218, 237, .2);
+  --panel-gradient: linear-gradient(150deg, var(--surface-1), #fbfcfa);
+  --accent-gradient: linear-gradient(135deg, #e2f3e9, #f5faf6);
+  --brand-gradient: linear-gradient(145deg, #199a79, #08745e);
   --amber: var(--status-amber);
   --red: var(--status-red);
   --red-bg: var(--status-red-bg);
@@ -33,12 +51,18 @@
   --space-lg: 1.5rem;
   --space-xl: 2rem;
   --space-2xl: 3rem;
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --shadow-soft: 0 14px 42px rgba(35, 65, 52, .06), 0 2px 6px rgba(35, 65, 52, .025);
+  --shadow-raised: 0 24px 60px rgba(35, 65, 52, .09), 0 4px 12px rgba(35, 65, 52, .04);
+  --shadow-accent: 0 6px 20px rgba(8, 127, 104, .15);
 }
 * { box-sizing: border-box; }
 body { background: var(--bg); color: var(--text); margin: 0; line-height: 1.6; font-family: var(--font-geist-sans), system-ui, sans-serif; }
+::selection { color: var(--accent-deep); background: var(--accent-border); }
+input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 .mono, [class*="font-mono"] { font-family: var(--font-geist-mono), ui-monospace, monospace; }
 .heading { letter-spacing: var(--tracking-tight); line-height: 1.2; font-weight: 600; }
 .mono { letter-spacing: var(--tracking-normal); }
@@ -51,7 +75,7 @@ body { background: var(--bg); color: var(--text); margin: 0; line-height: 1.6; f
 .badge-violet { background: var(--status-violet-bg); color: var(--status-violet); border: 1px solid var(--status-violet); }
 .badge-accent { background: var(--glow); color: var(--accent); border: 1px solid var(--accent); }
 .btn { display: inline-flex; align-items: center; gap: .5rem; padding: .75rem 1.5rem; border-radius: var(--radius-md); font-weight: 500; text-decoration: none; border: none; cursor: pointer; font-family: inherit; font-size: 1rem; }
-.btn-primary { background: var(--accent); color: var(--bg); }
+.btn-primary { background: var(--accent); color: var(--on-accent); }
 .btn-primary:hover { background: var(--accent-strong); }
 .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
 .btn-secondary:hover { border-color: var(--accent); }

@@ -87,17 +87,22 @@ bound provider delivery signature and authenticated fresh service probe. Provide
 delivery retries do not repay an invoice. Repeated failure becomes owner attention
 while preserving payment evidence. The database rental starts at settlement and expires.
 
-### Isolated service-escrow proof of concept
+### Opt-in service escrow
 
 `GuardianPayments` additionally has an experimental `lockPayment` path: one authenticated
 quote is moved from the smart account into the module, then a quote-signer EIP-712
 delivery attestation releases it to the provider, or any caller can return it to the
 account after a deadline of at most 24 hours. Pending escrow prevents module uninstall;
 a same-day refund frees that day's budget but keeps the invoice ID consumed. This path is
-tested only in `contracts/test/Escrow.integration.ts` on a local fork. It is not wired to
-the production API, worker fulfillment flow, task states or current public session; the
-provider signature is a trust assumption, not an on-chain service-quality oracle. See
-[escrow prototype notes](ESCROW_PROTOTYPE.md) before describing it as a capability.
+tested in `contracts/test/Escrow.integration.ts`, the reviewer worker on a local fork,
+and a separately owner-authorized Base Sepolia account. The public demo account is a new
+Kernel index 1; the prior index-0 owner deployment remains direct-settlement. Its recorded
+public lock/release receipts and activated namespace are in
+`docs/evidence/public-escrow-procurement.json`. In both paths, service is staged and
+probed internally before release; normal reads/writes require the confirmed release.
+The provider signature is a trust assumption, not an on-chain service-quality oracle.
+See [escrow prototype notes](ESCROW_PROTOTYPE.md) for deployment boundaries and the
+owner-signed rollout sequence.
 
 ## Reviewer execution environment
 

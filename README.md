@@ -28,12 +28,23 @@ The dashboard now includes the [Astra wallet assistant](docs/WALLET_ASSISTANT.md
 English/Indonesian asset overview, authenticated invoice drafting/payment planning,
 explicit queue release, and deterministic wallet-policy/operation risk checks.
 See the API contract and [frontend integration record](docs/FRONTEND_INTEGRATION.md).
+The [unified web workspace](docs/UI_WORKSPACE.md) connects overview, owner setup,
+wallet activity, escrow receipts and evidence with shared navigation and responsive layouts.
 The `submission/` directory was emptied at the team's request for a rebuild.
+
+An **opt-in service escrow path** is exercised end-to-end in the isolated reviewer fork
+and in a separate owner-authorized Base Sepolia deployment at Kernel index 1. The public
+demo includes a confirmed lock, provider-attested release and staged namespace activation;
+see the [recorded public escrow evidence](docs/evidence/public-escrow-procurement.json).
+The previous owner account at index 0 and the default mode remain direct-settlement.
+Owner setup has a separate opt-in path and dashboard receipts link to the public testnet
+transactions. See the [escrow design and demo steps](docs/ESCROW_PROTOTYPE.md).
 
 Stage two is on **`feat/batching-evaluation`**: bounded queue batching with shared
 durable attempts, fee deadlines, expanded reconciliation/security evaluation and
-the new wallet assistant. Current integration checks: **78 cases**, plus **7 web tests**.
-Contract/fork checkpoint: **16 cases**; **13 browser cases** cover the integrated
+the new wallet assistant and opt-in escrow path. Current integration checks:
+**104 cases**, plus **7 web tests**. Contract/fork checkpoint: **17 cases**;
+**17 browser cases** cover the integrated
 frontend/reviewer. Lint/typecheck/build passed. Real GPT-OSS regression **60/60** after
 fixing six baseline API/schema errors; the failing baseline is preserved. Historical
 Qwen corpus **60/60** after prompt

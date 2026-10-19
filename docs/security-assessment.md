@@ -8,11 +8,13 @@ Actual Linux and public HTTPS browser flows reach completed, verified delivery a
 write/read. China readiness probes are network checks, not an audit. Guides/results:
 [CLOUD-VALIDATION.md](evidence/CLOUD-VALIDATION.md), [MODEL_SELECTION.md](MODEL_SELECTION.md).
 
-An **isolated contract escrow proof of concept** has since been added and tested on a
-local fork. It holds one quoted amount pending a provider-signed delivery attestation
-or a bounded timeout refund. It is not connected to the API/worker or existing owner
-session. The quote signer is a trusted delivery attester; the contract cannot itself
-observe the off-chain service probe. See [ESCROW_PROTOTYPE.md](ESCROW_PROTOTYPE.md).
+An **opt-in escrow flow** has been tested end-to-end in the reviewer local fork and used
+for one separately owner-authorized public Base Sepolia demo at Kernel index 1. It held
+one quoted amount, accepted a provider-signed delivery attestation, and activated the
+staged namespace after release; the receipt is recorded in
+`evidence/public-escrow-procurement.json`. The existing owner account at index 0 remains
+direct-settlement. The quote signer is a trusted delivery attester; the contract cannot
+itself observe service quality. See [ESCROW_PROTOTYPE.md](ESCROW_PROTOTYPE.md).
 
 ## Current cloud/reviewer additions
 
@@ -72,6 +74,7 @@ tests, chain-driver fixtures and actual-Kernel fork evidence are distinguished b
 | Unknown reconciliation | SQL + actual-driver local fork + conflict fixtures | Lost-response batch recovery; confirmation/reorg/nonce/partial-settlement/head-lag/timeout conflicts tested. Production reorg/multi-bundler stress remains. |
 | Circuit breaker | Partial | Local pause and pause-only guardian/account unpause tested separately; pending control-order corpus remains. |
 | Provider/invoice integrity | Public + local/fork | Signed quote, canonical settlement, signed delivery and fresh PostgreSQL write/read verified in public AI-01. Service lifetime is limited; delivery is not atomic with payment. |
+| Escrow staged-service access | Local fork + one public Base Sepolia demo | Provider namespace was staged/read-disabled, internally probed, and activated after the confirmed release. Owner escrow uses a fresh Kernel index 1 and scoped owner authorization; index 0 remains direct. Provider-signed readiness remains an oracle trust assumption. |
 | Sponsored bootstrap | Public + local fork | Owner-signed deployment confirmed. Pinned paymaster, signature/intent/nonce/factory binding and restart/duplicate-request recovery tested. |
 
 Token custody remains in the Kernel account. Only the worker receives the agent

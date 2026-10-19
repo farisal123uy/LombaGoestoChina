@@ -35,6 +35,7 @@
     "wallet:deployment-quote": "npm run build:packages && npm run compile --workspace @guardian-wallet/contracts && node tools/wallet/check-deployment-quote.mjs",
     "wallet:verify": "npm run build:packages && node tools/wallet/verify-deployment.mjs",
     "wallet:procurement:verify": "npm run build:packages && node tools/wallet/verify-procurement.mjs",
+    "wallet:escrow:verify": "npm run build:packages && node tools/wallet/verify-escrow-procurement.mjs",
     "model:check": "npm run build:packages && node tools/models/evaluate-qwen.mjs",
     "model:cloud": "npm run build:packages && node tools/models/evaluate-qwen.mjs --record",
     "model:compare": "npm run build:packages && node tools/models/benchmark-cloud.mjs --record",

@@ -1,7 +1,9 @@
 // Evidence ledger integrated from feat/enterprise-dashboard (4e47b13).
 import { formatUnits } from "viem";
+import { developmentChain } from "@guardian-wallet/shared";
 import deploymentArtifact from "../../../docs/evidence/public-deployment.json";
 import procurementArtifact from "../../../docs/evidence/public-procurement.json";
+import escrowProcurementArtifact from "../../../docs/evidence/public-escrow-procurement.json";
 import forkArtifact from "../../../docs/evidence/2026-10-16-local-fork.json";
 import previewArtifact from "../../../docs/evidence/provider-live-preview.json";
 import qwenArtifact from "../../../docs/evidence/qwen-local-evaluation.json";
@@ -19,15 +21,16 @@ export interface CompromisedPlannerRecord extends EvidenceRecord { success: bool
 export interface EvidenceData {
   deployment: EvidenceRecord & { facts: Record<string, string | boolean | undefined> };
   procurement: EvidenceRecord & { facts: Record<string, string | boolean | undefined> };
+  escrow: EvidenceRecord & { facts: Record<string, string | boolean | undefined> };
   localFork: EvidenceRecord & { facts: Record<string, string | boolean | undefined>; compromised: CompromisedPlannerRecord; revoke: EvidenceRecord; recovery: EvidenceRecord & { facts: Record<string, string | boolean | undefined> } };
   preview: EvidenceRecord & { facts: Record<string, string | boolean | undefined> };
   evaluation: EvidenceRecord & { facts: Record<string, string | boolean | undefined>; runs: Array<{ case: string; expected: string; actual: string; passed: boolean; elapsedMs?: number }> };
   hashLedger: HashRecord[];
 }
 type Json = Record<string, unknown>;
-const requiredFiles = ["public-deployment.json", "public-procurement.json", "2026-10-16-local-fork.json", "provider-live-preview.json", "qwen-local-evaluation.json"] as const;
+const requiredFiles = ["public-deployment.json", "public-procurement.json", "public-escrow-procurement.json", "2026-10-16-local-fork.json", "provider-live-preview.json", "qwen-local-evaluation.json"] as const;
 const cloudFiles = ["cloud-model-smoke.json", "cloud-model-comparison.json", "security-cloud-model-evaluation.json", "security-cloud-model-baseline.json", "reviewer-linux-cloud.json"] as const;
-const requiredArtifacts = { "public-deployment.json": deploymentArtifact, "public-procurement.json": procurementArtifact, "2026-10-16-local-fork.json": forkArtifact, "provider-live-preview.json": previewArtifact, "qwen-local-evaluation.json": qwenArtifact };
+const requiredArtifacts = { "public-deployment.json": deploymentArtifact, "public-procurement.json": procurementArtifact, "public-escrow-procurement.json": escrowProcurementArtifact, "2026-10-16-local-fork.json": forkArtifact, "provider-live-preview.json": previewArtifact, "qwen-local-evaluation.json": qwenArtifact };
 const cloudArtifacts = { "cloud-model-smoke.json": smokeArtifact, "cloud-model-comparison.json": comparisonArtifact, "security-cloud-model-evaluation.json": securityArtifact, "security-cloud-model-baseline.json": securityBaselineArtifact, "reviewer-linux-cloud.json": linuxArtifact };
 
 function object(value: unknown, name: string): Json { if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`Invalid evidence JSON object: ${name}`); return value as Json; }
@@ -43,7 +46,7 @@ function hash(label: string, value: unknown, kind: HashKind, origin: Origin, exp
   if (typeof value !== "string") return undefined;
   let safeHref: string | undefined;
   if (origin === "live-public" && kind === "Transaction" && explorerHref) {
-    try { const url = new URL(explorerHref); if (url.protocol === "https:" && url.hostname === "sepolia.basescan.org" && url.pathname.toLowerCase() === `/tx/${value.toLowerCase()}` && /^0x[0-9a-f]{64}$/i.test(value)) safeHref = url.toString(); } catch { /* A malformed link is never treated as a public receipt. */ }
+    try { const url = new URL(explorerHref); if (url.protocol === "https:" && ["sepolia.basescan.org", "base-sepolia.blockscout.com"].includes(url.hostname) && url.pathname.toLowerCase() === `/tx/${value.toLowerCase()}` && /^0x[0-9a-f]{64}$/i.test(value)) safeHref = `${developmentChain.explorerUrl}/tx/${value}`; } catch { /* A malformed link is never treated as a public receipt. */ }
   }
   return { label, value, kind, origin, ...(safeHref ? { explorerHref: safeHref } : {}) };
 }
@@ -57,8 +60,8 @@ export async function readCloudEvidence(name: typeof cloudFiles[number]): Promis
 }
 
 export async function loadEvidence(): Promise<EvidenceData> {
-  const [deploymentJson, procurementJson, forkJson, previewJson, evaluationJson] = await Promise.all(requiredFiles.map(readEvidence));
-  const deploymentData = deploymentJson!, procurementData = procurementJson!, forkData = forkJson!, previewData = previewJson!, evaluationData = evaluationJson!;
+  const [deploymentJson, procurementJson, escrowJson, forkJson, previewJson, evaluationJson] = await Promise.all(requiredFiles.map(readEvidence));
+  const deploymentData = deploymentJson!, procurementData = procurementJson!, escrowData = escrowJson!, forkData = forkJson!, previewData = previewJson!, evaluationData = evaluationJson!;
   const deployment: EvidenceData["deployment"] = {
     title: "Owner-sponsored deployment", origin: "live-public", capturedAt: text(deploymentData.verifiedAt, "public-deployment.verifiedAt"), sourceState: optionalText(deploymentData.sourceState), sourceHashes: strings(deploymentData.sources ?? {}, "public-deployment.sources"),
     hashes: [...only(hash("UserOperation", deploymentData.userOperationHash, "UserOperation", "live-public")), ...only(hash("Transaction", deploymentData.transactionHash, "Transaction", "live-public", text(deploymentData.explorer, "public-deployment.explorer"))), ...only(hash("Block", deploymentData.blockHash, "Block", "live-public"))],
@@ -69,6 +72,38 @@ export async function loadEvidence(): Promise<EvidenceData> {
     title: "Database procurement and delivery", origin: "live-public", capturedAt: text(procurementData.verifiedAt, "public-procurement.verifiedAt"), sourceState: optionalText(procurementData.sourceState), sourceHashes: strings(procurementData.sources ?? {}, "public-procurement.sources"),
     hashes: [...only(hash("UserOperation", procurementData.userOperationHash, "UserOperation", "live-public")), ...only(hash("Transaction", procurementData.transactionHash, "Transaction", "live-public", text(procurementData.explorer, "public-procurement.explorer"))), ...only(hash("Settlement block", procurementData.blockHash, "Block", "live-public")), ...only(hash("Invoice", procurementData.invoiceId, "Invoice", "live-public")), ...only(hash("Payment", procurementData.paymentId, "Payment", "live-public")), ...only(hash("Service", procurementData.serviceHash, "Service", "live-public"))],
     facts: { "Task status": text(procurementData.taskStatus, "public-procurement.taskStatus"), "Amount": amount(procurementData.amountUnits, procurementData.tokenDecimals), "Settlement": text(procurementData.settledAt, "public-procurement.settledAt"), "Token balance before": amount(snapshots.tokenBalanceBeforeUnits, procurementData.tokenDecimals), "Token balance after": amount(snapshots.tokenBalanceAfterUnits, procurementData.tokenDecimals), "UTC spend before": amount(snapshots.utcDaySpentBeforeUnits, procurementData.tokenDecimals), "UTC spend after": amount(snapshots.utcDaySpentAfterUnits, procurementData.tokenDecimals), "Quote signature verified": bool(procurementData.quoteSignatureVerified, "public-procurement.quoteSignatureVerified"), "Delivery signature verified": bool(delivery.signatureVerified, "public-procurement.delivery.signatureVerified"), "Recorded delivery status": text(delivery.status, "public-procurement.delivery.status"), "UTC spend at verification": amount(policy.spentUnits, procurementData.tokenDecimals), "Recorded source state": optionalText(procurementData.sourceState) },
+  };
+  const lock = object(escrowData.lock, "public-escrow-procurement.lock"), release = object(escrowData.release, "public-escrow-procurement.release"), escrowDelivery = object(escrowData.delivery, "public-escrow-procurement.delivery");
+  const escrow: EvidenceData["escrow"] = {
+    title: "Escrow lock, provider release and service delivery", origin: "live-public", capturedAt: text(escrowData.verifiedAt, "public-escrow-procurement.verifiedAt"), sourceState: optionalText(escrowData.sourceState), sourceHashes: strings(escrowData.sources ?? {}, "public-escrow-procurement.sources"),
+    hashes: [
+      ...only(hash("Lock UserOperation", lock.userOperationHash, "UserOperation", "live-public")),
+      ...only(hash("Escrow lock transaction", lock.transactionHash, "Transaction", "live-public", text(lock.explorer, "public-escrow-procurement.lock.explorer"))),
+      ...only(hash("Lock block", lock.blockHash, "Block", "live-public")),
+      ...only(hash("Invoice", escrowData.invoiceId, "Invoice", "live-public")),
+      ...only(hash("Payment", escrowData.paymentId, "Payment", "live-public")),
+      ...only(hash("Service", escrowData.serviceHash, "Service", "live-public")),
+      ...only(hash("Release UserOperation", release.userOperationHash, "UserOperation", "live-public")),
+      ...only(hash("Escrow release transaction", release.transactionHash, "Transaction", "live-public", text(release.explorer, "public-escrow-procurement.release.explorer"))),
+      ...only(hash("Release block", release.blockHash, "Block", "live-public")),
+    ],
+    facts: {
+      "Network": "Base Sepolia · public testnet",
+      "Settlement mode": text(escrowData.settlementMode, "public-escrow-procurement.settlementMode"),
+      "Task status": text(escrowData.taskStatus, "public-escrow-procurement.taskStatus"),
+      "Escrow status": text(escrowData.escrowStatus, "public-escrow-procurement.escrowStatus"),
+      "Amount": amount(escrowData.amountUnits, escrowData.tokenDecimals),
+      "Quote signature verified": bool(escrowData.quoteSignatureVerified, "public-escrow-procurement.quoteSignatureVerified"),
+      "Lock UserOperation succeeded": bool(lock.userOperationSuccess, "public-escrow-procurement.lock.userOperationSuccess"),
+      "Lock confirmations": scalar(lock.confirmations, "public-escrow-procurement.lock.confirmations"),
+      "Release UserOperation succeeded": bool(release.userOperationSuccess, "public-escrow-procurement.release.userOperationSuccess"),
+      "Release confirmations": scalar(release.confirmations, "public-escrow-procurement.release.confirmations"),
+      "Provider receipt signature verified": bool(escrowDelivery.providerReceiptSignatureVerified, "public-escrow-procurement.delivery.providerReceiptSignatureVerified"),
+      "Guardian accepted provider attestation": bool(release.providerAttestationAcceptedByGuardian, "public-escrow-procurement.release.providerAttestationAcceptedByGuardian"),
+      "Namespace activated after release": bool(escrowDelivery.namespaceReady, "public-escrow-procurement.delivery.namespaceReady"),
+      "Staged namespace probe count": scalar(escrowDelivery.internalProbeCount, "public-escrow-procurement.delivery.internalProbeCount"),
+      "Limitations": text(escrowData.limitations, "public-escrow-procurement.limitations"),
+    },
   };
   if (!Array.isArray(forkData.operationResults)) throw new Error("Invalid local-fork.operationResults");
   const operations = forkData.operationResults;
@@ -99,8 +134,8 @@ export async function loadEvidence(): Promise<EvidenceData> {
     runs: evaluationData.runs.map((run, index) => { const item = object(run, `evaluation.runs.${index}`), metrics = item.metrics && typeof item.metrics === "object" ? object(item.metrics, "evaluation.metrics") : undefined; return { case: text(item.case, "evaluation.case"), expected: JSON.stringify(item.expected), actual: JSON.stringify(item.actual), passed: bool(item.passed, "evaluation.passed"), elapsedMs: typeof metrics?.elapsedMs === "number" ? metrics.elapsedMs : undefined }; }),
   };
   const sourceHashes = (record: EvidenceRecord) => Object.entries(record.sourceHashes).map(([path, value]) => ({ label: path, value, kind: "Source SHA-256" as const, origin: record.origin }));
-  const hashLedger = [deployment, procurement, localFork, compromised, localFork.revoke, localFork.recovery, preview, evaluation].flatMap((record) => [...record.hashes, ...sourceHashes(record)]);
-  return { deployment, procurement, localFork, preview, evaluation, hashLedger };
+  const hashLedger = [deployment, procurement, escrow, localFork, compromised, localFork.revoke, localFork.recovery, preview, evaluation].flatMap((record) => [...record.hashes, ...sourceHashes(record)]);
+  return { deployment, procurement, escrow, localFork, preview, evaluation, hashLedger };
 }
 
 export interface LandingEvidence {

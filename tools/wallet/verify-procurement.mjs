@@ -96,7 +96,7 @@ try {
     offerId: offer.id, serviceKind: offer.kind, amountUnits: quote.amountUnits, tokenDecimals: 6, tokenLabel: "MockUSD test token", recipient: quote.recipient,
     invoiceId: quote.invoiceId, paymentId: id, serviceHash: quote.serviceHash, quoteSignatureVerified: true, planOrigin: plan.origin, model: plan.model,
     exchange: (task.exchange || []).map(({ actor, stage, modelId, observedAt }) => ({ actor, stage, modelId, observedAt })),
-    userOperationHash: attempt.userOperationHash, transactionHash: receipt.transactionHash, explorer: `https://sepolia.basescan.org/tx/${receipt.transactionHash}`,
+    userOperationHash: attempt.userOperationHash, transactionHash: receipt.transactionHash, explorer: `https://base-sepolia.blockscout.com/tx/${receipt.transactionHash}`,
     blockNumber: receipt.blockNumber.toString(), blockHash: receipt.blockHash, settledAt: new Date(Number(block.timestamp) * 1000).toISOString(), confirmations: confirmations.toString(),
     outerTransactionSuccess: true, userOperationSuccess: true, userOperationNonce: attempt.nonce, matchedSettlementEventsInReceipt: settlements.length,
     invoiceConsumedBeforeBlock: consumedBefore, invoiceConsumedAtBlock: consumedAfter, invoiceConsumedNow: consumedNow,

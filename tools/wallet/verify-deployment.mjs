@@ -9,7 +9,8 @@ try {
   await verifyProject();
   const api = await readEnvironment("api");
   const deployment = JSON.parse(await readFile(join(root, ".local/onboarding/deployment.json"), "utf8"));
-  const journal = JSON.parse(await readFile(join(root, ".local/onboarding/operations.json"), "utf8"));
+  const journalPath = deployment.settlementMode === "escrow" ? ".local/onboarding-escrow/operations.json" : ".local/onboarding/operations.json";
+  const journal = JSON.parse(await readFile(join(root, journalPath), "utf8"));
   const record = journal.operation;
   if (record?.status !== "confirmed" || !record.transactionHash) throw new Error("DEPLOYMENT_NOT_CONFIRMED");
   const client = createDevelopmentPublicClient(api.BASE_SEPOLIA_RPC_URL || "https://sepolia.base.org");
@@ -25,9 +26,10 @@ try {
   if (canonical.hash !== receipt.blockHash || policy.token.toLowerCase() !== deployment.token.toLowerCase() || policy.quoteSigner.toLowerCase() !== deployment.providerSigner.toLowerCase() || !policy.installed) throw new Error("DEPLOYMENT_POLICY_BINDING_FAILED");
   const report = {
     verifiedAt: new Date().toISOString(), evidenceType: "public-base-sepolia-owner-signed-sponsored-deployment",
-    chainId: 84532, owner: deployment.owner, kernel: deployment.kernel, guardian: deployment.guardian, token: deployment.token,
+    chainId: 84532, settlementMode: deployment.settlementMode || "direct", kernelIndex: deployment.kernelIndex || "0",
+    owner: deployment.owner, kernel: deployment.kernel, guardian: deployment.guardian, token: deployment.token,
     providerSigner: deployment.providerSigner, recipient: deployment.recipient, sessionSigner: deployment.sessionSigner,
-    userOperationHash: hash, transactionHash: receipt.transactionHash, explorer: `https://sepolia.basescan.org/tx/${receipt.transactionHash}`,
+    userOperationHash: hash, transactionHash: receipt.transactionHash, explorer: `https://base-sepolia.blockscout.com/tx/${receipt.transactionHash}`,
     blockNumber: receipt.blockNumber.toString(), blockHash: receipt.blockHash, paymaster: event.args.paymaster,
     ownerSignatureVerified: true, outerTransactionSuccess: true, userOperationSuccess: true,
     tokenBalanceUnits: policy.balanceUnits, protectedBalanceUnits: policy.protectedBalanceUnits,
@@ -35,7 +37,10 @@ try {
     modulePaused: policy.paused, sessionAuthorizationRecorded: Boolean(journal.sessionSignature), runtimeSynchronized: Boolean(journal.runtimeSynced),
     scope: "Public testnet deployment and policy verification. No service procurement/payment completion claim; testnet acceptance for final competition evidence remains organizer-dependent.",
   };
-  if (process.argv.includes("--record")) await writeFile(join(root, "docs/evidence/public-deployment.json"), `${JSON.stringify(report, null, 2)}\n`);
+  if (process.argv.includes("--record")) {
+    const evidencePath = deployment.settlementMode === "escrow" ? "docs/evidence/public-escrow-deployment.json" : "docs/evidence/public-deployment.json";
+    await writeFile(join(root, evidencePath), `${JSON.stringify(report, null, 2)}\n`);
+  }
   console.log(JSON.stringify(report, null, 2));
 } catch {
   console.error("DEPLOYMENT_VERIFICATION_FAILED_DETAILS_SUPPRESSED");

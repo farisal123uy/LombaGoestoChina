@@ -1,4 +1,12 @@
-# Astra enterprise demo — five-minute storyboard
+# Astra enterprise demo — previous five-minute storyboard
+
+The current, refreshed nine-slide competition presentation is
+[`submission/generated/Guardian-Wallet-presentation.pptx`](../submission/generated/Guardian-Wallet-presentation.pptx),
+with Indonesian rehearsal notes at
+[`submission/presentation-notes.md`](../submission/presentation-notes.md). It includes
+the owner-authorized public Base Sepolia escrow deployment and lock/release receipts.
+The five-minute direct-settlement storyboard below is retained as a separate historical
+live-rehearsal variant; it is not the current escrow presentation.
 
 Status: **live-UI storyboard for team rehearsal; a separate 4m24s English-narrated
 recorded-evidence walkthrough is prepared** at

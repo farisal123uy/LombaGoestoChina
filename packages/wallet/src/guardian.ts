@@ -11,6 +11,7 @@ export const guardianAbi = parseAbi([
   "struct ServiceQuote { address account; bytes32 providerId; bytes32 invoiceId; bytes32 serviceHash; address token; address recipient; uint256 amount; uint48 validUntil; }",
   "function executePayments(ServiceQuote[] quotes, bytes[] signatures, uint64 expectedPolicyVersion, uint48 validUntil)",
   "function lockPayment(ServiceQuote quote, bytes signature, uint64 expectedPolicyVersion, uint48 validUntil, uint48 refundAfter)",
+  "function MAX_ESCROW_WINDOW() view returns (uint48)",
   "function releaseEscrow(bytes32 paymentId, bytes32 transactionHash, uint48 readyAt, uint48 serviceExpiresAt, bytes signature)",
   "function refundEscrow(bytes32 paymentId)",
   "function pendingEscrows(address account) view returns (uint256)",

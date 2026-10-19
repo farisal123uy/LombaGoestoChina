@@ -6,7 +6,7 @@ import { keccak256, toBytes, verifyTypedData } from "viem";
 import { PaymentStore, accountKey, type QueryDatabase } from "@guardian-wallet/database";
 import { BoundedPaymentPlanner, QwenClient, buildWalletOverview, formatWalletUnits, escapeVendorText, selectPaymentBatch, vendorDescriptionSchema } from "@guardian-wallet/planner";
 import { getPaymentId, invoiceId, providerId, serviceHash, quoteTypedData, type PaymentExecutionDriver, type PaymentFulfillment } from "@guardian-wallet/wallet";
-import { paymentPlanSchema, serviceQuoteSchema, type DeliveryReceipt, type PaymentAttempt, type PaymentTask, type PolicySnapshot, type WalletAssistantResponse, type WalletIntent, type WalletOverview, type WalletRiskReport, type WalletExecutionResponse } from "@guardian-wallet/shared";
+import { paymentPlanSchema, serviceQuoteSchema, type DeliveryReceipt, type EscrowActionAttempt, type PaymentAttempt, type PaymentTask, type PolicySnapshot, type WalletAssistantResponse, type WalletIntent, type WalletOverview, type WalletRiskReport, type WalletExecutionResponse } from "@guardian-wallet/shared";
 import { PaymentWorker } from "../../apps/worker/src/worker.js";
 import { buildApp } from "../../apps/api/src/app.js";
 import { OwnerAuth } from "../../apps/api/src/auth.js";
@@ -18,7 +18,7 @@ beforeAll(async () => { sharedDatabase = new PGlite(); await applyTestMigrations
 beforeEach(async () => {
   // Reuse the embedded engine, not financial state. Repeated WASM boot/teardown
   // obscures application timing and can cause memory pressure on laptop/CI hosts.
-  await sharedDatabase.exec("RESET ROLE; TRUNCATE payment_attempt_members,payment_attempts,payment_tasks,execution_locks,worker_controls;");
+  await sharedDatabase.exec("RESET ROLE; TRUNCATE escrow_operations,payment_attempt_members,payment_attempts,payment_tasks,execution_locks,worker_controls;");
 });
 afterAll(async () => { await sharedDatabase.close(); });
 afterEach(async () => { for (const cleanup of close.splice(0).reverse()) await cleanup(); });
@@ -648,4 +648,35 @@ describe("Owner API, bounded planning and untrusted input", () => {
       expect(serviceQuoteSchema.safeParse({ ...valid, amountUnits: invalid }).success).toBe(false);
     }
   });
+  it("refunds an escrowed task after its deadline without requesting provider fulfillment", async () => {
+    const f = await fixture(), base = await f.task(), outcome = await f.planner.plan(base, f.state);
+    if (outcome.status !== "planned") throw new Error("FIXTURE_PLAN_REQUIRED");
+    const refundAfter = Math.floor(f.state.observedAt + 120), lockHash = keccak256(toBytes("escrow-lock-transaction"));
+    const task = await f.store.createTask({ ...base, offerId: "database-small-1h", status: "escrowed", plan: outcome.plan,
+      escrow: { status: "locked", lockedAt: f.state.observedAt, refundAfter, lockTransactionHash: lockHash } });
+    const lockAttempt: PaymentAttempt = { taskId: task.id, sender: f.account, userOperationHash: keccak256(toBytes("escrow-lock-operation")), nonce: "18446744073709551616", nonceKey: "1", status: "confirmed", submissionBlock: "100", preparedAt: f.state.observedAt * 1000, validUntil: outcome.plan.validUntil, transactionHash: lockHash, settlementMode: "escrow", escrowLockedAt: f.state.observedAt, escrowRefundAfter: refundAfter };
+    await f.db.query("INSERT INTO payment_attempts (task_id,account_key,status,record,signed_payload) VALUES ($1,$2,'confirmed',$3::text::jsonb,$4)", [task.id, f.key, JSON.stringify(lockAttempt), "durable-lock-payload"]);
+    await f.db.query("INSERT INTO payment_attempt_members (task_id,attempt_task_id) VALUES ($1,$1)", [task.id]);
+
+    const refundRecord: EscrowActionAttempt = { taskId: task.id, sender: f.account, userOperationHash: keccak256(toBytes("escrow-refund-operation")), nonce: "18446744073709551617", nonceKey: "1", status: "prepared", submissionBlock: "101", preparedAt: f.state.observedAt * 1000, validUntil: outcome.plan.validUntil, settlementMode: "escrow", action: "refund" };
+    const driver: PaymentExecutionDriver = {
+      ...f.driver,
+      prepareEscrowAction: vi.fn(async (_plan, action) => { expect(action.kind).toBe("refund"); return { attempt: refundRecord, signedPayload: "durable-refund-payload" }; }),
+      reconcileEscrowAction: vi.fn(async () => ({ status: "confirmed" as const, transactionHash: keccak256(toBytes("escrow-refund-transaction")) })),
+      submit: vi.fn(async () => refundRecord.userOperationHash),
+    };
+    const fulfillment: PaymentFulfillment = { fulfill: vi.fn(), fulfillEscrow: vi.fn(async () => { throw new Error("SHOULD_NOT_PROVISION_AFTER_DEADLINE"); }), activateEscrow: vi.fn(async () => {}) };
+    f.advance((refundAfter + 1 - f.state.observedAt) * 1000);
+    let now = f.state.observedAt * 1000 + (refundAfter + 1 - f.state.observedAt) * 1000;
+    const worker = () => new PaymentWorker(f.store, f.planner, driver, f.key, "escrow-refund-worker", fulfillment, { settlementMode: "escrow", clock: () => now });
+    expect(await worker().runOnce()).toBe("escrow_refund_submitted");
+    expect(driver.prepareEscrowAction).toHaveBeenCalledOnce(); expect(driver.submit).toHaveBeenCalledOnce();
+    expect(fulfillment.fulfillEscrow).not.toHaveBeenCalled();
+    f.advance(4000); now += 4000;
+    expect(await worker().runOnce()).toBe("refunded");
+    expect((await f.store.getTask(task.id, f.owner.address))?.status).toBe("refunded");
+    expect((await f.store.getTask(task.id, f.owner.address))?.escrow?.status).toBe("refunded");
+    expect(fulfillment.fulfillEscrow).not.toHaveBeenCalled(); expect(driver.submit).toHaveBeenCalledOnce();
+  });
+
 });

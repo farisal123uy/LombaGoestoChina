@@ -103,6 +103,41 @@ describe("Provider signer and real PostgreSQL test-service provisioning (chain p
     await db.exec(`UPDATE provider_databases SET expires_at=now()-interval '1 second'`);
     expect((await f.app.inject({ method: "POST", url: `/databases/${delivery.namespaceId}/probe`, headers: f.headers, payload: { probeId: randomUUID() } })).statusCode).toBe(409);
   });
+  it("keeps escrow-staged namespaces private until release activation and activates idempotently", async () => {
+    const f = await fixture(), invoice = await f.invoice(), namespaceId = randomUUID(), now = Math.floor(Date.now() / 1000);
+    const receipt: DeliveryReceipt = { account: f.account, invoiceId: invoice.quote.invoiceId, paymentId: getPaymentId(84532, invoice.quote),
+      serviceHash: invoice.quote.serviceHash, namespaceId, transactionHash: f.tx, readyAt: now, expiresAt: now + 3600, signature: `0x${"11".repeat(65)}` as Hex };
+    await f.store.saveNamespace({ namespaceId, invoiceId: invoice.quote.invoiceId, serviceHash: invoice.quote.serviceHash, capacityBytes: 1048576, receipt }, false);
+    await expect(f.store.values(namespaceId)).rejects.toThrow("SERVICE_NOT_AVAILABLE_OR_EXPIRED");
+    await expect(f.store.probe(namespaceId, randomUUID())).rejects.toThrow("SERVICE_NOT_AVAILABLE_OR_EXPIRED");
+    expect((await f.store.probe(namespaceId, randomUUID(), true)).ready).toBe(true);
+
+    const releaseTransaction = keccak256(toBytes("escrow-confirmed-release"));
+    await f.store.activateEscrow(invoice.quote.invoiceId, releaseTransaction);
+    await f.store.activateEscrow(invoice.quote.invoiceId, releaseTransaction);
+    await expect(f.store.activateEscrow(invoice.quote.invoiceId, keccak256(toBytes("different-release")))).rejects.toThrow("ESCROW_ACTIVATION_CONFLICT");
+    expect(await f.store.values(namespaceId)).toEqual({});
+    expect(await f.store.put(namespaceId, "release", "confirmed")).toMatchObject({ stored: true });
+    expect((await f.store.probe(namespaceId, randomUUID())).ready).toBe(true);
+  });
+  it("keeps an escrow-staged namespace inaccessible until the confirmed release is activated", async () => {
+    const f = await fixture(), invoice = await f.invoice(), namespaceId = randomUUID();
+    const now = Math.floor(Date.now() / 1000), paymentId = getPaymentId(84532, invoice.quote);
+    const receipt: DeliveryReceipt = { account: f.account, invoiceId: invoice.quote.invoiceId, paymentId, serviceHash: invoice.quote.serviceHash,
+      namespaceId, transactionHash: f.tx, readyAt: now, expiresAt: now + 3600, signature: `0x${"11".repeat(65)}` as Hex };
+    await f.store.saveNamespace({ namespaceId, invoiceId: invoice.quote.invoiceId, serviceHash: invoice.quote.serviceHash, capacityBytes: 1048576, receipt }, false);
+    expect(await f.store.values(namespaceId).catch((error) => error.message)).toBe("SERVICE_NOT_AVAILABLE_OR_EXPIRED");
+    await expect(f.store.probe(namespaceId, randomUUID())).rejects.toThrow("SERVICE_NOT_AVAILABLE_OR_EXPIRED");
+    expect((await f.store.probe(namespaceId, randomUUID(), true)).ready).toBe(true);
+
+    const releaseTx = keccak256(toBytes("escrow-release-tx"));
+    await f.store.activateEscrow(invoice.quote.invoiceId, releaseTx);
+    await f.store.activateEscrow(invoice.quote.invoiceId, releaseTx); // Idempotent recovery after a lost activation response.
+    await expect(f.store.activateEscrow(invoice.quote.invoiceId, keccak256(toBytes("different-release")))).rejects.toThrow("ESCROW_ACTIVATION_CONFLICT");
+    expect(await f.store.values(namespaceId)).toEqual({});
+    expect(await f.store.put(namespaceId, "released", "yes")).toMatchObject({ stored: true });
+    expect((await f.store.probe(namespaceId, randomUUID())).ready).toBe(true);
+  });
   it("provider AI forwards only fixed offer identity and cannot inject signer financial fields", async () => {
     const f = await fixture(), quoted = await f.invoice();
     let decision: object = { accepted: true, offerId: "database-small-1h", summary: "The requested offer is available." };

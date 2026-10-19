@@ -45,10 +45,15 @@ it("review workspace: real fork, signed procurement/delivery and isolated databa
   while (Date.now() < deadline) {
     detail = (await first.api.inject({ method: "GET", url: `/v1/tasks/${taskId}`, headers })).json<typeof detail>();
     if (detail.task.status === "completed") break;
+    if (detail.task.status === "escrowed") {
+      assert.equal(detail.task.escrow?.status, "locked");
+      assert.equal((await first.api.inject({ method: "GET", url: `/v1/tasks/${taskId}/database`, headers })).statusCode, 409, "service reads stay blocked while funds remain in escrow");
+    }
     assert(!["needs_owner", "rejected"].includes(detail.task.status), JSON.stringify({ taskStatus: detail.task.status, reason: detail.task.reason }));
     await new Promise((resolve) => setTimeout(resolve, 700));
   }
   assert.equal(detail.task.status, "completed", JSON.stringify(detail)); assert.equal(detail.operation?.status, "confirmed"); assert(detail.task.delivery);
+  assert.equal(detail.task.escrow?.status, "released"); assert(detail.task.escrow?.lockTransactionHash); assert(detail.task.escrow?.releaseTransactionHash);
   const write = await first.api.inject({ method: "PUT", url: `/v1/tasks/${taskId}/database`, headers, payload: { key: "review-proof", value: "Signed payment and service delivery verified." } });
   assert.equal(write.statusCode, 200, write.body);
   const values = (await first.api.inject({ method: "GET", url: `/v1/tasks/${taskId}/database`, headers })).json<{ values: Record<string, string> }>();
@@ -64,7 +69,8 @@ it("review workspace: real fork, signed procurement/delivery and isolated databa
   assert.equal((await second.api.inject({ method: "GET", url: `/v1/tasks/${taskId}`, headers: otherHeaders })).statusCode, 404);
   const report = { capturedAt: new Date().toISOString(), evidenceType: "actual-isolated-Kernel-fork-PGlite-cloud-HTTP-fixture-not-live-model", modelId: defaultCloudModel, modelCalls: calls, taskStatus: detail.task.status, operationStatus: detail.operation?.status, transactionHash: detail.operation?.transactionHash, before, after, secondAccount: other.account,
     resourceObservation: { firstWorkspace: firstResources, twoWorkspaceRssBytes: process.memoryUsage().rss, processPeakRssKb: process.resourceUsage().maxRSS, environment: "Windows local test process; excludes separate web process; not a Linux hosting capacity guarantee" },
-    checks: ["draft-not-sent", "queue-preserves-pause", "actual-restricted-session-settlement", "signed-delivery-verification", "database-probe-and-write-read", "idempotent-execute", "separate-wallet-and-database"], limitations: "Model HTTP responses are explicit fixtures. Real contracts and service DB execute on disposable local forks. No Groq inference, public transaction, commercial purchase or billing." };
+    escrow: detail.task.escrow,
+    checks: ["draft-not-sent", "queue-preserves-pause", "restricted-session-escrow-lock", "provider-attested-escrow-release", "signed-delivery-verification", "database-probe-and-write-read", "idempotent-execute", "separate-wallet-and-database"], limitations: "Model HTTP responses are explicit fixtures. Real contracts and service DB execute on disposable local forks. Escrow uses a trusted provider attestation plus timeout refund; service quality is not independently proven on-chain. No Groq inference, public transaction, commercial purchase or billing." };
   if (process.env.RECORD_REVIEW_EVIDENCE === "true") await writeFile(new URL("../../docs/evidence/reviewer-workspace-fork.json", import.meta.url), `${JSON.stringify(report, null, 2)}\n`);
   t.diagnostic(JSON.stringify(report));
 });

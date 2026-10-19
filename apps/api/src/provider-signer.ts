@@ -5,7 +5,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { parseEventLogs, type Address, type Hex, type PublicClient } from "viem";
 import { accountKey, type ProviderStore } from "@guardian-wallet/database";
 import { databaseValueSchema, hashSchema, offerIdSchema, type DeliveryReceipt, type ServiceQuote } from "@guardian-wallet/shared";
-import { deliveryTypedData, getPaymentId, getServiceOffer, guardianAbi, invoiceId, providerId, quoteTypedData, serviceHash } from "@guardian-wallet/wallet";
+import { deliveryTypedData, escrowDeliveryTypedData, getPaymentId, getServiceOffer, guardianAbi, invoiceId, providerId, quoteTypedData, serviceHash } from "@guardian-wallet/wallet";
 import { requireProviderToken } from "./provider-auth.js";
 export interface ProviderSignerOptions {
   client: PublicClient; store: ProviderStore; account: Address; guardian: Address; token: Address;
@@ -63,10 +63,62 @@ export async function buildProviderSigner(options: ProviderSignerOptions) {
     const namespace = await options.store.saveNamespace({ namespaceId, invoiceId: quote.invoiceId, serviceHash: quote.serviceHash, capacityBytes: offer.capacityMb * 1024 * 1024, receipt: delivery });
     return { delivery: namespace.receipt, serviceKind: "postgres-jsonb-namespace", provisioning: "real-postgres-namespace-test-service" };
   });
+  app.post("/provision-escrow", async (request) => {
+    const input = z.strictObject({ invoiceId: hashSchema, transactionHash: hashSchema }).parse(request.body);
+    const invoice = await options.store.invoice(input.invoiceId);
+    if (!invoice) throw new Error("PROVIDER_INVOICE_NOT_FOUND");
+    const quote = invoice.quote, id = getPaymentId(84532, quote);
+    const receipt = await options.client.getTransactionReceipt({ hash: input.transactionHash });
+    const [latest, canonical, consumed, escrow] = await Promise.all([
+      options.client.getBlockNumber({ cacheTime: 0 }), options.client.getBlock({ blockNumber: receipt.blockNumber }),
+      options.client.readContract({ address: options.guardian, abi: guardianAbi, functionName: "consumed", args: [options.account, id] }),
+      options.client.readContract({ address: options.guardian, abi: guardianAbi, functionName: "escrows", args: [id] }),
+    ]);
+    if (receipt.status !== "success" || canonical.hash !== receipt.blockHash || latest - receipt.blockNumber + 1n < BigInt(options.confirmations ?? 2) || !consumed) throw new Error("PROVIDER_ESCROW_LOCK_NOT_CONFIRMED");
+    const lockEvents = parseEventLogs({ abi: guardianAbi, eventName: "EscrowLocked", logs: receipt.logs.filter((item) => item.address.toLowerCase() === options.guardian.toLowerCase()) });
+    if (!lockEvents.some((event) => event.args.account.toLowerCase() === options.account.toLowerCase() && event.args.paymentId === id
+      && event.args.recipient.toLowerCase() === signer.address.toLowerCase() && event.args.amount === BigInt(quote.amountUnits)
+      && event.args.refundAfter === escrow.refundAfter) || escrow.account.toLowerCase() !== options.account.toLowerCase()
+      || escrow.token.toLowerCase() !== quote.token.toLowerCase() || escrow.quoteSigner.toLowerCase() !== signer.address.toLowerCase()
+      || escrow.invoiceId !== quote.invoiceId || escrow.serviceHash !== quote.serviceHash || escrow.amount !== BigInt(quote.amountUnits)
+      || escrow.status !== 1) throw new Error("PROVIDER_ESCROW_LOCK_BINDING_FAILED");
+    const offer = getServiceOffer(invoice.offerId), readyBlock = await options.client.getBlock();
+    const readyAt = Number(readyBlock.timestamp), expiresAt = readyAt + offer.durationHours * 3600;
+    if (readyAt > escrow.refundAfter || expiresAt <= readyAt) throw new Error("SERVICE_NOT_READY_BEFORE_ESCROW_DEADLINE");
+    const namespaceId = randomUUID();
+    const unsigned = { account: options.account, invoiceId: quote.invoiceId, paymentId: id, serviceHash: quote.serviceHash, namespaceId, transactionHash: input.transactionHash, readyAt, expiresAt };
+    const delivery: DeliveryReceipt = { ...unsigned, signature: await signer.signTypedData(deliveryTypedData(84532, options.guardian, unsigned)) };
+    const namespace = await options.store.saveNamespace({ namespaceId, invoiceId: quote.invoiceId, serviceHash: quote.serviceHash, capacityBytes: offer.capacityMb * 1024 * 1024, receipt: delivery }, false);
+    if (namespace.receipt.transactionHash.toLowerCase() !== input.transactionHash.toLowerCase() || namespace.receipt.expiresAt <= Math.floor(Date.now() / 1000)) throw new Error("PROVIDER_NAMESPACE_ESCROW_BINDING_FAILED");
+    const attestation = { paymentId: id, account: options.account, invoiceId: quote.invoiceId, serviceHash: quote.serviceHash,
+      transactionHash: input.transactionHash, readyAt: namespace.receipt.readyAt, serviceExpiresAt: namespace.receipt.expiresAt };
+    return { delivery: namespace.receipt, attestation: { ...attestation, signature: await signer.signTypedData(escrowDeliveryTypedData(84532, options.guardian, attestation)) } };
+  });
+  app.post("/activate-escrow", async (request) => {
+    const input = z.strictObject({ invoiceId: hashSchema, releaseTransactionHash: hashSchema }).parse(request.body);
+    const invoice = await options.store.invoice(input.invoiceId);
+    if (!invoice) throw new Error("PROVIDER_INVOICE_NOT_FOUND");
+    const paymentId_ = getPaymentId(84532, invoice.quote), receipt = await options.client.getTransactionReceipt({ hash: input.releaseTransactionHash });
+    const [latest, canonical, escrow] = await Promise.all([
+      options.client.getBlockNumber({ cacheTime: 0 }), options.client.getBlock({ blockNumber: receipt.blockNumber }),
+      options.client.readContract({ address: options.guardian, abi: guardianAbi, functionName: "escrows", args: [paymentId_] }),
+    ]);
+    if (receipt.status !== "success" || canonical.hash !== receipt.blockHash || latest - receipt.blockNumber + 1n < BigInt(options.confirmations ?? 2)) throw new Error("PROVIDER_ESCROW_RELEASE_NOT_CONFIRMED");
+    const released = parseEventLogs({ abi: guardianAbi, eventName: "EscrowReleased", logs: receipt.logs.filter((log) => log.address.toLowerCase() === options.guardian.toLowerCase()) })
+      .some((event) => event.args.account.toLowerCase() === options.account.toLowerCase() && event.args.paymentId === paymentId_);
+    if (!released || escrow.account.toLowerCase() !== options.account.toLowerCase() || escrow.status !== 2) throw new Error("PROVIDER_ESCROW_RELEASE_BINDING_FAILED");
+    const namespace = await options.store.activateEscrow(input.invoiceId, input.releaseTransactionHash);
+    return { ready: true, namespaceId: namespace.namespaceId, releaseTransactionHash: input.releaseTransactionHash };
+  });
   app.post("/databases/:id/probe", async (request) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
     const { probeId } = z.strictObject({ probeId: z.string().uuid() }).parse(request.body);
     return options.store.probe(id, probeId);
+  });
+  app.post("/databases/:id/escrow-probe", async (request) => {
+    const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
+    const { probeId } = z.strictObject({ probeId: z.string().uuid() }).parse(request.body);
+    return options.store.probe(id, probeId, true);
   });
   app.get("/databases/:id/values", async (request) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);

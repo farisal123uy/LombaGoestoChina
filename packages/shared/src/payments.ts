@@ -39,7 +39,7 @@ export const paymentPlanSchema = z.strictObject({
 });
 export type PaymentPlan = z.infer<typeof paymentPlanSchema>;
 
-export const paymentTaskStatuses = ["draft", "queued", "planned", "waiting", "needs_owner", "rejected", "executing", "paid", "service_pending", "completed", "cancelled"] as const;
+export const paymentTaskStatuses = ["draft", "queued", "planned", "waiting", "needs_owner", "rejected", "executing", "escrowed", "paid", "service_pending", "completed", "refunded", "cancelled"] as const;
 export type PaymentTaskStatus = typeof paymentTaskStatuses[number];
 export const operationStatuses = ["prepared", "submitting", "submitted", "unknown", "confirmed", "failed", "needs_review"] as const;
 export type OperationStatus = typeof operationStatuses[number];
@@ -62,6 +62,14 @@ export interface PaymentTask {
   deliveryTotalAttempts?: number;
   deliveryRetryCycles?: number;
   quoteSigner?: `0x${string}`;
+  escrow?: {
+    status: "locked" | "released" | "refunded" | "needs_review";
+    lockedAt: number;
+    refundAfter: number;
+    lockTransactionHash?: `0x${string}`;
+    releaseTransactionHash?: `0x${string}`;
+    refundTransactionHash?: `0x${string}`;
+  };
 }
 
 export interface PaymentAttempt {
@@ -78,6 +86,14 @@ export interface PaymentAttempt {
   validUntil: number;
   transactionHash?: `0x${string}`;
   reason?: string;
+  settlementMode?: "direct" | "escrow";
+  escrowLockedAt?: number;
+  escrowRefundAfter?: number;
+}
+
+export interface EscrowActionAttempt extends PaymentAttempt {
+  action: "release" | "refund";
+  delivery?: DeliveryReceipt;
 }
 
 export interface PolicySnapshot {

@@ -21,6 +21,13 @@ export const deliveryReceiptSchema = z.strictObject({
   readyAt: timestampSchema, expiresAt: timestampSchema, signature: signatureSchema,
 });
 export type DeliveryReceipt = z.infer<typeof deliveryReceiptSchema>;
+export const escrowDeliveryAttestationSchema = z.strictObject({
+  paymentId: hashSchema, account: addressSchema, invoiceId: hashSchema, serviceHash: hashSchema,
+  transactionHash: hashSchema, readyAt: timestampSchema, serviceExpiresAt: timestampSchema, signature: signatureSchema,
+});
+export type EscrowDeliveryAttestation = z.infer<typeof escrowDeliveryAttestationSchema>;
+export const escrowFulfillmentSchema = z.strictObject({ delivery: deliveryReceiptSchema, attestation: escrowDeliveryAttestationSchema });
+export type EscrowFulfillment = z.infer<typeof escrowFulfillmentSchema>;
 export const serviceProbeSchema = z.strictObject({
   namespaceId: z.string().uuid(), serviceHash: hashSchema, probeId: z.string().uuid(),
   ready: z.literal(true), probeCount: z.number().int().positive(),

@@ -32,6 +32,7 @@ test("a reviewer creates and closes an isolated workspace without MetaMask or ex
   await expect(page.getByRole("button", { name: "Connect owner & sign in" })).toHaveCount(0);
   await expect(page.getByText("openai/gpt-oss-120b", { exact: true })).toBeVisible();
   await expect(page.getByRole("region", { name: "Wallet assistant" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Main navigation" })).toHaveCount(1);
   await expect(page.getByText(/Review sandbox: hosted AI inference/)).toBeVisible();
   await expect(page.getByRole("link", { name: "Inspect public transaction ↗" })).toHaveCount(0);
   await page.getByRole("button", { name: "Close workspace" }).click();

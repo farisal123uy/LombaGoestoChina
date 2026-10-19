@@ -54,7 +54,7 @@ try {
   page.on("request", (request) => { if (/api\.groq\.com|fonts\.googleapis\.com|fonts\.gstatic\.com|localhost:4000|127\.0\.0\.1:4000/.test(request.url())) forbiddenBrowserRequests.push(new URL(request.url()).origin); });
   page.on("response", async (response) => {
     if (/\/api\/review\/sessions\/[^/]+\/v1\/tasks\/[^/]+$/.test(response.url()) && response.ok()) {
-      try { const value = await response.json(); if (value.task?.status === "completed" && value.operation?.status === "confirmed") responseEvidence = { taskId: value.task.id, taskStatus: value.task.status, operationStatus: value.operation.status, localTransactionHash: value.operation.transactionHash }; } catch { /* Status polling can race with close. */ }
+      try { const value = await response.json(); if (value.task?.status === "completed" && value.operation?.status === "confirmed") responseEvidence = { taskId: value.task.id, taskStatus: value.task.status, operationStatus: value.operation.status, settlementMode: value.operation.settlementMode, escrow: value.task.escrow, localTransactionHash: value.operation.transactionHash }; } catch { /* Status polling can race with close. */ }
     }
   });
   await page.goto(origin);
@@ -82,6 +82,12 @@ try {
   const task = page.getByRole("button", { name: /database-small-1h.*completed/ });
   await expect(task).toBeVisible({ timeout: 60000 }); await task.click();
   await expect(page.getByRole("heading", { name: "completed", exact: true })).toBeVisible();
+  await expect(page.getByText("Service escrow · released", { exact: true })).toBeVisible();
+  await expect(page.getByText("Escrow release", { exact: true })).toBeVisible();
+  assert.equal(responseEvidence.settlementMode, "escrow");
+  assert.equal(responseEvidence.escrow?.status, "released");
+  assert(responseEvidence.escrow?.lockTransactionHash);
+  assert(responseEvidence.escrow?.releaseTransactionHash);
   await expect(page.getByRole("link", { name: "Inspect public transaction ↗" })).toHaveCount(0);
   await page.getByRole("button", { name: "Verify database probe" }).click();
   stage = "service-probe-and-write-read";
@@ -97,7 +103,7 @@ try {
   await expect(page.getByRole("button", { name: "Start private review workspace" })).toBeVisible();
   assert.deepEqual(forbiddenBrowserRequests, [], "BROWSER_MADE_FORBIDDEN_DIRECT_PROVIDER_OR_LOCALHOST_REQUEST");
   report = { capturedAt: new Date().toISOString(), evidenceType: publicMode ? "public-HTTPS-browser-Linux-production-real-Groq-API-isolated-Kernel-fork" : "actual-production-Next-browser-real-Groq-API-local-Kernel-fork", passed: true, modelId: options.modelId, diagnosticBuildId: buildId, ...(publicMode ? { publicOrigin: origin, deployedSourceSha256: buildId } : {}), ...responseEvidence,
-    elapsedMs: Date.now() - began, procurementThroughWriteReadMs, checks: ["public-review-navigation", "owner-route-redirect", "no-MetaMask", "real-API-payment-preview", "queue-and-worker-completion", "local-hash-not-public-explorer", "service-probe-write-read", "close-workspace", "no-browser-Groq-Google-font-or-owner-localhost-request"], sourceHashes,
+    elapsedMs: Date.now() - began, procurementThroughWriteReadMs, checks: ["public-review-navigation", "owner-route-redirect", "no-MetaMask", "real-API-payment-preview", "queue-and-worker-escrow-completion", "dashboard-shows-escrow-lock-and-release", "local-hash-not-public-explorer", "service-probe-write-read", "close-workspace", "no-browser-Groq-Google-font-or-owner-localhost-request"], sourceHashes,
     limitations: publicMode ? "Browser on the owner's network to the claimed Linux server over public HTTPS, not a China-network measurement. Model is real Groq API; transfers are only isolated fork assets. Hosting account Free/Trial is operator-confirmed. No video/presentation recording." : "Production web/backend on this Windows host for QA, not the final judge deployment. Model is real Groq API; transactions are isolated fork assets. No video or presentation recording." };
 } catch (error) { failure = error; }
 finally { await browser?.close().catch(() => {}); for (const child of children.reverse()) child.kill("SIGTERM"); }

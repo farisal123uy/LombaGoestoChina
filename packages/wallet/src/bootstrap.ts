@@ -11,12 +11,14 @@ export interface BootstrapConfiguration {
   recipient: Address;
   sessionSigner: Address;
   validUntil: number;
+  /** Kernel account index; escrow demo uses a fresh index to avoid changing an existing wallet. */
+  kernelIndex?: bigint;
   guardianBytecode: Hex;
   tokenBytecode: Hex;
 }
 export async function buildBootstrap(client: PublicClient, configuration: BootstrapConfiguration) {
   if (await client.getChainId() !== 84532) throw new Error("WRONG_CHAIN");
-  const account = await createOwnerKernel(client, addressToEmptyAccount(configuration.owner));
+  const account = await createOwnerKernel(client, addressToEmptyAccount(configuration.owner), [], configuration.kernelIndex ?? 0n);
   const guardianSalt = keccak256(toBytes("guardian-wallet:guardian:v1"));
   const tokenSalt = keccak256(toBytes(`guardian-wallet:fixed-demo-token:v1:${account.address.toLowerCase()}`));
   const tokenInit = encodeDeployData({ abi: tokenConstructor, bytecode: configuration.tokenBytecode, args: [account.address] });

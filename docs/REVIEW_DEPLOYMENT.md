@@ -48,8 +48,8 @@ public AI-01 transaction remains linked as independent historical execution evid
 
 ## Verified scope
 
-`contracts/test/Review.integration.ts` verifies an actual local-fork payment through
-the runtime factory, signed quote, signed delivery, live PGlite probe/write/read,
+`contracts/test/Review.integration.ts` verifies an actual local-fork escrow lock,
+provider-attested release, staged service activation, PGlite probe/write/read,
 duplicate-execution prevention and a second isolated wallet/database. In this test
 **model HTTP responses are fixtures**, clearly labeled in
 `docs/evidence/reviewer-workspace-fork.json`. Real cloud inference and Linux/public-browser

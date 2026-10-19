@@ -9,7 +9,7 @@ import { network } from "hardhat";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { erc20Abi, parseEventLogs, keccak256, toBytes } from "viem";
 import { entryPoint07Abi, toPackedUserOperation, type UserOperation } from "viem/account-abstraction";
-import { createAgentKernel, createKernelPaymentDriver, entryPoint, guardianAbi, operationHash, quoteTypedData, readPolicySnapshot } from "@guardian-wallet/wallet";
+import { assertEscrowSessionAuthorization, createAgentKernel, createGuardianPermission, createKernelPaymentDriver, entryPoint, guardianAbi, guardianEscrowRefundSelector, guardianEscrowReleaseSelector, guardianEscrowSelector, operationHash, quoteTypedData, readPolicySnapshot } from "@guardian-wallet/wallet";
 import { BoundedPaymentPlanner } from "@guardian-wallet/planner";
 import type { PaymentTask } from "@guardian-wallet/shared";
 import { OnboardingJournal, OnboardingService, buildOnboardingApp } from "../../apps/api/src/onboarding.js";
@@ -64,7 +64,7 @@ it("sponsored owner bootstrap + scoped worker payment with zero owner/account ET
   const journal = new OnboardingJournal(join(directory, "operations.json"));
   let synchronized = 0;
   const options = {
-    client, configuration: { owner: owner.address, providerSigner: provider.address, recipient: provider.address, sessionSigner: session.address, validUntil: Number((await client.getBlock()).timestamp) + 86400, guardianBytecode: guardian.bytecode, tokenBytecode: token.bytecode },
+    client, configuration: { owner: owner.address, providerSigner: provider.address, recipient: provider.address, sessionSigner: session.address, validUntil: Math.max(Number((await client.getBlock()).timestamp), Math.floor(Date.now() / 1000)) + 86400, guardianBytecode: guardian.bytecode, tokenBytecode: token.bytecode },
     bundlerUrl: url, sponsorship: { approvedPaymaster: paymaster.address }, maxGasCostWei: 100000000000000000n, confirmations: 1,
     journal, syncRuntime: async () => { synchronized++; },
   };
@@ -129,5 +129,59 @@ it("sponsored owner bootstrap + scoped worker payment with zero owner/account ET
   assert.equal(await client.readContract({ address: confirmed.token, abi: erc20Abi, functionName: "balanceOf", args: [confirmed.kernel] }), 9740000n);
   assert.equal(await client.getBalance({ address: confirmed.kernel }), 0n);
   assert.equal(await client.getBalance({ address: owner.address }), 0n);
-  t.diagnostic(JSON.stringify({ evidenceType: "local-fork-with-fixture-paymaster-not-public-sponsorship", bootstrapTransactionHash: confirmed.operation?.transactionHash, workerTransactionHash: result.transactionHash, ownerEth: "0", kernelEth: "0", kernelMockUsdUnits: "9740000", sends: sendCount }));
+
+  const escrowDirectory = await mkdtemp(join(tmpdir(), "guardian-owner-escrow-"));
+  t.after(() => rm(escrowDirectory, { recursive: true, force: true }));
+  const escrowOptions = {
+    ...options,
+    configuration: { ...options.configuration, kernelIndex: 1n },
+    settlementMode: "escrow" as const,
+    escrowWindowSeconds: 600,
+    assertEscrowSchema: async () => {},
+    journal: new OnboardingJournal(join(escrowDirectory, "operations.json")),
+  };
+  const blockedEscrow = new OnboardingService({ ...escrowOptions, assertEscrowSchema: async () => { throw new Error("ESCROW_SCHEMA_MISSING"); } });
+  await assert.rejects(blockedEscrow.prepare(), /ONBOARDING_ESCROW_SCHEMA_REQUIRED/);
+  const escrowOnboarding = new OnboardingService(escrowOptions);
+  const escrowPreview = await escrowOnboarding.status();
+  assert.equal(escrowPreview.settlementMode, "escrow");
+  assert.equal(escrowPreview.kernelIndex, "1");
+  assert.notEqual(escrowPreview.kernel, confirmed.kernel, "escrow setup must use a fresh owner Kernel account");
+  const escrowDeployment = await escrowOnboarding.prepare();
+  assert(escrowDeployment.operation);
+  const escrowDeploymentSignature = await owner.signMessage({ message: { raw: escrowDeployment.operation.hash } });
+  await escrowOnboarding.submit(escrowDeployment.operation.id, escrowDeploymentSignature);
+  const deployedEscrow = await escrowOnboarding.reconcile();
+  assert.equal(deployedEscrow.operation?.status, "confirmed");
+  const escrowAuthorization = await escrowOnboarding.authorization();
+  const escrowSessionSignature = await owner.signTypedData(escrowAuthorization.typedData);
+  await escrowOnboarding.authorizeSession(escrowSessionSignature);
+  await assertEscrowSessionAuthorization(client, deployedEscrow.kernel, owner.address, session.address, deployedEscrow.guardian, escrowOptions.configuration.validUntil, escrowSessionSignature);
+  await assert.rejects(assertEscrowSessionAuthorization(client, deployedEscrow.kernel, owner.address, session.address, deployedEscrow.guardian, escrowOptions.configuration.validUntil), /ESCROW_SESSION_PERMISSION_NOT_OWNER_AUTHORIZED/);
+  await assert.rejects(assertEscrowSessionAuthorization(client, deployedEscrow.kernel, owner.address, session.address, deployedEscrow.guardian, escrowOptions.configuration.validUntil, await attacker.signTypedData(escrowAuthorization.typedData)), /ESCROW_SESSION_PERMISSION_NOT_OWNER_AUTHORIZED/);
+
+  const wallClock = Math.floor(Date.now() / 1000);
+  const forkTimestamp = Number((await client.getBlock()).timestamp);
+  await connection.provider.request({ method: "evm_setNextBlockTimestamp", params: [Math.max(wallClock, forkTimestamp + 1)] });
+  await connection.provider.request({ method: "evm_mine", params: [] });
+  const escrowQuoteInput = { ...q, account: deployedEscrow.kernel, token: deployedEscrow.token, invoiceId: keccak256(toBytes(randomUUID())), validUntil: escrowOptions.configuration.validUntil };
+  const escrowQuote = { ...escrowQuoteInput, signature: await provider.signTypedData(quoteTypedData(84532, deployedEscrow.guardian, escrowQuoteInput)) };
+  const escrowTask: PaymentTask = { ...task, id: randomUUID(), paymentId: keccak256(toBytes("escrow-payment")), quote: escrowQuote };
+  const escrowOutcome = await new BoundedPaymentPlanner().plan(escrowTask, await readPolicySnapshot(client, deployedEscrow.guardian, deployedEscrow.kernel));
+  assert.equal(escrowOutcome.status, "planned"); if (escrowOutcome.status !== "planned") throw new Error("EXPECTED_ESCROW_PLAN");
+  const escrowAgent = await createAgentKernel(client, deployedEscrow.kernel, session, deployedEscrow.guardian, escrowOptions.configuration.validUntil, escrowSessionSignature, true);
+  const escrowDriver = createKernelPaymentDriver({ client, account: escrowAgent, guardianAddress: deployedEscrow.guardian, bundlerUrl: url, sponsorship: { approvedPaymaster: paymaster.address }, maxGasCostWei: 100000000000000000n, confirmations: 1, settlementMode: "escrow", escrowWindowSeconds: 600, sessionValidUntil: escrowOptions.configuration.validUntil });
+  const escrowPrepared = await escrowDriver.prepare(escrowOutcome.plan);
+  assert.equal(await escrowDriver.submit(escrowPrepared.signedPayload), escrowPrepared.attempt.userOperationHash);
+  const escrowResult = await escrowDriver.reconcile(escrowPrepared.attempt, escrowOutcome.plan);
+  assert.equal(escrowResult.status, "confirmed");
+  const permission = await createGuardianPermission(client, session, deployedEscrow.guardian, escrowOptions.configuration.validUntil, true);
+  for (const selector of [guardianEscrowSelector, guardianEscrowReleaseSelector, guardianEscrowRefundSelector]) {
+    assert.equal(await permission.isEnabled(deployedEscrow.kernel, selector), true, `owner authorization must enable ${selector}`);
+  }
+  await assertEscrowSessionAuthorization(client, deployedEscrow.kernel, owner.address, session.address, deployedEscrow.guardian, escrowOptions.configuration.validUntil);
+  assert.equal(await client.readContract({ address: deployedEscrow.guardian, abi: guardianAbi, functionName: "MAX_ESCROW_WINDOW" }), 86400);
+  assert.equal(await client.getBalance({ address: deployedEscrow.kernel }), 0n);
+  assert.equal(await client.getBalance({ address: owner.address }), 0n);
+  t.diagnostic(JSON.stringify({ evidenceType: "local-fork-with-fixture-paymaster-not-public-sponsorship", bootstrapTransactionHash: confirmed.operation?.transactionHash, workerTransactionHash: result.transactionHash, escrowBootstrapTransactionHash: deployedEscrow.operation?.transactionHash, escrowLockTransactionHash: escrowResult.transactionHash, ownerEth: "0", kernelEth: "0", kernelMockUsdUnits: "9740000", escrowKernelIndex: "1", escrowSelectorsOwnerAuthorized: true, sends: sendCount }));
 });

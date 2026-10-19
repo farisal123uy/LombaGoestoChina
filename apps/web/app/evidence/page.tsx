@@ -5,4 +5,4 @@ import "./evidence.css";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Evidence ledger | Guardian Wallet", description: "Recorded public, local-fork and model-inference evidence with explicit boundaries." };
-export default async function EvidencePage() { return <EvidenceLedger evidence={await loadEvidence()} reviewOnly={process.env.REVIEW_ONLY === "true"} />; }
+export default async function EvidencePage() { return <EvidenceLedger evidence={await loadEvidence()} />; }

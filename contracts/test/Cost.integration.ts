@@ -95,7 +95,7 @@ it("COST-01: actual Kernel worker single vs 4/7 invoice batches from identical w
     for (let repeat = 0; repeat < 3; repeat++) for (const mode of ["single", "batch"] as const) {
       assert.equal(await connection.provider.request({ method: "evm_revert", params: [snapshot] }), true);
       snapshot = await connection.provider.request({ method: "evm_snapshot", params: [] });
-      await db.exec("TRUNCATE payment_attempt_members,payment_attempts,payment_tasks,execution_locks,worker_controls;"); observations = [];
+      await db.exec("TRUNCATE escrow_operations,payment_attempt_members,payment_attempts,payment_tasks,execution_locks,worker_controls;"); observations = [];
       const store = new PaymentStore(wrap(db)), key = accountKey(84532, agent.address), state = await readPolicySnapshot(client, guardian.address, agent.address);
       assert.equal(state.balanceUnits, "10000000"); assert.equal(state.spentUnits, "0");
       for (const q of quotes) {

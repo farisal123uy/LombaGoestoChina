@@ -24,7 +24,7 @@ if (!api.OWNER_ADDRESS) {
       balanceEth: formatEther(balance), balanceWei: balance.toString(),
       accountKind: !code || code === "0x" ? "eoa" : code.startsWith("0xef0100") ? "delegated_eoa" : "contract_needs_owner_signer_review",
       gasFunding: balance > 0n ? "balance_present_deployment_cost_still_requires_estimation" : "zero_native_balance_can_use_verified_sponsored_useroperations",
-      checkedBlock: block.number.toString(), explorer: `https://sepolia.basescan.org/address/${owner}`,
+      checkedBlock: block.number.toString(), explorer: `https://base-sepolia.blockscout.com/address/${owner}`,
       signingCapabilityVerified: false, transactionsSent: 0,
     }, null, 2));
   } catch {

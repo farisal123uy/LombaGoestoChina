@@ -5,6 +5,7 @@ const state = {
   chainId: 84532, owner, kernel: "0x1111111111111111111111111111111111111111", guardian: "0x2222222222222222222222222222222222222222",
   token: "0x3333333333333333333333333333333333333333", providerSigner: "0x4444444444444444444444444444444444444444", recipient: "0x4444444444444444444444444444444444444444",
   sessionSigner: "0x5555555555555555555555555555555555555555", paymaster: "0x777777777777AeC03fd955926DbF81597e66834C", validUntil: 1900000000,
+  settlementMode: "direct" as const, kernelIndex: "0", escrowWindowSeconds: 600,
   installed: false, ready: false, sessionAuthorized: false, runtimeConfigured: false, gasMode: "sponsored_native_gas",
   limits: { initialTokenUnits: "10000000", protectedUnits: "6000000", perPaymentUnits: "1000000", dailyUnits: "2000000", decimals: 6 },
 };
@@ -38,6 +39,7 @@ test("owner completes the visible sign/deploy/session flow without entering a pr
     await route.fulfill({ contentType: "application/json", headers, body: JSON.stringify(body) });
   });
   await page.goto("/setup");
+  await expect(page.getByText("Base Sepolia · owner setup · direct", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Connect owner" })).toBeVisible();
   await page.getByRole("button", { name: "Connect MetaMask & sign in" }).click();
   await expect(page.getByText("Owner connected", { exact: true })).toBeVisible();
@@ -45,7 +47,7 @@ test("owner completes the visible sign/deploy/session flow without entering a pr
   await expect(page.getByRole("button", { name: "Sign & submit deployment" })).toBeEnabled();
   await page.getByRole("button", { name: "Sign & submit deployment" }).click();
   await expect(page.getByRole("button", { name: "Authorize Astra session" })).toBeEnabled({ timeout: 15000 });
-  await expect(page.getByRole("link", { name: /View transaction/ })).toHaveAttribute("href", `https://sepolia.basescan.org/tx/0x${"bb".repeat(32)}`);
+  await expect(page.getByRole("link", { name: /View transaction/ })).toHaveAttribute("href", `https://base-sepolia.blockscout.com/tx/0x${"bb".repeat(32)}`);
   await page.getByRole("button", { name: "Authorize Astra session" }).click();
   await expect(page.getByText("Runtime configuration ready.", { exact: true })).toBeVisible();
   await expect(page.getByRole("textbox")).toHaveCount(0);
@@ -72,4 +74,16 @@ test("a different wallet cannot proceed to owner sign-in or deployment", async (
   await expect(page.getByText(`Select the configured owner: ${owner}`, { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Prepare deployment", exact: true })).toBeDisabled();
   expect(nonceRequests).toBe(0);
+});
+
+test("owner setup clearly identifies an escrow deployment and its fresh account index", async ({ page }) => {
+  const escrowState = { ...state, settlementMode: "escrow" as const, kernelIndex: "1", escrowWindowSeconds: 600 };
+  await page.route("http://127.0.0.1:4100/**", (route) => route.fulfill({
+    contentType: "application/json",
+    headers: { "access-control-allow-origin": route.request().headers().origin || "http://localhost:3000", "access-control-allow-headers": "content-type,authorization", "access-control-allow-methods": "GET,POST,OPTIONS" },
+    body: JSON.stringify(escrowState),
+  }));
+  await page.goto("/setup");
+  await expect(page.getByText("Base Sepolia · owner setup · escrow", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Settlement mode: escrow · refund window 600s · new isolated Kernel index 1/)).toBeVisible();
 });

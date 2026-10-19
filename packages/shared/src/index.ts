@@ -6,7 +6,7 @@ export * from "./assistant.js";
 export const developmentChain = {
   id: 84532,
   name: "Base Sepolia",
-  explorerUrl: "https://sepolia.basescan.org",
+  explorerUrl: "https://base-sepolia.blockscout.com",
   isTestnet: true,
 } as const;
 

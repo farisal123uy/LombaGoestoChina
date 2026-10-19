@@ -14,9 +14,14 @@ hosted Supabase database on October 17, 2026. Tests apply the same SQL to PGlite
 - `0004_batch_attempt_members.sql`: RLS-protected invoice membership, one durable
   leader operation and legacy single-attempt backfill.
 - `0005_batch_member_lookup.sql`: index for batch leader/member reconciliation.
+- `0006_gorgeous_vertigo.sql`: RLS-protected escrow action journal and private signed
+  operation payload storage for provider-attested release/timeout refund recovery.
+- `0007_brief_puma.sql`: staged provider namespace readiness and confirmed release
+  transaction binding so a locked service stays inaccessible before payout.
 
-The stage-two 0004/0005 migrations are verified locally/fork only; apply them before
-rollout. Their presence in this branch does not imply the original hosted DB migrated.
+The stage-two 0004/0005/0006/0007 migrations are verified locally/fork only; apply them
+before the corresponding feature rollout. Their presence in this branch does not imply
+the original hosted DB migrated.
 
 Store parameters are already JSON-encoded strings. SQL binds them through
 `::text::jsonb` to prevent postgres.js from serializing a JSON string a second time.

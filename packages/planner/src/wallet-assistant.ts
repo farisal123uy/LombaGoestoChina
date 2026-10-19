@@ -48,6 +48,7 @@ export function assessWalletRisk(state: PolicySnapshot, overview: WalletOverview
   for (const task of tasks) {
     if ((task.status === "draft" || reservesBudget(task)) && task.quote.validUntil <= now) add("EXPIRED_INVOICE", "warning", "This invoice has expired and cannot be executed.", task.id);
     if (task.status === "service_pending") add("DELIVERY_PENDING", "warning", "Payment has settled but service delivery is pending. Do not pay this invoice again.", task.id);
+    if (task.status === "escrowed") add("SERVICE_ESCROW_PENDING", "warning", "Funds are held in Guardian escrow until provider attestation or timeout refund. Do not submit another invoice for this service.", task.id);
   }
   if (!checks.some((check) => check.severity !== "info")) add("POLICY_CHECKS_CLEAR", "info", "No current wallet-policy or operation warning was detected. This is not a market-risk assessment or a guarantee of safety.");
   return { level: checks.some((check) => check.severity === "critical") ? "high" : checks.some((check) => check.severity === "warning") ? "medium" : "low", scope: "wallet-policy-and-payment-operations", checks, observedAt: state.observedAt };

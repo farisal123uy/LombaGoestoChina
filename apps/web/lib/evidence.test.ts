@@ -26,8 +26,19 @@ describe("evidence ledger", () => {
     expect(evidence.procurement.hashes.some((hash) => Boolean(hash.explorerHref))).toBe(true);
     expect(nonPublic.every((hash) => hash.explorerHref === undefined)).toBe(true);
     const receipt = evidence.procurement.hashes.find((hash) => hash.kind === "Transaction");
-    expect(receipt?.explorerHref).toBe(`https://sepolia.basescan.org/tx/${receipt?.value}`);
+    expect(receipt?.explorerHref).toBe(`https://base-sepolia.blockscout.com/tx/${receipt?.value}`);
     expect(chainNote("local-fork")).toBe("Local fork, not on public chain");
     expect(chainNote("local-inference")).toBe("Recorded local inference, not a chain transaction");
+  });
+  it("includes the public escrow lock and provider release as a distinct recorded flow", async () => {
+    const evidence = await loadEvidence();
+    expect(evidence.escrow.origin).toBe("live-public");
+    expect(evidence.escrow.facts["Settlement mode"]).toBe("escrow");
+    expect(evidence.escrow.facts["Escrow status"]).toBe("released");
+    expect(evidence.escrow.facts["Guardian accepted provider attestation"]).toBe(true);
+    const transactions = evidence.escrow.hashes.filter((item) => item.kind === "Transaction");
+    expect(transactions).toHaveLength(2);
+    expect(transactions.every((item) => item.explorerHref?.startsWith("https://base-sepolia.blockscout.com/tx/"))).toBe(true);
+    expect(evidence.hashLedger).toEqual(expect.arrayContaining(evidence.escrow.hashes));
   });
 });
