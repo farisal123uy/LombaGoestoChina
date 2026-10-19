@@ -17,11 +17,11 @@ try {
   await verifyProject();
   const deployment = JSON.parse(await readFile(join(root, ".local/onboarding/deployment.json"), "utf8"));
   const api = await readEnvironment("api"), worker = await readEnvironment("worker"), database = await readEnvironment("database");
-  if (!database.DATABASE_URL || api.AI_PROVIDER !== "ollama") throw new Error("CONFIGURE_DATABASE_AND_QWEN_FIRST");
+   if (!database.DATABASE_URL || !["ollama", "groq"].includes(api.AI_PROVIDER) || (api.AI_PROVIDER === "groq" && (!api.GROQ_API_KEY || api.GROQ_FREE_TIER_CONFIRMED !== "true"))) throw new Error("CONFIGURE_DATABASE_AND_QWEN_FIRST");
   let old = {};
   try { old = parseEnv(await readFile(join(root, ".local/provider-agent.env"), "utf8")); } catch (error) { if (error.code !== "ENOENT") throw error; }
   const agentToken = old.ACCESS_TOKEN || randomBytes(32).toString("hex"), signerToken = old.SIGNER_TOKEN || randomBytes(32).toString("hex");
-  await localEnv("provider-agent", { PORT: "4200", ACCESS_TOKEN: agentToken, SIGNER_TOKEN: signerToken, SIGNER_URL: "http://127.0.0.1:4201", OLLAMA_BASE_URL: api.OLLAMA_BASE_URL || "http://127.0.0.1:11434", AI_MODEL_ID: api.AI_MODEL_ID || "qwen3:8b", OLLAMA_API_TOKEN: api.OLLAMA_API_TOKEN || "" });
+  await localEnv("provider-agent", { PORT: "4200", ACCESS_TOKEN: agentToken, SIGNER_TOKEN: signerToken, SIGNER_URL: "http://127.0.0.1:4201", AI_PROVIDER: api.AI_PROVIDER, AI_MODEL_ID: api.AI_MODEL_ID || (api.AI_PROVIDER === "groq" ? "openai/gpt-oss-120b" : "qwen3:8b"), AI_OUTPUT_TOKENS: api.AI_OUTPUT_TOKENS || "", GROQ_API_KEY: api.GROQ_API_KEY || "", GROQ_FREE_TIER_CONFIRMED: api.GROQ_FREE_TIER_CONFIRMED || "false", OLLAMA_BASE_URL: api.OLLAMA_BASE_URL || "http://127.0.0.1:11434", OLLAMA_API_TOKEN: api.OLLAMA_API_TOKEN || "" });
   await localEnv("provider-signer-service", { PORT: "4201", ACCESS_TOKEN: signerToken, DATABASE_URL: database.DATABASE_URL, BASE_SEPOLIA_RPC_URL: api.BASE_SEPOLIA_RPC_URL || "https://sepolia.base.org", KERNEL_ACCOUNT_ADDRESS: deployment.kernel, GUARDIAN_ADDRESS: deployment.guardian, TOKEN_ADDRESS: deployment.token });
   await writeEnvironment("api", { PROVIDER_AGENT_URL: "http://127.0.0.1:4200", PROVIDER_AGENT_TOKEN: agentToken, PROVIDER_SIGNER_URL: "http://127.0.0.1:4201", PROVIDER_SIGNER_TOKEN: signerToken });
   await writeEnvironment("worker", { DATABASE_URL: database.DATABASE_URL, PROVIDER_SIGNER_URL: "http://127.0.0.1:4201", PROVIDER_SIGNER_TOKEN: signerToken, PROVIDER_SIGNER_ADDRESS: deployment.providerSigner, WORKER_INTERVAL_MS: !worker.WORKER_INTERVAL_MS || worker.WORKER_INTERVAL_MS === "15000" ? "2000" : worker.WORKER_INTERVAL_MS });

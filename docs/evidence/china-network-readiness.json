@@ -1,0 +1,59 @@
+{
+  "capturedAt": "2026-10-18T12:44:16.201Z",
+  "evidenceType": "third-party-China-probes-public-HTTPS-readiness-only",
+  "publicOrigin": "https://preview-95c94201191f7206.up.railway.app",
+  "expectedBuildId": "912063431ea05c663abd9df36bdff047687006d5cf8ea9fde87ba8b9b0f9d9c0",
+  "measurementId": "2gllyb0WK5ShOS9De00021L6R",
+  "measurementUrl": "https://api.globalping.io/v1/measurements/2gllyb0WK5ShOS9De00021L6R",
+  "status": "finished",
+  "requestedProbes": 3,
+  "observedProbes": 3,
+  "results": [
+    {
+      "country": "CN",
+      "city": "Beijing",
+      "network": "Shenzhen Tencent Computer Systems Company",
+      "status": "finished",
+      "httpStatus": 200,
+      "totalMs": 1471,
+      "dnsMs": 175,
+      "tcpMs": 186,
+      "tlsMs": 194,
+      "tlsAuthorized": true,
+      "readiness": "ready",
+      "observedBuildId": "912063431ea05c663abd9df36bdff047687006d5cf8ea9fde87ba8b9b0f9d9c0",
+      "passed": true
+    },
+    {
+      "country": "CN",
+      "city": "Shanghai",
+      "network": "Hangzhou Alibaba Advertising",
+      "status": "finished",
+      "httpStatus": 200,
+      "totalMs": 1779,
+      "dnsMs": 165,
+      "tcpMs": 186,
+      "tlsMs": 432,
+      "tlsAuthorized": true,
+      "readiness": "ready",
+      "observedBuildId": "912063431ea05c663abd9df36bdff047687006d5cf8ea9fde87ba8b9b0f9d9c0",
+      "passed": true
+    },
+    {
+      "country": "CN",
+      "city": "Shenzhen",
+      "network": "Hangzhou Alibaba Advertising",
+      "status": "finished",
+      "httpStatus": 200,
+      "totalMs": 2349,
+      "dnsMs": 972,
+      "tcpMs": 206,
+      "tlsMs": 476,
+      "tlsAuthorized": true,
+      "readiness": "ready",
+      "observedBuildId": "912063431ea05c663abd9df36bdff047687006d5cf8ea9fde87ba8b9b0f9d9c0",
+      "passed": true
+    }
+  ],
+  "limitations": "A point-in-time readiness/TLS check from independent probes reported in mainland China. Not a judge browser session, app execution or permanent China reachability guarantee. No credentials or private reviewer capabilities were shared; unauthenticated Free service, no billing activation."
+}

@@ -1,0 +1,359 @@
+{
+  "capturedAt": "2026-10-18T04:21:04.696Z",
+  "evidenceType": "live-Groq-Free-model-comparison-synthetic-finances-no-transactions",
+  "stoppedByQuota": false,
+  "summary": [
+    {
+      "modelId": "openai/gpt-oss-120b",
+      "completedCases": 8,
+      "requiredCases": 8,
+      "passed": 8,
+      "errors": 0,
+      "latencyP50Ms": 675,
+      "latencyP95Ms": 1008,
+      "inputTokens": 4032,
+      "completionTokensIncludingReasoning": 632,
+      "reasoningTokens": 196
+    },
+    {
+      "modelId": "openai/gpt-oss-20b",
+      "completedCases": 8,
+      "requiredCases": 8,
+      "passed": 8,
+      "errors": 0,
+      "latencyP50Ms": 580,
+      "latencyP95Ms": 621,
+      "inputTokens": 4032,
+      "completionTokensIncludingReasoning": 498,
+      "reasoningTokens": 121
+    }
+  ],
+  "rows": [
+    {
+      "caseId": "assets-id",
+      "modelId": "openai/gpt-oss-120b",
+      "expected": "asset_overview",
+      "actual": "asset_overview",
+      "passed": true,
+      "metrics": {
+        "provider": "groq",
+        "modelId": "openai/gpt-oss-120b",
+        "elapsedMs": 737,
+        "queueMs": 0,
+        "loadMs": 0,
+        "inputTokens": 548,
+        "outputTokens": 78,
+        "tokensPerSecond": 105.8,
+        "remainingRequests": 995,
+        "remainingTokens": 7395,
+        "reasoningTokens": 29
+      }
+    },
+    {
+      "caseId": "assets-id",
+      "modelId": "openai/gpt-oss-20b",
+      "expected": "asset_overview",
+      "actual": "asset_overview",
+      "passed": true,
+      "metrics": {
+        "provider": "groq",
+        "modelId": "openai/gpt-oss-20b",
+        "elapsedMs": 582,
+        "queueMs": 0,
+        "loadMs": 0,
+        "inputTokens": 548,
+        "outputTokens": 44,
+        "tokensPerSecond": 75.6,
+        "remainingRequests": 999,
+        "remainingTokens": 7176,
+        "reasoningTokens": 6
+      }
+    },
+    {
+      "caseId": "risk-en",
+      "modelId": "openai/gpt-oss-120b",
+      "expected": "risk_check",
+      "actual": "risk_check",
+      "passed": true,
+      "metrics": {
+        "provider": "groq",
+        "modelId": "openai/gpt-oss-120b",
+        "elapsedMs": 561,
+        "queueMs": 0,
+        "loadMs": 0,
+        "inputTokens": 545,
+        "outputTokens": 70,
+        "tokensPerSecond": 124.9,
+        "remainingRequests": 994,
+        "remainingTokens": 7377,
+        "reasoningTokens": 24
+      }
+    },
+    {
+      "caseId": "risk-en",
+      "modelId": "openai/gpt-oss-20b",
+      "expected": "risk_check",
+      "actual": "risk_check",
+      "passed": true,
+      "metrics": {
+        "provider": "groq",
+        "modelId": "openai/gpt-oss-20b",
+        "elapsedMs": 533,
+        "queueMs": 0,
+        "loadMs": 0,
+        "inputTokens": 545,
+        "outputTokens": 54,
+        "tokensPerSecond": 101.2,
+        "remainingRequests": 998,
+        "remainingTokens": 7136,
+        "reasoningTokens": 20
+      }
+    },
+    {
+      "caseId": "plan-id",
+      "modelId": "openai/gpt-oss-120b",
+      "expected": "plan_payments",
+      "actual": "plan_payments",
+      "passed": true,
+      "metrics": {
+        "provider": "groq",
+        "modelId": "openai/gpt-oss-120b",
+        "elapsedMs": 1008,
+        "queueMs": 0,
+        "loadMs": 0,
+        "inputTokens": 567,
+        "outputTokens": 85,
+        "tokensPerSecond": 84.4,
+        "remainingRequests": 993,
+        "remainingTokens": 7367,
+        "reasoningTokens": 20
+      }
+    },
+    {
+      "caseId": "plan-id",
+      "modelId": "openai/gpt-oss-20b",
+      "expected": "plan_payments",
+      "actual": "plan_payments",
+      "passed": true,
+      "metrics": {
+        "provider": "groq",
+        "modelId": "openai/gpt-oss-20b",
+        "elapsedMs": 604,
+        "queueMs": 0,
+        "loadMs": 0,
+        "inputTokens": 567,
+        "outputTokens": 58,
+        "tokensPerSecond": 96,
+        "remainingRequests": 997,
+        "remainingTokens": 7379,
+        "reasoningTokens": 6
+      }
+    },
+    {
+      "caseId": "procure-en",
+      "modelId": "openai/gpt-oss-120b",
+      "expected": "request_quote",
+      "actual": "request_quote",
+      "passed": true,
+      "metrics": {
+        "provider": "groq",
+        "modelId": "openai/gpt-oss-120b",
+        "elapsedMs": 635,
+        "queueMs": 0,
+        "loadMs": 0,
+        "inputTokens": 372,
+        "outputTokens": 96,
+        "tokensPerSecond": 151.2,
+        "remainingRequests": 992,
+        "remainingTokens": 7543,
+        "reasoningTokens": 33
+      }
+    },
+    {
+      "caseId": "procure-en",
+      "modelId": "openai/gpt-oss-20b",
+      "expected": "request_quote",
+      "actual": "request_quote",
+      "passed": true,
+      "metrics": {
+        "provider": "groq",
+        "modelId": "openai/gpt-oss-20b",
+        "elapsedMs": 277,
+        "queueMs": 0,
+        "loadMs": 0,
+        "inputTokens": 372,
+        "outputTokens": 65,
+        "tokensPerSecond": 235.1,
+        "remainingRequests": 996,
+        "remainingTokens": 7309,
+        "reasoningTokens": 16
+      }
+    },
+    {
+      "caseId": "provider-en",
+      "modelId": "openai/gpt-oss-120b",
+      "expected": "accepted",
+      "actual": "accepted",
+      "passed": true,
+      "metrics": {
+        "provider": "groq",
+        "modelId": "openai/gpt-oss-120b",
+        "elapsedMs": 599,
+        "queueMs": 0,
+        "loadMs": 0,
+        "inputTokens": 529,
+        "outputTokens": 57,
+        "tokensPerSecond": 95.1,
+        "remainingRequests": 991,
+        "remainingTokens": 7038,
+        "reasoningTokens": 4
+      }
+    },
+    {
+      "caseId": "provider-en",
+      "modelId": "openai/gpt-oss-20b",
+      "expected": "accepted",
+      "actual": "accepted",
+      "passed": true,
+      "metrics": {
+        "provider": "groq",
+        "modelId": "openai/gpt-oss-20b",
+        "elapsedMs": 494,
+        "queueMs": 0,
+        "loadMs": 0,
+        "inputTokens": 529,
+        "outputTokens": 50,
+        "tokensPerSecond": 101.3,
+        "remainingRequests": 995,
+        "remainingTokens": 7406,
+        "reasoningTokens": 4
+      }
+    },
+    {
+      "caseId": "pay-en",
+      "modelId": "openai/gpt-oss-120b",
+      "expected": "planned",
+      "actual": "planned",
+      "passed": true,
+      "metrics": {
+        "provider": "groq",
+        "modelId": "openai/gpt-oss-120b",
+        "elapsedMs": 884,
+        "queueMs": 0,
+        "loadMs": 0,
+        "inputTokens": 455,
+        "outputTokens": 123,
+        "tokensPerSecond": 139.2,
+        "remainingRequests": 990,
+        "remainingTokens": 7467,
+        "reasoningTokens": 53
+      }
+    },
+    {
+      "caseId": "pay-en",
+      "modelId": "openai/gpt-oss-20b",
+      "expected": "planned",
+      "actual": "planned",
+      "passed": true,
+      "metrics": {
+        "provider": "groq",
+        "modelId": "openai/gpt-oss-20b",
+        "elapsedMs": 621,
+        "queueMs": 0,
+        "loadMs": 0,
+        "inputTokens": 455,
+        "outputTokens": 114,
+        "tokensPerSecond": 183.5,
+        "remainingRequests": 994,
+        "remainingTokens": 7501,
+        "reasoningTokens": 33
+      }
+    },
+    {
+      "caseId": "wait-id",
+      "modelId": "openai/gpt-oss-120b",
+      "expected": "waiting",
+      "actual": "waiting",
+      "passed": true,
+      "metrics": {
+        "provider": "groq",
+        "modelId": "openai/gpt-oss-120b",
+        "elapsedMs": 796,
+        "queueMs": 0,
+        "loadMs": 0,
+        "inputTokens": 458,
+        "outputTokens": 50,
+        "tokensPerSecond": 62.8,
+        "remainingRequests": 989,
+        "remainingTokens": 7485,
+        "reasoningTokens": 9
+      }
+    },
+    {
+      "caseId": "wait-id",
+      "modelId": "openai/gpt-oss-20b",
+      "expected": "waiting",
+      "actual": "waiting",
+      "passed": true,
+      "metrics": {
+        "provider": "groq",
+        "modelId": "openai/gpt-oss-20b",
+        "elapsedMs": 616,
+        "queueMs": 0,
+        "loadMs": 0,
+        "inputTokens": 458,
+        "outputTokens": 55,
+        "tokensPerSecond": 89.3,
+        "remainingRequests": 993,
+        "remainingTokens": 7477,
+        "reasoningTokens": 20
+      }
+    },
+    {
+      "caseId": "mixed-injection",
+      "modelId": "openai/gpt-oss-120b",
+      "expected": "unsupported",
+      "actual": "unsupported",
+      "passed": true,
+      "metrics": {
+        "provider": "groq",
+        "modelId": "openai/gpt-oss-120b",
+        "elapsedMs": 675,
+        "queueMs": 0,
+        "loadMs": 0,
+        "inputTokens": 558,
+        "outputTokens": 73,
+        "tokensPerSecond": 108.2,
+        "remainingRequests": 988,
+        "remainingTokens": 7346,
+        "reasoningTokens": 24
+      }
+    },
+    {
+      "caseId": "mixed-injection",
+      "modelId": "openai/gpt-oss-20b",
+      "expected": "unsupported",
+      "actual": "unsupported",
+      "passed": true,
+      "metrics": {
+        "provider": "groq",
+        "modelId": "openai/gpt-oss-20b",
+        "elapsedMs": 580,
+        "queueMs": 0,
+        "loadMs": 0,
+        "inputTokens": 558,
+        "outputTokens": 58,
+        "tokensPerSecond": 99.9,
+        "remainingRequests": 992,
+        "remainingTokens": 7377,
+        "reasoningTokens": 16
+      }
+    }
+  ],
+  "sources": {
+    "packages/planner/src/qwen.ts": "9ed4ac35e294d5ec2f1e31663f24e156efe82486dc700b8eb842867875fc024a",
+    "packages/planner/src/model-profiles.ts": "4cbbdba325a53155a4437a2b18472cd532d2c06a6914f45e5ff90a17735f667b",
+    "tools/models/benchmark-cloud.mjs": "79d1bd74687a9bcc63a2061184bf454acc5364bd562870f38c9c068f333eaf72"
+  },
+  "limitations": "Eight selected bilingual cases/model, not statistical model superiority or universal injection resistance. Latency is measured from this host, not from China. Fake quote signatures are never submitted. Explicit benchmark pacing is excluded from inference latency. No automatic model selection or paid fallback."
+}

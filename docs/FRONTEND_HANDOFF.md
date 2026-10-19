@@ -5,6 +5,24 @@ The branch includes the complete monorepo and working frontend reference, shared
 schemas, API, worker, provider processes, tests and sanitized public evidence.
 Current progress: [PROGRESS.md](PROGRESS.md).
 
+Integration update: frontend `origin/feat/enterprise-dashboard` at **`4e47b13`** is
+now ported into the local stage-two source with the assistant and reviewer flows.
+See [FRONTEND_INTEGRATION.md](FRONTEND_INTEGRATION.md). This is not a published merge;
+the owner explicitly deferred GitHub commit/push.
+
+Stage-two additive features (currently local `feat/batching-evaluation`): asset
+overview, payment drafting/queuing and wallet-policy risk checks. Integration contract:
+[WALLET_ASSISTANT.md](WALLET_ASSISTANT.md). The reference UI is isolated in
+`apps/web/components/wallet-assistant.tsx`, mounted from `financial-dashboard.tsx`.
+Preserve `draft` as non-executable and use shared `assistant.ts` types when merging
+the new capability into a redesigned frontend.
+
+The reviewer entry `/review` mounts `FinancialDashboard` with a scoped `reviewSession`
+and same-origin `/api/review/sessions/<id>` prefix. Preserve the optional API base,
+capability header on status/financial calls, no-MetaMask review path, expiry/close flow,
+and explicit local-fork receipt labels. Do not turn a local hash into a public explorer
+link. Model display uses the actual ID (candidate GPT-OSS 120B), not hard-coded Qwen.
+
 ## Get the code
 
 For a fresh clone:
@@ -44,7 +62,7 @@ npm run dev:web
 ```
 
 On PowerShell, use `npm.cmd` if execution policy blocks `npm`.
-Open **http://localhost:3000/dashboard** or **http://localhost:3000/setup**.
+Judge flow: **http://localhost:3000/** → **/evidence** → recorded video. Owner flow: **/setup** → **/dashboard**. The owner runtime requires the registered wallet and running backend; reviewers should start at **/evidence**.
 
 ## Integration references
 
@@ -103,3 +121,16 @@ npm run test:e2e
 Coordinate changes to shared schemas, API routes and root `package-lock.json` with
 the backend owner. UI/UX work can build on the existing components while preserving
 owner authentication, explicit execution controls and the `paid`/`completed` distinction.
+
+## Evidence ledger
+
+`/evidence` is a static build-time ledger of committed `docs/evidence/*.json` artifacts;
+it performs no live API, wallet, explorer, or chain verification. Judges should start with the
+six-claim table, verify the public purchase transaction, then read each record's `Proves` and
+`Does not prove` boundary. Only `Public chain · recorded` transaction records may link to an
+explorer; local-fork and local-inference hashes never do. Vercel builds must retain
+`docs/evidence/` in the repository build context. `apps/web/vercel.json` already runs from
+the repository root, but a deployment source filter must not exclude `docs/`.
+
+Security controls, evidence boundaries, and open backend-owner questions are in
+[security-self-assessment.md](security-self-assessment.md).

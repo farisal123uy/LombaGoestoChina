@@ -1,6 +1,6 @@
 import type { CreateKernelAccountReturnType } from "@zerodev/sdk";
-import { parseEventLogs, type Hex, type PublicClient } from "viem";
-import { entryPoint07Abi, formatUserOperationRequest, getUserOperationHash, UserOperationReceiptNotFoundError, type UserOperation } from "viem/account-abstraction";
+import { parseEventLogs, TransactionReceiptNotFoundError, type Hex, type PublicClient } from "viem";
+import { entryPoint07Abi, formatUserOperationRequest, getUserOperationHash, type UserOperation } from "viem/account-abstraction";
 import { type PaymentAttempt, type PaymentPlan, type PaymentTask, type PolicySnapshot } from "@guardian-wallet/shared";
 import { encodeGuardianPayments, getPaymentId, guardianAbi, readPolicySnapshot, validatePaymentPlan } from "./guardian.js";
 import { entryPoint } from "./kernel.js";
@@ -84,25 +84,29 @@ export function createKernelPaymentDriver(options: {
     async reconcile(attempt, plan) {
       bind(plan);
       if (attempt.sender.toLowerCase() !== account.address.toLowerCase() || attempt.taskId !== plan.taskId) throw new Error("ATTEMPT_BINDING");
+      const pending = (reason?: string): Reconciliation => Date.now() - attempt.preparedAt > 300000
+        ? { status: "needs_review", reason: "RECONCILIATION_TIMEOUT" }
+        : { status: "pending", ...(reason ? { reason } : {}) };
+      try {
       let transactionHash: Hex | undefined;
       try {
         const receipt = await bundler.getUserOperationReceipt({ hash: attempt.userOperationHash });
         transactionHash = receipt.receipt.transactionHash;
-      } catch (error) {
-        if (!(error instanceof UserOperationReceiptNotFoundError)) throw error;
-      }
+      } catch { /* Bundler outage is not settlement evidence. Continue via canonical EntryPoint logs. */ }
       const latest = await client.getBlockNumber();
       if (!transactionHash) {
         const from = BigInt(attempt.submissionBlock);
+        if (latest < from) return pending("CHAIN_BEHIND_SUBMISSION_BLOCK");
         if (latest - from > 5000n) return { status: "needs_review", reason: "EVENT_LOOKUP_WINDOW_EXCEEDED" };
         const logs = await client.getContractEvents({ address: entryPoint.address, abi: entryPoint07Abi, eventName: "UserOperationEvent", args: { userOpHash: attempt.userOperationHash }, fromBlock: from, toBlock: latest });
         transactionHash = logs[0]?.transactionHash ?? undefined;
       }
       if (transactionHash) {
         const receipt = await client.getTransactionReceipt({ hash: transactionHash });
-        if (latest - receipt.blockNumber + 1n < BigInt(confirmations)) return { status: "pending" };
+        if (latest - receipt.blockNumber + 1n < BigInt(confirmations)) return pending();
         const block = await client.getBlock({ blockNumber: receipt.blockNumber });
-        if (block.hash !== receipt.blockHash) return { status: "pending", reason: "REORG_RECONCILING" };
+        if (block.hash !== receipt.blockHash) return pending("REORG_RECONCILING");
+        if (receipt.status !== "success") return { status: "needs_review", reason: "OUTER_TRANSACTION_FAILED" };
         const operationEvent = parseEventLogs({ abi: entryPoint07Abi, eventName: "UserOperationEvent", logs: receipt.logs.filter((l) => l.address.toLowerCase() === entryPoint.address.toLowerCase()) }).find((e) => e.args.userOpHash === attempt.userOperationHash);
         if (!operationEvent || operationEvent.args.sender.toLowerCase() !== account.address.toLowerCase() || operationEvent.args.nonce !== BigInt(attempt.nonce)) return { status: "needs_review", reason: "OPERATION_RECEIPT_MISMATCH" };
         const events = parseEventLogs({ abi: guardianAbi, eventName: "PaymentSettled", logs: receipt.logs.filter((l) => l.address.toLowerCase() === guardianAddress.toLowerCase()) });
@@ -116,8 +120,10 @@ export function createKernelPaymentDriver(options: {
       const consumedWithoutReceipt = await Promise.all(plan.quotes.map((q) => client.readContract({ address: guardianAddress, abi: guardianAbi, functionName: "consumed", args: [account.address, getPaymentId(plan.chainId, q)] })));
       if (consumedWithoutReceipt.some(Boolean)) return { status: "needs_review", reason: "INVOICE_CONSUMED_WITHOUT_MATCHED_RECEIPT" };
       if (nonce > BigInt(attempt.nonce)) return { status: "needs_review", reason: "NONCE_ADVANCED_WITHOUT_MATCHED_RECEIPT" };
-      if (Date.now() - attempt.preparedAt > 300000) return { status: "needs_review", reason: "RECONCILIATION_TIMEOUT" };
-      return { status: "pending" };
+      return pending();
+      } catch (error) {
+        return pending(error instanceof TransactionReceiptNotFoundError ? "RECEIPT_NOT_FOUND_RECONCILING" : "RECONCILIATION_RPC_UNAVAILABLE");
+      }
     },
   };
 }

@@ -1,0 +1,230 @@
+{
+  "measuredAt": "2026-10-19T04:28:43.179Z",
+  "caseId": "COST-01",
+  "evidenceType": "isolated-local-base-sepolia-fork-actual-kernel-worker",
+  "forkBlock": 48189742,
+  "chainId": 84532,
+  "kernelVersion": "0.3.1",
+  "entryPointVersion": "0.7",
+  "initialTokenBalanceUnits": "10000000",
+  "protectedBalanceUnits": "6000000",
+  "dailyLimitUnits": "2000000",
+  "permissionState": "already-enabled-identical-EVM-snapshot-per-mode",
+  "warmup": {
+    "previousDayAllowedPaymentUnits": "260000",
+    "firstEnableOperationGas": "1267792",
+    "excludedFromSteadyStateComparison": true
+  },
+  "payer": "locally-prefunded-Kernel-EntryPoint-native-gas; ephemeral-fork-assets",
+  "bundler": "local-stub-static-100000-preVerificationGas-2500000-verificationGasLimit-5000000-callGasLimit",
+  "gasPricing": {
+    "baseFeeWei": "1000000000",
+    "maxFeePerGasWei": "2000000000",
+    "priorityFeeWei": "1000000000"
+  },
+  "inference": "deterministic-baseline-for-both-modes; inference-cost-excluded",
+  "results": [
+    {
+      "invoiceCount": 4,
+      "invoiceAmountUnits": "260000",
+      "totalServiceAmountUnits": "1040000",
+      "repetitionsPerMode": 3,
+      "singleMedianEntryPointGas": "3258582",
+      "batchMedianEntryPointGas": "963656",
+      "entryPointGasReductionPercent": 70.42,
+      "singleMedianEnclosingTransactionGas": "1086084",
+      "batchMedianEnclosingTransactionGas": "449704",
+      "enclosingTransactionGasReductionPercent": 58.59,
+      "singleMedianEntryPointChargeWei": "6517164000000000",
+      "batchMedianEntryPointChargeWei": "1927312000000000",
+      "samples": [
+        {
+          "repeat": 1,
+          "mode": "single",
+          "settledInvoices": 4,
+          "operationCount": 4,
+          "elapsedMs": 7042,
+          "entryPointGasUsed": "3258582",
+          "entryPointChargeWei": "6517164000000000",
+          "enclosingTransactionGasUsed": "1086084",
+          "calldataBytes": 3088,
+          "tokenBalanceAfterUnits": "8960000",
+          "spentAfterUnits": "1040000"
+        },
+        {
+          "repeat": 1,
+          "mode": "batch",
+          "settledInvoices": 4,
+          "operationCount": 1,
+          "elapsedMs": 1171,
+          "entryPointGasUsed": "963656",
+          "entryPointChargeWei": "1927312000000000",
+          "enclosingTransactionGasUsed": "449704",
+          "calldataBytes": 2020,
+          "tokenBalanceAfterUnits": "8960000",
+          "spentAfterUnits": "1040000"
+        },
+        {
+          "repeat": 2,
+          "mode": "single",
+          "settledInvoices": 4,
+          "operationCount": 4,
+          "elapsedMs": 162,
+          "entryPointGasUsed": "3258582",
+          "entryPointChargeWei": "6517164000000000",
+          "enclosingTransactionGasUsed": "1086084",
+          "calldataBytes": 3088,
+          "tokenBalanceAfterUnits": "8960000",
+          "spentAfterUnits": "1040000"
+        },
+        {
+          "repeat": 2,
+          "mode": "batch",
+          "settledInvoices": 4,
+          "operationCount": 1,
+          "elapsedMs": 68,
+          "entryPointGasUsed": "963656",
+          "entryPointChargeWei": "1927312000000000",
+          "enclosingTransactionGasUsed": "449704",
+          "calldataBytes": 2020,
+          "tokenBalanceAfterUnits": "8960000",
+          "spentAfterUnits": "1040000"
+        },
+        {
+          "repeat": 3,
+          "mode": "single",
+          "settledInvoices": 4,
+          "operationCount": 4,
+          "elapsedMs": 156,
+          "entryPointGasUsed": "3258582",
+          "entryPointChargeWei": "6517164000000000",
+          "enclosingTransactionGasUsed": "1086084",
+          "calldataBytes": 3088,
+          "tokenBalanceAfterUnits": "8960000",
+          "spentAfterUnits": "1040000"
+        },
+        {
+          "repeat": 3,
+          "mode": "batch",
+          "settledInvoices": 4,
+          "operationCount": 1,
+          "elapsedMs": 66,
+          "entryPointGasUsed": "963656",
+          "entryPointChargeWei": "1927312000000000",
+          "enclosingTransactionGasUsed": "449704",
+          "calldataBytes": 2020,
+          "tokenBalanceAfterUnits": "8960000",
+          "spentAfterUnits": "1040000"
+        }
+      ]
+    },
+    {
+      "invoiceCount": 7,
+      "invoiceAmountUnits": "260000",
+      "totalServiceAmountUnits": "1820000",
+      "repetitionsPerMode": 3,
+      "singleMedianEntryPointGas": "5678151",
+      "batchMedianEntryPointGas": "1088400",
+      "entryPointGasReductionPercent": 80.83,
+      "singleMedianEnclosingTransactionGas": "1870809",
+      "batchMedianEnclosingTransactionGas": "601011",
+      "enclosingTransactionGasReductionPercent": 67.87,
+      "singleMedianEntryPointChargeWei": "11356302000000000",
+      "batchMedianEntryPointChargeWei": "2176800000000000",
+      "samples": [
+        {
+          "repeat": 1,
+          "mode": "single",
+          "settledInvoices": 7,
+          "operationCount": 7,
+          "elapsedMs": 5058,
+          "entryPointGasUsed": "5678151",
+          "entryPointChargeWei": "11356302000000000",
+          "enclosingTransactionGasUsed": "1870809",
+          "calldataBytes": 5404,
+          "tokenBalanceAfterUnits": "8180000",
+          "spentAfterUnits": "1820000"
+        },
+        {
+          "repeat": 1,
+          "mode": "batch",
+          "settledInvoices": 7,
+          "operationCount": 1,
+          "elapsedMs": 411,
+          "entryPointGasUsed": "1088400",
+          "entryPointChargeWei": "2176800000000000",
+          "enclosingTransactionGasUsed": "601011",
+          "calldataBytes": 3268,
+          "tokenBalanceAfterUnits": "8180000",
+          "spentAfterUnits": "1820000"
+        },
+        {
+          "repeat": 2,
+          "mode": "single",
+          "settledInvoices": 7,
+          "operationCount": 7,
+          "elapsedMs": 265,
+          "entryPointGasUsed": "5678151",
+          "entryPointChargeWei": "11356302000000000",
+          "enclosingTransactionGasUsed": "1870809",
+          "calldataBytes": 5404,
+          "tokenBalanceAfterUnits": "8180000",
+          "spentAfterUnits": "1820000"
+        },
+        {
+          "repeat": 2,
+          "mode": "batch",
+          "settledInvoices": 7,
+          "operationCount": 1,
+          "elapsedMs": 89,
+          "entryPointGasUsed": "1088400",
+          "entryPointChargeWei": "2176800000000000",
+          "enclosingTransactionGasUsed": "601011",
+          "calldataBytes": 3268,
+          "tokenBalanceAfterUnits": "8180000",
+          "spentAfterUnits": "1820000"
+        },
+        {
+          "repeat": 3,
+          "mode": "single",
+          "settledInvoices": 7,
+          "operationCount": 7,
+          "elapsedMs": 319,
+          "entryPointGasUsed": "5678151",
+          "entryPointChargeWei": "11356302000000000",
+          "enclosingTransactionGasUsed": "1870809",
+          "calldataBytes": 5404,
+          "tokenBalanceAfterUnits": "8180000",
+          "spentAfterUnits": "1820000"
+        },
+        {
+          "repeat": 3,
+          "mode": "batch",
+          "settledInvoices": 7,
+          "operationCount": 1,
+          "elapsedMs": 114,
+          "entryPointGasUsed": "1088400",
+          "entryPointChargeWei": "2176800000000000",
+          "enclosingTransactionGasUsed": "601011",
+          "calldataBytes": 3268,
+          "tokenBalanceAfterUnits": "8180000",
+          "spentAfterUnits": "1820000"
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "No public-chain transactions or real-money purchases.",
+    "EntryPoint actualGasUsed includes the stub's fixed preVerificationGas; enclosing transaction EVM gas is reported separately.",
+    "OP L1-data fees, commercial bundler/paymaster pricing, production congestion, model/hosting/electricity costs are not measured.",
+    "Elapsed time is local test-harness processing; configured batching wait, owner interactions and production RPC latency are excluded.",
+    "Scheduler savings apply equally to baseline and model-approved invoices; not attributed to AI intelligence."
+  ],
+  "sources": {
+    "apps/worker/src/worker.ts": "63208a22e5a387ad05b287ab22dbda71a640fb5083f962abd06b621ba9a2faf5",
+    "packages/database/src/payment-store.ts": "48ee210e887a52e1ad2c6e5017cb512811203fedf635686578d55669cf0771e8",
+    "packages/planner/src/batching.ts": "33b695d500825e11767ac94083245f21dce4a51c596b134062e8c3abeaa78255",
+    "packages/wallet/src/execution.ts": "ce7b7183ff424af5ea80026ceeac8b079fac54fb25d8bcbd4e01e4cfbc2bb985",
+    "contracts/test/Cost.integration.ts": "b9817911c77666b9a52ede13fb226ffe3b5bfdb805aed54c9ceb72c609656d4a"
+  }
+}

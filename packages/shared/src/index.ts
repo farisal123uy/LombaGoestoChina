@@ -1,6 +1,7 @@
 import { z } from "zod";
 export * from "./payments.js";
 export * from "./services.js";
+export * from "./assistant.js";
 
 export const developmentChain = {
   id: 84532,

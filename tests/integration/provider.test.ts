@@ -109,7 +109,7 @@ describe("Provider signer and real PostgreSQL test-service provisioning (chain p
     const modelFetch = vi.fn<typeof fetch>(async () => new Response(JSON.stringify({ done: true, message: { role: "assistant", content: JSON.stringify(decision) } })));
     const signFetch = vi.fn<typeof fetch>(async () => new Response(JSON.stringify({ quote: quoted.quote })));
     vi.stubGlobal("fetch", signFetch);
-    const app = await buildProviderAgent({ accessToken: "b".repeat(64), signerToken: "c".repeat(64), signerUrl: "http://signer.test", qwen: { fetch: modelFetch } });
+    const app = await buildProviderAgent({ accessToken: "b".repeat(64), signerToken: "c".repeat(64), signerUrl: "http://signer.test", qwen: { provider: "ollama", fetch: modelFetch } });
     cleanup.push(() => app.close());
     const request = { method: "POST" as const, url: "/request", payload: { requestId: quoted.requestId, instruction: "Rent a 1 MB database for 1 hour.", preferredOfferId: "database-small-1h" } };
     expect((await app.inject(request)).statusCode).toBe(401);

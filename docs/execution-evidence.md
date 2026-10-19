@@ -15,6 +15,13 @@ not an explorer manifest for public Base Sepolia transactions.
 
 ## Initial implementation evidence
 
+- Stage-two local evaluation: [COST-01 report](evidence/COST-01-local-batching.md),
+  [selected model/security summary](evidence/security-evaluation-summary.md) and
+  [actual Kernel expanded fixtures](evidence/security-kernel-fork.json).
+  These submit no public transactions; source hashes identify the working snapshot.
+- English submission review assets: [guide](../submission/README.md), 9-slide PPTX/PDF,
+  technical/risk PDFs, 4m24s narrated evidence walkthrough and source/evidence archive.
+  Official team details, release publication and portal receipt are not fabricated.
 - [Live provider preview](evidence/provider-live-preview.json): real local Qwen buyer
   intent, separate provider agent/signer, hosted invoice persistence, verified quote
   signature and live payment planning against public policy. Worker idle and auth
@@ -90,7 +97,7 @@ the organizing committee and label test tokens clearly.
 | SEC-02 | Vendor injection corpus, parser/planner outputs, decisions and benign-case controls. |
 | SEC-03–07 | Initial local/fork policy coverage above; expand corpus/control ordering and collect accepted public-network evidence. |
 | REL-01–03 | Local/fork crash, lost-response, stale preflight, rollback and fixture delivery retries covered; reorg/hosted service-failure evaluation remain. |
-| COST-01 | Comparable single vs batch 4/7 measurements within the 2.00 cap, latency and cost payer. |
+| COST-01 | Actual Kernel/worker 4/7 comparison, three repeats/mode, identical warm snapshots; EVM gas scope and stub/L1/pricing exclusions recorded. |
 
 For SEC-01, distinguish local EVM execution, public-chain simulation, bundler rejection
 and mined revert. Only the first three may be available for a rejected operation;

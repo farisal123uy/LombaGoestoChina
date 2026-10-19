@@ -1,0 +1,16 @@
+{
+  "name": "@guardian-wallet/reviewer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Runtime dependency boundary for the disposable contract-backed reviewer service",
+  "dependencies": {
+    "@guardian-wallet/api": "0.1.0",
+    "@guardian-wallet/worker": "0.1.0",
+    "@guardian-wallet/web": "0.1.0",
+    "@guardian-wallet/contracts": "0.1.0",
+    "@electric-sql/pglite": "0.5.10",
+    "hardhat": "3.19.0",
+    "@nomicfoundation/hardhat-viem": "3.0.9"
+  }
+}

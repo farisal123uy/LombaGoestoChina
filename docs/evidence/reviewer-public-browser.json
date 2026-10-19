@@ -1,0 +1,34 @@
+{
+  "capturedAt": "2026-10-18T12:41:01.355Z",
+  "evidenceType": "public-HTTPS-browser-Linux-production-real-Groq-API-isolated-Kernel-fork",
+  "passed": true,
+  "modelId": "openai/gpt-oss-120b",
+  "diagnosticBuildId": "912063431ea05c663abd9df36bdff047687006d5cf8ea9fde87ba8b9b0f9d9c0",
+  "publicOrigin": "https://preview-95c94201191f7206.up.railway.app",
+  "deployedSourceSha256": "912063431ea05c663abd9df36bdff047687006d5cf8ea9fde87ba8b9b0f9d9c0",
+  "taskId": "23da4249-4c85-44e0-a4df-2b011508774a",
+  "taskStatus": "completed",
+  "operationStatus": "confirmed",
+  "localTransactionHash": "0x13479a00a9ab32887450ae034c9a9c0355e9678dd835d56f8f2a8f1c11e2333b",
+  "elapsedMs": 37703,
+  "procurementThroughWriteReadMs": 11276,
+  "checks": [
+    "public-review-navigation",
+    "owner-route-redirect",
+    "no-MetaMask",
+    "real-API-payment-preview",
+    "queue-and-worker-completion",
+    "local-hash-not-public-explorer",
+    "service-probe-write-read",
+    "close-workspace",
+    "no-browser-Groq-Google-font-or-owner-localhost-request"
+  ],
+  "sourceHashes": {
+    "apps/web/components/financial-dashboard.tsx": "776c1e4e6ae9c2259db20842583469f0d2eec3ea8fa9c3ed9df729f851f82cd4",
+    "apps/web/components/wallet-assistant.tsx": "7b9926b76c9ca8d851de1bc503bdd7a3644d8555d193a8d12be67e3ae9e3a6c0",
+    "apps/web/components/reviewer-workspace.tsx": "a4c0b39aea0d9ae58ae985068ce60af8adfcc1dffdf265ea0ceba90b37475274",
+    "apps/web/lib/evidence.ts": "b7deb63b26cbaae1ade479a45487828bbe8c787bb7d902068cad2e329d70ee0d",
+    "apps/api/src/review-host.ts": "08f4121f249ea1c19f597f62ef4bb1d8f6091b4094b1653777a441cb3b6f0af3"
+  },
+  "limitations": "Browser on the owner's network to the claimed Linux server over public HTTPS, not a China-network measurement. Model is real Groq API; transfers are only isolated fork assets. Hosting account Free/Trial is operator-confirmed. No video/presentation recording."
+}

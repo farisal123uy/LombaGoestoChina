@@ -1,15 +1,21 @@
 import type { PaymentStore } from "@guardian-wallet/database";
-import type { PaymentPlanner } from "@guardian-wallet/planner";
+import { selectPaymentBatch, type PaymentPlanner } from "@guardian-wallet/planner";
 import type { PaymentExecutionDriver, PaymentFulfillment } from "@guardian-wallet/wallet";
 
 /** One tick, no overlapping loop and no automatic new-nonce retry. */
 export class PaymentWorker {
+  private readonly maxBatchSize: number;
+  private readonly batchWindowMs: number;
+  private readonly clock: () => number;
   constructor(private readonly store: PaymentStore, private readonly planner: PaymentPlanner,
     private readonly driver: PaymentExecutionDriver, private readonly accountKey: string, private readonly workerId: string,
-    private readonly fulfillment?: PaymentFulfillment) {}
+    private readonly fulfillment?: PaymentFulfillment, options: { maxBatchSize?: number; batchWindowMs?: number; clock?: () => number } = {}) {
+    this.maxBatchSize = options.maxBatchSize ?? 1; this.batchWindowMs = options.batchWindowMs ?? 0; this.clock = options.clock ?? Date.now;
+    if (!Number.isInteger(this.maxBatchSize) || this.maxBatchSize < 1 || this.maxBatchSize > 10 || !Number.isInteger(this.batchWindowMs) || this.batchWindowMs < 0 || this.batchWindowMs > 30000) throw new Error("INVALID_BATCH_CONFIGURATION");
+  }
 
   async runOnce() {
-    const claim = await this.store.claim(this.accountKey, this.workerId);
+    const claim = await this.store.claim(this.accountKey, this.workerId, 90000, this.maxBatchSize);
     if (!claim) return "idle";
     try {
       if (["paid", "service_pending"].includes(claim.task.status)) {
@@ -44,12 +50,18 @@ export class PaymentWorker {
         await this.store.updateTask(claim, outcome.status, outcome.reason);
         return outcome.status;
       }
+      // A stalled/lagging RPC must not keep fee/sponsorship checks alive forever.
+      // Durable unknown attempts are reconciled above even after this deadline.
+      if (outcome.plan.validUntil * 1000 <= this.clock()) throw new Error("EXPIRED_PLAN");
       await this.store.updateTask(claim, "planned", undefined, outcome.plan);
-      await this.driver.validate(outcome.plan);
-      const prepared = await this.driver.prepare(outcome.plan);
+      const batch = this.maxBatchSize > 1 ? selectPaymentBatch(claim.task, claim.batchCandidates || [], await this.driver.snapshot(claim.task), this.maxBatchSize) : undefined;
+      const plan = batch?.plan || outcome.plan;
+      if (batch && batch.tasks.length < this.maxBatchSize && this.clock() < Date.parse(claim.task.createdAt) + this.batchWindowMs && plan.validUntil * 1000 > this.clock() + 5000) return "waiting_batch";
+      await this.driver.validate(plan);
+      const prepared = await this.driver.prepare(plan);
       // Durable exact payload/hash BEFORE calling the network. A crash after this
       // line is reconciled; another worker must never start a new payment instead.
-      await this.store.prepare(claim, prepared.attempt, prepared.signedPayload);
+      await this.store.prepare(claim, prepared.attempt, prepared.signedPayload, batch);
       await this.store.assertLease(claim);
       await this.store.updateAttempt(claim, { ...prepared.attempt, status: "submitting" });
       try {

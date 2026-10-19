@@ -4,6 +4,7 @@ COPY package.json package-lock.json .npmrc ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/worker/package.json apps/worker/package.json
 COPY apps/web/package.json apps/web/package.json
+COPY apps/reviewer/package.json apps/reviewer/package.json
 COPY packages/shared/package.json packages/shared/package.json
 COPY packages/planner/package.json packages/planner/package.json
 COPY packages/wallet/package.json packages/wallet/package.json

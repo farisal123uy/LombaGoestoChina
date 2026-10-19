@@ -1,0 +1,87 @@
+{
+  "capturedAt": "2026-10-18T04:02:43.391Z",
+  "evidenceType": "actual-isolated-Kernel-fork-PGlite-cloud-HTTP-fixture-not-live-model",
+  "modelId": "openai/gpt-oss-120b",
+  "modelCalls": 6,
+  "taskStatus": "completed",
+  "operationStatus": "confirmed",
+  "transactionHash": "0xc067f0d739273c7dcee24e8cf31347fa022d13993c09ab2a40d6f2f6b22384f8",
+  "before": {
+    "account": "0x6Ef6FEFD2a2b09e140B42fc66c2a9995695F7A35",
+    "chainId": 84532,
+    "token": {
+      "address": "0x255d5B41cCEF1Bb499b55249bADff5f932ffe467",
+      "symbol": "mUSD",
+      "decimals": 6,
+      "balanceUnits": "10000000",
+      "formattedBalance": "10"
+    },
+    "nativeBalanceWei": "988800000000000000",
+    "protectedBalanceUnits": "6000000",
+    "spendableBalanceUnits": "4000000",
+    "perPaymentLimitUnits": "1000000",
+    "dailyLimitUnits": "2000000",
+    "spentUnits": "0",
+    "remainingDailyUnits": "2000000",
+    "committedUnits": "0",
+    "availableToPlanUnits": "2000000",
+    "queuedTaskCount": 0,
+    "draftTaskCount": 0,
+    "schedulerPaused": true,
+    "policyVersion": "1",
+    "observedAt": 1792296139,
+    "observedBlockNumber": "48189749",
+    "observedBlockHash": "0xd13407a2bc2ae214ac1baf0725164f40d2d9e1e0dccefd99c4b1753bb74e017d"
+  },
+  "after": {
+    "account": "0x6Ef6FEFD2a2b09e140B42fc66c2a9995695F7A35",
+    "chainId": 84532,
+    "token": {
+      "address": "0x255d5B41cCEF1Bb499b55249bADff5f932ffe467",
+      "symbol": "mUSD",
+      "decimals": 6,
+      "balanceUnits": "9740000",
+      "formattedBalance": "9.74"
+    },
+    "nativeBalanceWei": "988800000000000000",
+    "protectedBalanceUnits": "6000000",
+    "spendableBalanceUnits": "3740000",
+    "perPaymentLimitUnits": "1000000",
+    "dailyLimitUnits": "2000000",
+    "spentUnits": "260000",
+    "remainingDailyUnits": "1740000",
+    "committedUnits": "0",
+    "availableToPlanUnits": "1740000",
+    "queuedTaskCount": 0,
+    "draftTaskCount": 0,
+    "schedulerPaused": false,
+    "policyVersion": "1",
+    "observedAt": 1792296146,
+    "observedBlockNumber": "48189755",
+    "observedBlockHash": "0xd1259c9ff814e3bd123f363663ba10c96dd124a82cc4e5021912d815e4c59544"
+  },
+  "secondAccount": "0x7CdDF4d944a20494fab339811A5B0ce15461BD02",
+  "resourceObservation": {
+    "firstWorkspace": {
+      "elapsedMs": 14801,
+      "rssBytes": 894496768,
+      "cpuMicros": {
+        "user": 1875000,
+        "system": 312000
+      }
+    },
+    "twoWorkspaceRssBytes": 1119109120,
+    "processPeakRssKb": 1280592,
+    "environment": "Windows local test process; excludes separate web process; not a Linux hosting capacity guarantee"
+  },
+  "checks": [
+    "draft-not-sent",
+    "queue-preserves-pause",
+    "actual-restricted-session-settlement",
+    "signed-delivery-verification",
+    "database-probe-and-write-read",
+    "idempotent-execute",
+    "separate-wallet-and-database"
+  ],
+  "limitations": "Model HTTP responses are explicit fixtures. Real contracts and service DB execute on disposable local forks. No Groq inference, public transaction, commercial purchase or billing."
+}

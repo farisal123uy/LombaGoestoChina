@@ -1,0 +1,98 @@
+{
+  "capturedAt": "2026-10-17T07:37:41.213Z",
+  "evidenceType": "isolated-local-kernel-fork-adversarial-fixtures-not-public-transactions",
+  "forkBlock": 48189742,
+  "kernelVersion": "0.3.1",
+  "entryPoint": "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
+  "evidence": [
+    {
+      "label": "allowed-session-payment",
+      "userOperationHash": "0x203ad4a26e161113a54a6aaeca07abc65c8ebd76b472b72fc94d3bec0b9cbcf0",
+      "transactionHash": "0xe2c4062eaa35c7d6c130002ffc2862666b3f7aa059bb4c4bed580dd5a90417b9",
+      "success": true
+    },
+    {
+      "label": "direct-transfer-denied",
+      "userOperationHash": "0x7b0b8d90a42df28269ac0d17553c89a8429dd053c36180e37c925374ad969c4c",
+      "success": false,
+      "rejection": "FailedOpWithRevert"
+    },
+    {
+      "label": "infinite-approval-denied",
+      "userOperationHash": "0x574e683da274bc098c79e394b3c88f6b84d0f97b36130e9bfff7e295e184c168",
+      "success": false,
+      "rejection": "FailedOpWithRevert"
+    },
+    {
+      "label": "policy-admin-denied",
+      "userOperationHash": "0xbc0d230d8f0af2c962c8f76c48096af40e96fd3c5cc2cfd3be66381e11cc17fd",
+      "success": false,
+      "rejection": "FailedOpWithRevert"
+    },
+    {
+      "label": "transferFrom-denied",
+      "userOperationHash": "0x5e370c881df4024adc47dcdb05d968553325262e1ba6ff7b85b53e5a1d09a0a7",
+      "success": false,
+      "rejection": "FailedOpWithRevert"
+    },
+    {
+      "label": "permit-selector-denied",
+      "userOperationHash": "0x07c76a3c7a3c1b996f2158e65efc9f2ad20cf6185987a68b2fe036aec3009be8",
+      "success": false,
+      "rejection": "FailedOpWithRevert"
+    },
+    {
+      "label": "SEC-01-compromised-planner-fixture",
+      "userOperationHash": "0xb495f67ba591e551ea11e0b0e0264cd45f74b136cea5893a3877792ac2c61db3",
+      "transactionHash": "0x7f7c90c99ccba06922295e727122f4b33adf59bbebd1a66d26e7e628d5598343",
+      "success": false
+    },
+    {
+      "label": "mixed-batch-bypass-denied",
+      "userOperationHash": "0x8806848d7f68442050d72a7d5037fbefcf42214407a2fadc3ece5345fac694f3",
+      "success": false,
+      "rejection": "FailedOpWithRevert"
+    },
+    {
+      "label": "delegatecall-to-guardian-denied",
+      "userOperationHash": "0x1486d3210e044d3c0576f64ad324fd0b16480761022029202299bf99fbb4052b",
+      "success": false,
+      "rejection": "FailedOpWithRevert"
+    },
+    {
+      "label": "nested-kernel-execute-denied",
+      "userOperationHash": "0xcda504e6662f9f47ffd7981d552701c871e72f995f757ecbae90af92aa59dd4d",
+      "success": false,
+      "rejection": "FailedOpWithRevert"
+    },
+    {
+      "label": "owner-revokes-sessions",
+      "userOperationHash": "0x407c95f23d9a34f07d5ffc8ec527fbfc6220ea6f7053c5f9b393436b9d57bf12",
+      "transactionHash": "0x1542a0659db82949c61a6267db394bd8b973c93050f5b3547c37bf49767717a8",
+      "success": true
+    },
+    {
+      "label": "revoked-session-denied",
+      "userOperationHash": "0xec173c8e27a787667c95cf3267e885ae7668f80a52de0f2db2b186eae0742bd3",
+      "success": false,
+      "rejection": "FailedOpWithRevert"
+    }
+  ],
+  "lostResponseRecovery": {
+    "sends": 1,
+    "taskStatus": "paid",
+    "userOperationHash": "0xaf056737da62e201d69e8feba9f79f62356b22461b22d70168896bd4628723a5",
+    "transactionHash": "0x6e0083dd36f4797ee3689c589dd72cd823ce1e4490c03478a23a48335f67e1a8"
+  },
+  "finalBalanceUnits": "9480000",
+  "allowanceUnits": "0",
+  "erc1271SessionRejected": true,
+  "sessionRevocationTested": true,
+  "permitScope": "Permission validation rejects the permit selector; MockUSD does not implement EIP-2612, so token permit semantics are not claimed.",
+  "sources": {
+    "contracts/test/Kernel.integration.ts": "fc40c2bb68509ebec9d72d2f382792b2845c80f3aa9e7a0042d758f2b736f80f",
+    "contracts/contracts/GuardianPayments.sol": "735cfadd456bc1fcb5713499491efe9a7eb201068d70560a2659a39aedbf83f7",
+    "packages/wallet/src/kernel.ts": "4140f4cfde990701fe6e6358dfc0f3425f3bb210c54462453cbd8e107e1bfee0",
+    "packages/wallet/src/execution.ts": "8ee8654cc02f6c6f1a8afd2092f328d404c5019213836f71e71ebb90e7682ef7"
+  }
+}

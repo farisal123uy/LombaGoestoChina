@@ -25,7 +25,7 @@ test("owner completes the visible sign/deploy/session flow without entering a pr
   }, { address: owner });
   await page.route("http://127.0.0.1:4100/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
-    const headers = { "access-control-allow-origin": "http://localhost:3000", "access-control-allow-headers": "content-type,authorization", "access-control-allow-methods": "GET,POST,OPTIONS" };
+    const headers = { "access-control-allow-origin": route.request().headers().origin || "http://localhost:3000", "access-control-allow-headers": "content-type,authorization", "access-control-allow-methods": "GET,POST,OPTIONS" };
     if (route.request().method() === "OPTIONS") return route.fulfill({ status: 204, headers });
     let body: unknown = current;
     if (path === "/auth/nonce") body = { nonce: "test-nonce", message: "Owner sign-in test fixture" };
@@ -54,7 +54,8 @@ test("owner completes the visible sign/deploy/session flow without entering a pr
 test("coordinator outage gives a usable startup instruction", async ({ page }) => {
   await page.route("http://127.0.0.1:4100/**", (route) => route.abort());
   await page.goto("/setup");
-  await expect(page.getByRole("alert").filter({ hasText: "npm.cmd run onboarding" })).toBeVisible();
+  await expect(page.getByRole("alert").filter({ hasText: "npm run onboarding" })).toBeVisible();
+  await expect(page.getByText("Unavailable", { exact: true }).first()).toBeVisible();
   await expect(page.getByRole("button", { name: "Connect MetaMask & sign in" })).toBeDisabled();
 });
 
@@ -65,7 +66,7 @@ test("a different wallet cannot proceed to owner sign-in or deployment", async (
   });
   await page.route("http://127.0.0.1:4100/**", (route) => {
     if (new URL(route.request().url()).pathname === "/auth/nonce") nonceRequests++;
-    return route.fulfill({ contentType: "application/json", headers: { "access-control-allow-origin": "http://localhost:3000" }, body: JSON.stringify(state) });
+    return route.fulfill({ contentType: "application/json", headers: { "access-control-allow-origin": route.request().headers().origin || "http://localhost:3000" }, body: JSON.stringify(state) });
   });
   await page.goto("/setup");
   await page.getByRole("button", { name: "Connect MetaMask & sign in" }).click();
