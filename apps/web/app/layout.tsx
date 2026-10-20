@@ -14,6 +14,9 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Guardian Wallet | Bounded AI Authority",
   description: "Policy-bound AI procurement, independently inspectable evidence and a disposable reviewer workspace.",
+  icons: {
+    icon: "/logo.svg",
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

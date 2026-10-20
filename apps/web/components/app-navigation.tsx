@@ -22,7 +22,9 @@ export function AppNavigation({ reviewOnly = false }: { reviewOnly?: boolean }) 
   return <div className="app-nav-frame">
     <header className="app-navigation">
       <Link className="app-brand" href="/" aria-label="Guardian Wallet overview">
-        <span className="brand-mark" aria-hidden="true">G</span>
+        <span className="brand-mark" aria-hidden="true">
+          <img src="/logo.svg" alt="" width="20" height="20" />
+        </span>
         <span className="app-brand-copy"><strong>Guardian <span>Wallet</span></strong><small>POLICY CONTROL</small></span>
       </Link>
       <nav className="app-nav-links" aria-label="Main navigation">
