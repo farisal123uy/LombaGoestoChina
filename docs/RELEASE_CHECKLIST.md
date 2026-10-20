@@ -38,8 +38,11 @@ presentation and supporting documents are in the root [submission folder](../sub
 - [x] README, deployment guide and runnable tests available.
 - [x] Root typecheck includes integration/browser tests; the Docker evidence allowlist
   has a regression check. Full and production dependency scans report zero advisories.
-- [ ] Final source revision frozen for official submission; the project branch
-  `feat/batching-evaluation` is being published with owner authorization (`main` unchanged).
+- [x] Runtime source and owner-maintained submission materials committed/pushed to
+  `feat/batching-evaluation`; `main` is unchanged. The verified deployment runs runtime
+  commit `d5517adc9d551ba6df36b53a357001bb35edd981`; exact archive/build SHA-256 is in `PROGRESS.md`.
+- [ ] Freeze and human-review the final source revision/material set for official submission;
+  any subsequent source edit requires updating the selected revision.
 - [x] Credential-free deployed source archive/inventory retained after frontend integration;
   later local docs/checker/evidence updates are packaged separately.
 - [x] Source review packaging includes the full lockfile license inventory and installed

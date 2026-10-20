@@ -166,13 +166,13 @@ static Space cannot run this backend or hold server secrets. The Docker SDK's po
 7. Have someone on the judge's China network verify reachability and latency. An
    Indonesian-only check is insufficient for a China accessibility claim.
 
-The laptop/tunnel experiment is stopped. Current team release steps are ongoing
-hosting-credit/eligibility monitoring, a check on the judge's exact network, team
-identity/eligibility, organizer acceptance of Base Sepolia, and official submission.
-Frontend `4e47b13` is integrated and the API key is configured privately. The owner
-has authorized source publication on the `feat/batching-evaluation` branch; `main`
-remains unchanged. Presentation/video materials are maintained in the root
-[submission folder](../submission/), separately from runtime deployment and official upload.
+The laptop/tunnel experiment is stopped. The October 20 public Linux deployment runs
+the runtime files from source commit `d5517adc9d551ba6df36b53a357001bb35edd981`; the owner-
+maintained submission files and documentation updates are pushed to
+`feat/batching-evaluation`, and `main` remains unchanged. Owner-maintained presentation/video files remain in the root
+[submission folder](../submission/). Continue monitoring Free/Trial credits and verify
+reachability on the judge's exact network; organizer acceptance of Base Sepolia and
+the official upload receipt are not confirmed.
 
 For this VM rollout, `node tools/deploy/linux-review.mjs --claimed-free` uses the
 dedicated private SSH identity, verifies a source-only archive, builds/prunes a fresh

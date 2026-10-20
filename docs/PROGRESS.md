@@ -1,5 +1,28 @@
 # Guardian Wallet — catatan progres
 
+## Publikasi dan deployment publik — 20 Oktober
+
+- Runtime source, logo web dan materi submission tim telah di-commit sebagai
+  **`d5517adc9d551ba6df36b53a357001bb35edd981`** dan di-push ke `origin/feat/batching-evaluation`;
+  branch `main` tidak diubah. Commit dokumentasi lanjutan memperbarui catatan release tanpa
+  mengubah berkas runtime yang sudah dideploy.
+- Reviewer publik: https://preview-95c94201191f7206.up.railway.app/review. Release runtime
+  Linux aktif memakai source archive SHA-256
+  **`4fc4f46ebf05e5c7ee2f2e3bad68871d4b80474338a2081d21c1bfe3b64dbdb3`**, dibuat dari
+  commit di atas. Access code tetap dibagikan terpisah secara privat.
+- Build baru lulus clean install/build Linux, readiness model/fork, live GPT-OSS procurement
+  di fork, signed delivery, service probe/write-read dan closed-capability rejection. Public
+  HTTPS browser kemudian lulus end-to-end dengan logo SVG/favicon yang hash-nya cocok dengan source.
+- Tiga probe readiness/TLS China melihat HTTP 200 dan build ID baru. Ini probe jaringan waktu
+  tertentu, bukan browser juri/SLA. Tidak ada upgrade billing API; host tetap Free/Trial yang
+  eligibility-nya dikonfirmasi operator.
+- Rollout memakai release directory berversi dan mempertahankan release/environment sebelumnya
+  untuk rollback. Perbandingan archive menunjukkan **97 runtime files**, tanpa file runtime berubah.
+- Verifikasi kode menjelang penutupan rilis mencakup lint, typecheck, production build dan
+  semua **156 tes**. Tidak ada kode runtime berubah pada pembaruan catatan publikasi ini.
+- Submission folder berisi materi yang dikelola tim; source push bukan bukti upload resmi.
+  Organizer belum mengonfirmasi penerimaan Base Sepolia dan portal belum memiliki receipt.
+
 ## Perapihan struktur proyek — 20 Oktober
 
 - Materi submission aktif memakai sembilan berkas PPTX/Markdown/rekaman milik tim
@@ -92,8 +115,8 @@ di bawah sudah dihentikan/dibersihkan; materi aktif kini berada di root `submiss
   belum ditemukan penerimaan Base Sepolia/testnet secara eksplisit. Draft pertanyaan
   Inggris di `archive/ORGANIZER_NETWORK_CONFIRMATION.md` dan `archive/organizer-network-query.eml`
   sekarang menjadi arsip yang tidak dikirim, bukan permintaan yang sedang menunggu jawaban.
-- Owner kini mengizinkan publikasi source ke branch GitHub `feat/batching-evaluation`;
-  branch `main` tidak diubah. Presentasi/video tetap menunggu izin terpisah.
+- Owner memilih melanjutkan dengan evidence Base Sepolia; branch `main` tetap tidak diubah.
+  Status source push dan deployment terbaru dicatat pada bagian teratas file ini.
 
 ## Status aktif — sistem online dan frontend terintegrasi (18 Oktober)
 
@@ -123,11 +146,10 @@ di bawah sudah dihentikan/dibersihkan; materi aktif kini berada di root `submiss
 - Panduan aktif: [REVIEWER_GUIDE.md](REVIEWER_GUIDE.md),
   [FRONTEND_INTEGRATION.md](FRONTEND_INTEGRATION.md),
   [CLOUD-VALIDATION.md](evidence/CLOUD-VALIDATION.md), [release gates](RELEASE_CHECKLIST.md).
-- **Push source ke branch `feat/batching-evaluation` telah diizinkan owner; `main`
-  tidak diubah. Presentasi/video tetap menunggu izin.**
-  `submission/` tetap kosong. Sisa resmi: konfirmasi jaringan oleh panitia, identitas/
-  eligibility tim, uji jaringan juri sendiri, materi presentasi, dan upload/receipt
-  portal. Catatan di bawah adalah checkpoint historis, bukan status aktif.
+- **Checkpoint saat itu (18 Oktober):** source push sudah diizinkan owner; source belum
+  dipublikasikan dan `submission/` belum berisi materi final. Status tersebut sudah
+  diperbarui oleh publikasi/deployment dan materi tim pada bagian teratas file ini.
+  Catatan di bawah tetap merupakan riwayat checkpoint, bukan status aktif.
 - Perintah `npm.cmd run release:readiness` memeriksa readiness/build publik, penolakan
   akses tanpa capability/kode salah, hasil model/browser/China dan kecocokan **85 file
   runtime** terhadap ZIP deployed. Report lokal: `.local/release/readiness-report.json`.
@@ -154,13 +176,14 @@ di bawah sudah dihentikan/dibersihkan; materi aktif kini berada di root `submiss
   build-only tooling tersebut dipangkas dari image produksi. Ini bukan audit keamanan.
 - Panduan terbaru: [AI_CLOUD.md](AI_CLOUD.md), [REVIEW_DEPLOYMENT.md](REVIEW_DEPLOYMENT.md),
   [technical documentation](technical-documentation.md), [release gates](RELEASE_CHECKLIST.md).
-- Frontend teman belum di-push/diintegrasikan; source stage dua belum di-commit/push.
-  Presentasi/video tetap menunggu izin. Status rilis resmi **belum 100%**.
+- **Checkpoint pra-integrasi (18 Oktober):** frontend dan source stage dua belum dipush;
+  presentasi/video masih menunggu keputusan tim. Status ini kemudian berubah; lihat bagian
+  publikasi/deployment di awal dokumen. Status official submission saat ini tetap belum lengkap.
 
-## Pembaruan aktif — API cloud gratis dan kesiapan juri
+## Historical checkpoint — API cloud gratis dan kesiapan juri (18 Oktober)
 
-- Batas biaya layanan **Rp0**, tanpa aktivasi billing. Presentasi/video menunggu izin
-  owner; frontend teman belum di-push sehingga integrasi frontend final belum selesai.
+- Batas biaya layanan **Rp0**, tanpa aktivasi billing. Pada checkpoint ini presentasi/video
+  menunggu izin owner dan frontend teman belum di-push; keduanya adalah status historis.
 - Qwen runtime dipindahkan ke adapter **Groq Free**, model pinned
   `qwen/qwen3.8-27b`, strict JSON, reasoning none, batas token/request dan penanganan
   quota tanpa paid fallback. Panduan konfigurasi saat ini: [AI_CLOUD.md](AI_CLOUD.md).
