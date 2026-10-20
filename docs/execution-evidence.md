@@ -19,9 +19,11 @@ not an explorer manifest for public Base Sepolia transactions.
   [selected model/security summary](evidence/security-evaluation-summary.md) and
   [actual Kernel expanded fixtures](evidence/security-kernel-fork.json).
   These submit no public transactions; source hashes identify the working snapshot.
-- English submission review assets: [guide](../submission/README.md), 9-slide PPTX/PDF,
-  technical/risk PDFs, 4m24s narrated evidence walkthrough and source/evidence archive.
-  Official team details, release publication and portal receipt are not fabricated.
+- Current English submission materials: [index](../submission/README.md), four PPTX
+  decks (10/9/10/11 slides), four content documents, a 5:43.233 demo video and a
+  10:11.200 presentation video. The index records validation scope, retained durations,
+  source/deployment references and source-only archive boundaries. Official upload
+  and portal receipt remain tracked in the [release checklist](RELEASE_CHECKLIST.md).
 - [Live provider preview](evidence/provider-live-preview.json): real local Qwen buyer
   intent, separate provider agent/signer, hosted invoice persistence, verified quote
   signature and live payment planning against public policy. Worker idle and auth

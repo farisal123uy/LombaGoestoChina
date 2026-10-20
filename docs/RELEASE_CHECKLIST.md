@@ -1,7 +1,7 @@
 # Competition release gates
 
 This is an implementation/release tracker, not a submission receipt. Team-maintained
-presentation and supporting documents are in the root [submission folder](../submission/).
+presentation and supporting documents are listed in the [submission index](../submission/README.md).
 
 ## Technical gates
 
@@ -28,6 +28,8 @@ presentation and supporting documents are in the root [submission folder](../sub
   restart/Docker resource acceptance remains a separate operational choice.
 - [ ] Reachability/latency verified from the judge's China network.
 - [x] Teammate frontend `4e47b13` integrated into the local source and regression-checked.
+- [x] Owner selected the current `feat/batching-evaluation` UI/UX for this release;
+  the selection is recorded in `FRONTEND_INTEGRATION.md`.
 - Reviewer route uses isolated fork migrations/session. The original public owner runtime
   remains a separate checkpoint, not a newly migrated public batch-execution claim.
 
@@ -57,9 +59,10 @@ presentation and supporting documents are in the root [submission folder](../sub
   rules do not explicitly resolve testnet acceptance; no organizer approval is claimed.
   The [archived clarification draft](archive/ORGANIZER_NETWORK_CONFIRMATION.md) is not an active
   release task. Public receipts and local-fork reviewer results remain labeled separately.
-- [x] Team-maintained presentation, technical/security documents and screen recording
-  are present in [submission/](../submission/). The retired generator's historical
-  export checks do not validate replacements supplied by the team.
+- [x] Four team-maintained PPTX decks, four content documents plus their index, demo
+  video and presentation video are present in [submission/](../submission/README.md).
+  PPTX integrity/XML checks and sampled video/audio playback passed. The index records
+  actual durations retained by owner decision; this is not a full narration/visual review.
 - [ ] Final links/materials reviewed and uploaded through the actual official channel.
 - [ ] Portal receipt/confirmation and final source/package copy retained.
 

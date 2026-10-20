@@ -82,8 +82,8 @@ npm ci
 npm run dev
 ```
 
-The large submission recording is tracked with Git LFS. Git LFS is needed only to
-download that media (`git lfs pull`); the application does not depend on the recording.
+The two submission videos are tracked with Git LFS. Git LFS is needed only to
+download that media (`git lfs pull`); the application does not depend on the videos.
 
 Web: **http://localhost:3000** · API: **http://localhost:4000/health** ·
 runtime status: **http://localhost:4000/v1/status**. Without financial configuration,
@@ -210,14 +210,16 @@ tools/        service setup, provider/reviewer runtime, diagnosis, evaluation an
 deployment/   reviewer hosting configuration and environment template
 docs/         active guides, technical/security documentation and evidence
 docs/archive/ historical plans, early storyboard and cancelled inquiry drafts
-submission/   team-maintained PPTX, Markdown documents and screen recording
+submission/   team-maintained PPTX, Markdown documents, demo and presentation videos
 ```
 
 Documentation: [technical design](docs/technical-documentation.md),
 [security assessment](docs/security-assessment.md), [wallet assistant](docs/WALLET_ASSISTANT.md),
 [batching/cost](docs/BATCHING_AND_COST.md), [release checklist](docs/RELEASE_CHECKLIST.md),
 [archive index](docs/archive/README.md), and [presentation material](submission/PRESENTATION_MATERIAL.md).
-Maintain submission files directly in `submission/`; the old presentation generator is retired.
+The [submission index](submission/README.md) lists the four PPTX decks, two videos,
+durations and release references. Maintain submission files directly in `submission/`;
+the old presentation generator is retired.
 
 ## Known limits
 

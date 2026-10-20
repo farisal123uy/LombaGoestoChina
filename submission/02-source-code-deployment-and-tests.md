@@ -1,7 +1,7 @@
 # Source Code, Deployment and Test Guide — Guardian Wallet: Astra
 
 - **Last aligned:** October 20, 2026.
-- **Source basis:** `feat/batching-evaluation`, based on `b439c8fb5662acb13724314923951bb11091b71a` with the October 20 project updates; exact revision is identified by Git HEAD or the source inventory.
+- **Source basis:** `feat/batching-evaluation`; verified runtime baseline `d5517adc9d551ba6df36b53a357001bb35edd981`. The [submission index](README.md) identifies the current materials, deployed build and exact-revision procedure.
 - **Related documents:** [technical documentation](01-technical-documentation.md), [security self-assessment](03-security-self-assessment.md), [presentation material](PRESENTATION_MATERIAL.md).
 
 ## 1. Repository and revision identity
@@ -10,7 +10,9 @@
 | --- | --- |
 | Repository | <https://github.com/farisal123uy/LombaGoestoChina> |
 | Development branch | [feat/batching-evaluation](https://github.com/farisal123uy/LombaGoestoChina/tree/feat/batching-evaluation) |
-| Base commit | [b439c8fb5662acb13724314923951bb11091b71a](https://github.com/farisal123uy/LombaGoestoChina/commit/b439c8fb5662acb13724314923951bb11091b71a), October 19. |
+| Verified runtime commit | [d5517adc9d551ba6df36b53a357001bb35edd981](https://github.com/farisal123uy/LombaGoestoChina/commit/d5517adc9d551ba6df36b53a357001bb35edd981), October 20. |
+| Deployed archive/build SHA-256 | `4fc4f46ebf05e5c7ee2f2e3bad68871d4b80474338a2081d21c1bfe3b64dbdb3`. |
+| Materials and selected interface | [Submission index](README.md); retain the commit containing the reviewed materials separately from the runtime baseline. |
 | Current local entry point | [README.md](../README.md). The [GitHub README](https://github.com/farisal123uy/LombaGoestoChina/blob/feat/batching-evaluation/README.md) reflects the published branch version. |
 | Current checkpoint/history | [PROGRESS.md](../docs/PROGRESS.md) and [release checklist](../docs/RELEASE_CHECKLIST.md). |
 
@@ -38,7 +40,7 @@ tools/          Setup, provider/reviewer runtime, diagnosis, evaluation and sour
 deployment/     Reviewer hosting configuration and environment template
 docs/           Active technical, operational, security and evidence documentation
 docs/archive/   Historical plans, early storyboard and cancelled inquiry drafts
-submission/     Team-maintained Markdown, PPTX files and screen recording
+submission/     Team-maintained Markdown, PPTX files, demo and presentation videos
 Dockerfile      Owner API/worker runtime, selected through SERVICE
 Dockerfile.review  Separate reviewer runtime image
 ```
@@ -51,7 +53,7 @@ directly in `submission/`; no presentation-generation dependency is required by 
 - **Node.js ≥22.13.0**, **npm 10**; the package manifest specifies npm 10.9.2.
 - One root `package-lock.json` and root install; workspace packages are private.
 - Git/network access for installation; Playwright Chromium for browser tests.
-- Git LFS to download the large submission recording with `git lfs pull`; it is not required by the application runtime.
+- Git LFS to download both submission videos with `git lfs pull`; it is not required by the application runtime.
 - Configured Groq access for live inference; a Base Sepolia read RPC for optional fork tests.
 - Python **3.9+** only for source-only packaging; Docker only for the image workflow.
 
@@ -293,9 +295,10 @@ API processes. Never publish actual keys, credential URLs, bearer/access codes o
 
 ## 9. Source freeze and submission materials
 
-`submission/` contains four Markdown documents, four PPTX files and one screen recording
-maintained by the team. This revision aligns Markdown; it does not certify updated PPTX/video content.
-The MP4 is stored through Git LFS; source-only review archives exclude that binary.
+`submission/` contains four Markdown content documents plus an index, four PPTX files,
+and the team's demo and presentation videos. The [submission index](README.md) lists the
+exact filenames, slide counts, measured video durations and sampled validation scope.
+Both MP4 files are stored through Git LFS; source-only review archives exclude the media binaries.
 
 ```powershell
 npm.cmd run release:source

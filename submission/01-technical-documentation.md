@@ -1,8 +1,8 @@
 # Technical Documentation — Guardian Wallet: Astra
 
 - **Track:** International Track, Topic F — Agent Wallet.
-- **Last aligned:** October 20, 2026, against the local `feat/batching-evaluation` working tree.
-- **Source baseline:** `b439c8fb5662acb13724314923951bb11091b71a` (October 19), with the October 20 project updates. Resolve the exact revision from Git HEAD or the source archive inventory.
+- **Last aligned:** October 20, 2026, against `feat/batching-evaluation` and the current team-supplied materials.
+- **Verified runtime baseline:** `d5517adc9d551ba6df36b53a357001bb35edd981`. The [submission index](README.md) identifies the deployed build, selected UI, materials and exact-revision procedure.
 - **Related documents:** [source, deployment and tests](02-source-code-deployment-and-tests.md), [security self-assessment](03-security-self-assessment.md), [presentation material](PRESENTATION_MATERIAL.md).
 
 ## 1. Purpose and implemented scope
@@ -291,7 +291,8 @@ the [deployment/test guide](02-source-code-deployment-and-tests.md).
 - [Current README](../README.md), [technical design](../docs/technical-documentation.md), [wallet assistant](../docs/WALLET_ASSISTANT.md).
 - [Security tracker](../docs/security-assessment.md), [escrow design](../docs/ESCROW_PROTOTYPE.md), [batching methodology](../docs/BATCHING_AND_COST.md).
 - Implementation: [Guardian](../contracts/contracts/GuardianPayments.sol), [worker](../apps/worker/src/worker.ts), [payment schemas](../packages/shared/src/payments.ts), [payment store](../packages/database/src/payment-store.ts).
-- [Historical archive](../docs/archive/README.md); active presentation/documents remain in `submission/`.
+- [Historical archive](../docs/archive/README.md); the [submission index](README.md) links the active documents, decks and videos.
 
-This document aligns Markdown content only. It does not certify that the existing PPTX files
-or screen recording have been updated or independently revalidated.
+The current [technical deck](01-Technical-Documentation.pptx) has 10 slides. Four PPTX files
+passed archive/XML integrity checks, and both videos passed sampled playback with decoded
+audio and video. The submission index records the scope of those checks and actual durations.

@@ -1,4 +1,14 @@
-# Frontend integration checkpoint
+# Frontend integration and release selection
+
+## Current release selection — October 20
+
+The owner selected the current UI/UX on `feat/batching-evaluation`. Its verified runtime
+baseline is `d5517adc9d551ba6df36b53a357001bb35edd981`, matching the deployed runtime
+described in [progress](PROGRESS.md). The separate `feat/guardian-ui-redesign` dark-theme
+variant is not the selected release interface. Current submission materials and video
+references are listed in the [submission index](../submission/README.md).
+
+## Historical integration checkpoint — October 18
 
 Frontend source: `origin/feat/enterprise-dashboard`, revision
 `4e47b138f1df397291aef5e696dd112b2266bdb7`.

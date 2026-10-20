@@ -3,7 +3,7 @@
 Archived direct-settlement rehearsal storyboard. The team's current materials are
 maintained in the repository-root [submission folder](../../submission/), including
 [PRESENTATION_MATERIAL.md](../../submission/PRESENTATION_MATERIAL.md) and
-[Guardian_Wallet_Astra_Presentation_v2.pptx](../../submission/Guardian_Wallet_Astra_Presentation_v2.pptx).
+[04-Guardian-Wallet-Astra-Presentation.pptx](../../submission/04-Guardian-Wallet-Astra-Presentation.pptx).
 The former generated presentation/video pipeline has been retired.
 
 Public AI-01, local COST-01 and selected security results are linked in

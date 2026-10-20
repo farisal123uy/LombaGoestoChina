@@ -1,5 +1,28 @@
 # Guardian Wallet — catatan progres
 
+## Pembaruan materi submission dan pilihan UI — 20 Oktober
+
+- Materi aktif di [submission](../submission/README.md): empat dokumen Markdown isi
+  beserta indeks, **empat PPTX** dan **dua video**. Deck pengganti memakai nama
+  `01-Technical-Documentation.pptx`, `02-Source-Code-Deployment-and-Tests.pptx`,
+  `03-Security-Self-Assessment.pptx` dan `04-Guardian-Wallet-Astra-Presentation.pptx`.
+  Jumlah slide berturut-turut **10 / 9 / 10 / 11**; integritas ZIP dan XML semuanya lulus.
+- `Demo_Project.mp4`: **343,233 detik (5:43,233)**, 342.525.443 byte, 1918×970.
+  `Vidio_Presentation.mp4`: **611,200 detik (10:11,200)**, 677.094.073 byte, 1918×1078.
+  Sampel awal/tengah/akhir kedua video berhasil dengan gambar dan audio terdekode.
+  Owner memilih mempertahankan rekaman pada durasi tersebut; aturan durasi tetap
+  dicatat apa adanya di indeks. Kedua MP4 memakai Git LFS.
+- UI/UX pilihan owner adalah **antarmuka saat ini pada `feat/batching-evaluation`**.
+  Catatan pilihan rilis ada di [FRONTEND_INTEGRATION.md](FRONTEND_INTEGRATION.md).
+- Referensi dokumentasi sekarang memisahkan baseline runtime terverifikasi
+  **`d5517adc9d551ba6df36b53a357001bb35edd981`**, build deployment dan revisi materi.
+  Commit yang memuat berkas materi atau inventori arsip mengidentifikasi paket persisnya.
+- Pembaruan ini mencakup materi dan dokumentasi. Hasil **156/156 tes**, lint,
+  typecheck, build dan audit dependency 0 advisory dari pemeriksaan sebelumnya tetap
+  menjadi checkpoint aplikasi; runtime source dan deployment tetap pada baseline tersebut.
+- Publikasi paket menggunakan `feat/batching-evaluation`. Review/upload resmi dan
+  receipt portal masih dilacak terpisah pada [release checklist](RELEASE_CHECKLIST.md).
+
 ## Publikasi dan deployment publik — 20 Oktober
 
 - Runtime source, logo web dan materi submission tim telah di-commit sebagai

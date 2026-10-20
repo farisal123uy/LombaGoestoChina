@@ -1,8 +1,8 @@
 # Security Self-Assessment — Guardian Wallet: Astra
 
 - **Assessment type:** internal project self-assessment, not a third-party audit.
-- **Last aligned:** October 20, 2026, against the local `feat/batching-evaluation` working tree.
-- **Source baseline:** `b439c8fb5662acb13724314923951bb11091b71a`, with the October 20 updates; use Git HEAD or the source archive inventory for an exact release identity.
+- **Last aligned:** October 20, 2026, against `feat/batching-evaluation` and the current team-supplied materials.
+- **Verified runtime baseline:** `d5517adc9d551ba6df36b53a357001bb35edd981`. The [submission index](README.md) identifies the deployed build, selected UI, materials and exact-revision procedure.
 - **Scope:** owner/session authorization, model/API boundaries, GuardianPayments, durable execution, provider fulfillment and reviewer isolation.
 
 ## 1. Executive assessment
