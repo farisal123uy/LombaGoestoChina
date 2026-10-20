@@ -3,6 +3,12 @@
 **An AI agent wallet whose spending limits are enforced on-chain, not by the AI.**
 International Track, Topic F (Agent Wallet).
 
+**For judges:** [Try the hosted application](https://preview-95c94201191f7206.up.railway.app/review)
+· [Judge quick start](JUDGES.md) · [Evidence](https://preview-95c94201191f7206.up.railway.app/evidence)
+· [Documents, slides and videos](submission/README.md).
+The interactive reviewer uses the private access link/code supplied by the team;
+no MetaMask, personal funds or local installation is required.
+
 An owner delegates database-service procurement to Astra through a restricted smart-account
 session. AI models interpret goals and propose payment decisions; deterministic code verifies
 signed invoices, and **GuardianPayments**, an ERC-7579 executor module installed on Kernel,
@@ -75,7 +81,8 @@ transactions are **fork-local**, not public broadcasts.
 ### Local application
 
 Requirements: **Node.js ≥22.13.0**, **npm 10**, and one root install/lockfile.
-Run from the repository root (`guardian-wallet-stage2` in this checkout):
+The published release is on `main`. Run from the repository root
+(`guardian-wallet-stage2` in this checkout):
 
 ```sh
 npm ci

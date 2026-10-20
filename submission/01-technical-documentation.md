@@ -1,7 +1,7 @@
 # Technical Documentation — Guardian Wallet: Astra
 
 - **Track:** International Track, Topic F — Agent Wallet.
-- **Last aligned:** October 20, 2026, against `feat/batching-evaluation` and the current team-supplied materials.
+- **Last aligned:** October 20, 2026, against the `main` integration and current team-supplied materials.
 - **Verified runtime baseline:** `d5517adc9d551ba6df36b53a357001bb35edd981`. The [submission index](README.md) identifies the deployed build, selected UI, materials and exact-revision procedure.
 - **Related documents:** [source, deployment and tests](02-source-code-deployment-and-tests.md), [security self-assessment](03-security-self-assessment.md), [presentation material](PRESENTATION_MATERIAL.md).
 

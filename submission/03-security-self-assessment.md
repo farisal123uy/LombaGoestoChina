@@ -1,7 +1,7 @@
 # Security Self-Assessment — Guardian Wallet: Astra
 
 - **Assessment type:** internal project self-assessment, not a third-party audit.
-- **Last aligned:** October 20, 2026, against `feat/batching-evaluation` and the current team-supplied materials.
+- **Last aligned:** October 20, 2026, against the `main` integration and current team-supplied materials.
 - **Verified runtime baseline:** `d5517adc9d551ba6df36b53a357001bb35edd981`. The [submission index](README.md) identifies the deployed build, selected UI, materials and exact-revision procedure.
 - **Scope:** owner/session authorization, model/API boundaries, GuardianPayments, durable execution, provider fulfillment and reviewer isolation.
 

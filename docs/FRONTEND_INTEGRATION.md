@@ -2,7 +2,8 @@
 
 ## Current release selection — October 20
 
-The owner selected the current UI/UX on `feat/batching-evaluation`. Its verified runtime
+The owner selected the UI/UX from candidate `f8b6c87` on `feat/batching-evaluation`,
+integrated into `main` at `3570de7`. Its verified runtime
 baseline is `d5517adc9d551ba6df36b53a357001bb35edd981`, matching the deployed runtime
 described in [progress](PROGRESS.md). The separate `feat/guardian-ui-redesign` dark-theme
 variant is not the selected release interface. Current submission materials and video

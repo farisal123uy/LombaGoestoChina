@@ -1,5 +1,8 @@
 # Guardian Wallet — reviewer quick start
 
+For a single entry page linking source, documents, videos and the trial flow, use
+[JUDGES.md](../JUDGES.md). The published source release is on `main`.
+
 ## Access
 
 - Interactive application:

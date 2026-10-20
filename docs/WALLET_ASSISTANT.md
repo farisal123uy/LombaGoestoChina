@@ -1,8 +1,8 @@
 # Astra wallet assistant
 
 The stage-two dashboard now supports English/Indonesian wallet requests alongside
-the existing AI-to-AI procurement workflow. Implementation is local to
-`feat/batching-evaluation`; publish the branch before asking teammates to fetch it.
+the existing AI-to-AI procurement workflow. The implementation from
+`feat/batching-evaluation` is integrated into the published `main` release.
 
 ## Capabilities
 

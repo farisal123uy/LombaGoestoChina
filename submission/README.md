@@ -2,6 +2,7 @@
 
 Team-maintained International Track, Topic F materials, aligned on October 20, 2026.
 This folder contains four content documents, this index, four PPTX decks and two MP4 videos.
+Start with the [judge quick start](../JUDGES.md) to try the hosted application.
 
 ## Documents and decks
 
@@ -29,13 +30,15 @@ run `git lfs pull` to retrieve the actual videos. Application setup does not req
 ## Source, deployment and interface identity
 
 - Repository: <https://github.com/farisal123uy/LombaGoestoChina>.
-- Publication branch: [feat/batching-evaluation](https://github.com/farisal123uy/LombaGoestoChina/tree/feat/batching-evaluation).
+- Publication branch: [main](https://github.com/farisal123uy/LombaGoestoChina/tree/main).
+- Integration commit: `3570de7`, preserving both the original `main` history and the
+  selected `feat/batching-evaluation` candidate `f8b6c87`.
 - Verified runtime baseline: [d5517adc9d551ba6df36b53a357001bb35edd981](https://github.com/farisal123uy/LombaGoestoChina/commit/d5517adc9d551ba6df36b53a357001bb35edd981).
 - Deployed archive/build SHA-256: `4fc4f46ebf05e5c7ee2f2e3bad68871d4b80474338a2081d21c1bfe3b64dbdb3`.
 - Materials revision: use the commit containing the reviewed files; run `git rev-parse HEAD`
   in that checkout or retain the commit permalink. The runtime baseline above identifies
   application code, not a claim that the later materials were part of that deployment.
-- Selected UI/UX: the current interface on `feat/batching-evaluation`, recorded in
+- Selected UI/UX: the verified interface integrated into `main`, recorded in
   [frontend integration](../docs/FRONTEND_INTEGRATION.md). The separate UI-redesign branch
   is not the selected release interface.
 - The source deck's older `b439c8f` base label is historical. Use the runtime baseline,

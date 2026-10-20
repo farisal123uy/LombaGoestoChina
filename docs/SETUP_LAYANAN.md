@@ -1,5 +1,13 @@
 # Setup layanan Guardian Wallet
 
+Rilis saat ini tersedia pada `main`; kedua riwayat Git telah disatukan pada commit
+`3570de7`. Juri dapat memakai [panduan akses](../JUDGES.md) tanpa setup akun layanan.
+Untuk runtime GPT-OSS/reviewer terkini, lihat [AI_CLOUD.md](AI_CLOUD.md) dan
+[REVIEW_DEPLOYMENT.md](REVIEW_DEPLOYMENT.md). Snapshot awal di bawah dipertahankan
+sebagai konteks panduan setup owner, bukan status kesiapan rilis saat ini.
+
+## Snapshot setup awal
+
 Panduan ini untuk menyiapkan akun dan koneksi proyek secara bertahap. Status awal:
 Git/Node/npm sudah tersedia. Supabase sudah terhubung dan migration awal/RLS telah
 diterapkan. Model lokal Qwen tersedia melalui Ollama; bundler dan akun deployment

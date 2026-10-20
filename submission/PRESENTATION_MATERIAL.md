@@ -3,7 +3,7 @@
 - **Title:** Guardian Wallet: Astra — An Owner-Controlled Agent Wallet with Bounded On-Chain Authority.
 - **Track:** International Track, Topic F — Agent Wallet.
 - **Last aligned:** October 20, 2026.
-- **Verified runtime baseline:** `d5517adc9d551ba6df36b53a357001bb35edd981` on `feat/batching-evaluation`; deployed build and materials-revision references are in the [submission index](README.md).
+- **Verified runtime baseline:** `d5517adc9d551ba6df36b53a357001bb35edd981`, integrated into `main`; deployed build and materials-revision references are in the [submission index](README.md).
 - **Format:** eleven content sections with the team's [11-slide presentation deck](04-Guardian-Wallet-Astra-Presentation.pptx), [presentation video](Vidio_Presentation.mp4) and [demo video](Demo_Project.mp4). Actual durations and sampled validation scope are recorded in the submission index.
 
 ## Slide 1 — Guardian Wallet: Astra

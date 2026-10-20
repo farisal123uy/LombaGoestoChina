@@ -28,7 +28,7 @@ presentation and supporting documents are listed in the [submission index](../su
   restart/Docker resource acceptance remains a separate operational choice.
 - [ ] Reachability/latency verified from the judge's China network.
 - [x] Teammate frontend `4e47b13` integrated into the local source and regression-checked.
-- [x] Owner selected the current `feat/batching-evaluation` UI/UX for this release;
+- [x] Owner selected the current UI/UX from candidate `f8b6c87`, integrated into `main`;
   the selection is recorded in `FRONTEND_INTEGRATION.md`.
 - Reviewer route uses isolated fork migrations/session. The original public owner runtime
   remains a separate checkpoint, not a newly migrated public batch-execution claim.
@@ -40,9 +40,14 @@ presentation and supporting documents are listed in the [submission index](../su
 - [x] README, deployment guide and runnable tests available.
 - [x] Root typecheck includes integration/browser tests; the Docker evidence allowlist
   has a regression check. Full and production dependency scans report zero advisories.
-- [x] Runtime source and owner-maintained submission materials committed/pushed to
-  `feat/batching-evaluation`; `main` is unchanged. The verified deployment runs runtime
+- [x] Runtime source and owner-maintained submission materials are integrated into
+  `main`, preserving the original main history and candidate `f8b6c87`. The verified deployment runs runtime
   commit `d5517adc9d551ba6df36b53a357001bb35edd981`; exact archive/build SHA-256 is in `PROGRESS.md`.
+- [x] [Judge quick start](../JUDGES.md) links the public reviewer, evidence, source,
+  documents, slides and videos, and explains private access and the complete trial flow.
+- [x] Main integration regression passed all 156 tests, lint, typecheck and production
+  build. Fresh public-browser completion/write-read/close and three China readiness
+  probes are recorded in [release verification](evidence/main-release-acceptance.json).
 - [ ] Freeze and human-review the final source revision/material set for official submission;
   any subsequent source edit requires updating the selected revision.
 - [x] Credential-free deployed source archive/inventory retained after frontend integration;

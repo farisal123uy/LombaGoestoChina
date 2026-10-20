@@ -5,6 +5,12 @@ The branch includes the complete monorepo and working frontend reference, shared
 schemas, API, worker, provider processes, tests and sanitized public evidence.
 Current progress: [PROGRESS.md](PROGRESS.md).
 
+Current release: the selected frontend, assistant and reviewer are integrated into
+`main`. Use [JUDGES.md](../JUDGES.md) for the hosted trial and
+[FRONTEND_INTEGRATION.md](FRONTEND_INTEGRATION.md) for release identity.
+
+## Historical collaboration checkpoint
+
 Integration update: frontend `origin/feat/enterprise-dashboard` at **`4e47b13`** is
 now ported into the local stage-two source with the assistant and reviewer flows.
 See [FRONTEND_INTEGRATION.md](FRONTEND_INTEGRATION.md). This is not a published merge;

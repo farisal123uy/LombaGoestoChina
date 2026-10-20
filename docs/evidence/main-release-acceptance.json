@@ -1,0 +1,63 @@
+{
+  "verificationDate": "2026-10-20",
+  "evidenceType": "main-integration-local-regression-and-public-reviewer-acceptance",
+  "integrationRevision": "3570de7",
+  "selectedCandidateRevision": "f8b6c87d4cc540ccbd5a3a862a3fe13c45f5d9a5",
+  "runtimeSourceRevision": "d5517adc9d551ba6df36b53a357001bb35edd981",
+  "deployedBuildId": "4fc4f46ebf05e5c7ee2f2e3bad68871d4b80474338a2081d21c1bfe3b64dbdb3",
+  "applicationMatchesVerifiedRuntimeBaseline": true,
+  "publicReviewerUrl": "https://preview-95c94201191f7206.up.railway.app/review",
+  "localRegression": {
+    "integrationPassed": 105,
+    "webPassed": 8,
+    "browserPassed": 25,
+    "contractAndForkPassed": 17,
+    "toolingPassed": 1,
+    "totalPassed": 156,
+    "lintPassed": true,
+    "typecheckPassed": true,
+    "productionBuildPassed": true,
+    "dependencyAdvisories": 0,
+    "lfsIntegrityPassed": true,
+    "webOutputConfiguredModelKeyFound": false,
+    "webOutputPrivateRuntimePathsFound": false
+  },
+  "publicBrowser": {
+    "capturedAt": "2026-10-20T14:44:21.899Z",
+    "passed": true,
+    "modelId": "openai/gpt-oss-120b",
+    "taskId": "c4945dce-7e31-4602-9dcd-ff496c670caa",
+    "taskStatus": "completed",
+    "operationStatus": "confirmed",
+    "settlementMode": "escrow",
+    "escrowStatus": "released",
+    "elapsedMs": 48491,
+    "procurementThroughWriteReadMs": 16203,
+    "checks": [
+      "public-brand-icon-matches-source",
+      "browser-favicon",
+      "public-review-navigation",
+      "owner-route-redirect",
+      "no-MetaMask",
+      "real-API-payment-preview",
+      "queue-and-worker-escrow-completion",
+      "dashboard-shows-escrow-lock-and-release",
+      "local-hash-not-public-explorer",
+      "service-probe-write-read",
+      "close-workspace",
+      "no-browser-Groq-Google-font-or-owner-localhost-request"
+    ]
+  },
+  "chinaReadiness": {
+    "capturedAt": "2026-10-20T14:45:06.204Z",
+    "measurementId": "2CgXX7usK0aWK1hKk00021Lsr",
+    "measurementUrl": "https://api.globalping.io/v1/measurements/2CgXX7usK0aWK1hKk00021Lsr",
+    "observedProbes": 3,
+    "results": [
+      { "city": "Beijing", "httpStatus": 200, "tlsAuthorized": true, "readiness": "ready", "totalMs": 3068, "passed": true },
+      { "city": "Shanghai", "httpStatus": 200, "tlsAuthorized": true, "readiness": "ready", "totalMs": 2708, "passed": true },
+      { "city": "Shenzhen", "httpStatus": 200, "tlsAuthorized": true, "readiness": "ready", "totalMs": 2403, "passed": true }
+    ]
+  },
+  "scope": "Local regression executes fixtures and isolated forks. The public HTTPS browser uses real Groq inference and isolated fork assets, not new public-chain payments. China probes check public readiness/TLS at capture time, not a judge browser or an uptime guarantee. Private access credentials are excluded."
+}

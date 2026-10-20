@@ -4,7 +4,9 @@
 
 - Public application: https://preview-95c94201191f7206.up.railway.app/review
 - Source package SHA-256 / public readiness `buildId`:
-  `912063431ea05c663abd9df36bdff047687006d5cf8ea9fde87ba8b9b0f9d9c0`.
+  `4fc4f46ebf05e5c7ee2f2e3bad68871d4b80474338a2081d21c1bfe3b64dbdb3`.
+- Verified runtime source: `d5517adc9d551ba6df36b53a357001bb35edd981`, integrated into
+  the `main` release. [Judge quick start](../JUDGES.md) links the current review materials.
 - Claimed Linux VM; Free/Trial without payment method confirmed by the owner.
   This is native Node deployment, not a tested Docker image. No paid upgrade was invoked.
 - Exact deployed ZIP is retained at `.local/linux-review/deployed-source-<buildId>.zip`.
@@ -168,9 +170,9 @@ static Space cannot run this backend or hold server secrets. The Docker SDK's po
 
 The laptop/tunnel experiment is stopped. The October 20 public Linux deployment runs
 the runtime files from source commit `d5517adc9d551ba6df36b53a357001bb35edd981`; the owner-
-maintained submission files and documentation updates are pushed to
-`feat/batching-evaluation`, and `main` remains unchanged. Owner-maintained presentation/video files remain in the root
-[submission folder](../submission/). Continue monitoring Free/Trial credits and verify
+maintained submission files and documentation updates are integrated into `main`
+with the selected UI/UX. Presentation/video files are listed in the
+[submission index](../submission/README.md). Continue monitoring Free/Trial credits and verify
 reachability on the judge's exact network; organizer acceptance of Base Sepolia and
 the official upload receipt are not confirmed.
 

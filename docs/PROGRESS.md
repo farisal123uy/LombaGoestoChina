@@ -1,5 +1,32 @@
 # Guardian Wallet — catatan progres
 
+## Rilis main dan verifikasi alur juri — 20 Oktober
+
+- Integrasi **`3570de7`** menyatukan riwayat awal `main` (`4b68811`) dan kandidat
+  **`f8b6c87`**. Tree aplikasi hasil integrasi sama dengan kandidat yang dipilih;
+  histori kedua cabang tetap tersimpan. Rilis dipublikasikan pada **`main`**.
+- [JUDGES.md](../JUDGES.md) menjadi pintu masuk juri: reviewer online, evidence,
+  source `main`, dokumen, PPTX, video dan langkah mencoba layanan sampai write/read.
+  Kode/tautan akses lengkap tetap privat di `.local/linux-review/reviewer-link.private.txt`.
+- Regresi setelah integrasi: **156/156 lulus** — 105 integrasi, 8 web, 25 browser,
+  17 kontrak/fork dan 1 tooling. Lint, typecheck, production build, audit dependency
+  0 advisory dan integritas Git LFS lulus. Output web tidak memuat model key atau
+  path runtime privat pada cakupan pemeriksaan yang tersedia.
+- Browser HTTPS publik terbaru mencapai **completed / confirmed / escrow released**,
+  signed service delivery, database probe, write/read dan close workspace. Model
+  GPT-OSS 120B nyata; aset/transaksi tetap fork disposable. Durasi keseluruhan
+  **48.491 ms**, procurement sampai write/read **16.203 ms**; UI/logo cocok dengan source.
+- Tiga probe baru dari **Beijing / Shanghai / Shenzhen** lulus TLS, HTTP 200,
+  readiness dan build ID dengan durasi **3.068 / 2.708 / 2.403 ms**. Ini pengukuran
+  endpoint pada waktu capture, bukan sesi browser juri atau jaminan uptime.
+- Runtime terverifikasi tetap source **`d5517adc9d551ba6df36b53a357001bb35edd981`**,
+  build **`4fc4f46ebf05e5c7ee2f2e3bad68871d4b80474338a2081d21c1bfe3b64dbdb3`**.
+  Pemeriksaan inventori membandingkan **97 file runtime** tanpa perbedaan. Server
+  Linux melaporkan proses API/web aktif dan tidak ada recent server error pada capture.
+- Bukti terbaru: [main-release-acceptance.json](evidence/main-release-acceptance.json).
+  Upload resmi/receipt dan pemantauan hosting selama penjurian tetap dilacak di
+  [release checklist](RELEASE_CHECKLIST.md); catatan di bawah merupakan checkpoint sebelumnya.
+
 ## Pembaruan materi submission dan pilihan UI — 20 Oktober
 
 - Materi aktif di [submission](../submission/README.md): empat dokumen Markdown isi

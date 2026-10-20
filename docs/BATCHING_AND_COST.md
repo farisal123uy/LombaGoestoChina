@@ -1,6 +1,6 @@
 # Bounded batching and COST-01
 
-Stage-two branch: `feat/batching-evaluation`; original public procurement remains
+Stage-two implementation is integrated into `main`; original public procurement remains
 the single-invoice AI-01 captured under implementation checkpoint `5088219`.
 
 ## Runtime rollout

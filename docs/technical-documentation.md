@@ -1,6 +1,6 @@
 # Guardian Wallet — technical documentation
 
-International Track, Topic F: Agent Wallet. Source branch: `feat/batching-evaluation`.
+International Track, Topic F: Agent Wallet. Published source branch: `main`.
 Use Git HEAD or the source archive inventory for the exact revision; the deployed
 archive/build marker is verified separately.
 

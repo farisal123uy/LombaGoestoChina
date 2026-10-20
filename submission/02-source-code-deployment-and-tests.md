@@ -1,7 +1,7 @@
 # Source Code, Deployment and Test Guide — Guardian Wallet: Astra
 
 - **Last aligned:** October 20, 2026.
-- **Source basis:** `feat/batching-evaluation`; verified runtime baseline `d5517adc9d551ba6df36b53a357001bb35edd981`. The [submission index](README.md) identifies the current materials, deployed build and exact-revision procedure.
+- **Source basis:** `main`, integrating candidate `f8b6c87`; verified runtime baseline `d5517adc9d551ba6df36b53a357001bb35edd981`. The [submission index](README.md) identifies the current materials, deployed build and exact-revision procedure.
 - **Related documents:** [technical documentation](01-technical-documentation.md), [security self-assessment](03-security-self-assessment.md), [presentation material](PRESENTATION_MATERIAL.md).
 
 ## 1. Repository and revision identity
@@ -9,11 +9,11 @@
 | Reference | Location / interpretation |
 | --- | --- |
 | Repository | <https://github.com/farisal123uy/LombaGoestoChina> |
-| Development branch | [feat/batching-evaluation](https://github.com/farisal123uy/LombaGoestoChina/tree/feat/batching-evaluation) |
+| Published release branch | [main](https://github.com/farisal123uy/LombaGoestoChina/tree/main) |
 | Verified runtime commit | [d5517adc9d551ba6df36b53a357001bb35edd981](https://github.com/farisal123uy/LombaGoestoChina/commit/d5517adc9d551ba6df36b53a357001bb35edd981), October 20. |
 | Deployed archive/build SHA-256 | `4fc4f46ebf05e5c7ee2f2e3bad68871d4b80474338a2081d21c1bfe3b64dbdb3`. |
 | Materials and selected interface | [Submission index](README.md); retain the commit containing the reviewed materials separately from the runtime baseline. |
-| Current local entry point | [README.md](../README.md). The [GitHub README](https://github.com/farisal123uy/LombaGoestoChina/blob/feat/batching-evaluation/README.md) reflects the published branch version. |
+| Current entry points | [Judge quick start](../JUDGES.md) and [README.md](../README.md). The [GitHub README](https://github.com/farisal123uy/LombaGoestoChina/blob/main/README.md) reflects the published release. |
 | Current checkpoint/history | [PROGRESS.md](../docs/PROGRESS.md) and [release checklist](../docs/RELEASE_CHECKLIST.md). |
 
 A branch label alone does not prove that a checkout, remote source and the hosted deployment
@@ -60,7 +60,7 @@ directly in `submission/`; no presentation-generation dependency is required by 
 To clone the published branch in PowerShell:
 
 ```powershell
-git clone --branch feat/batching-evaluation --single-branch https://github.com/farisal123uy/LombaGoestoChina.git
+git clone --branch main --single-branch https://github.com/farisal123uy/LombaGoestoChina.git
 Set-Location LombaGoestoChina
 npm.cmd ci
 ```
