@@ -259,6 +259,7 @@ export async function buildOnboardingApp(service: OnboardingService, owner: `0x$
     const input = z.strictObject({ address: addressSchema, nonce: z.string().regex(/^[0-9a-f]{48}$/), signature: signatureSchema }).parse(request.body);
     return auth.verify(input.address, input.nonce, input.signature);
   });
+  app.get("/auth/session", async (request) => ({ address: auth.authenticate(request.headers.authorization) }));
   for (const [path, action] of [["/prepare", () => service.prepare()], ["/reconcile", () => service.reconcile()], ["/session/authorization", () => service.authorization()], ["/runtime/sync", () => service.syncRuntime()]] as const) {
     app.post(path, async (request) => {
       auth.authenticate(request.headers.authorization);

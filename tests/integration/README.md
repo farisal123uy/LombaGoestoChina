@@ -13,7 +13,9 @@ payment-proof binding before provisioning, actual PGlite namespace/probe/KV,
 delivery-signature verification, provider model output confinement and object-only
 JSON persistence. Chain/model responses are explicit fixtures. Backend cases also
 cover concurrent procurement goal conflicts and delivery retries/escalation without
-repayment. The suite currently has 36 passing tests across five files.
+repayment. The current suite has **105 passing tests across ten files**, including
+Groq/Ollama boundaries, reviewer capability isolation, process supervision, real
+disk/process restart recovery and active-account invoice isolation.
 
 Priority scenarios:
 
@@ -25,5 +27,7 @@ Priority scenarios:
 6. Revoked permission preventing later execution.
 7. Durable recovery after a worker restart.
 
-Run with `npm run test:integration`. Other scenarios below remain acceptance targets
-until corresponding cases are implemented; a selected corpus is not a security audit.
+Run with `npm run test:integration`. `npm run typecheck` also checks these sources
+through `tsconfig.tests.json`; Vitest execution alone does not perform type checking.
+The separate `npm run test:tooling` check covers the Docker review evidence allowlist.
+Contract/fork cases use the contracts workspace.

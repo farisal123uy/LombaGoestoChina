@@ -1,5 +1,12 @@
 # Evaluation plan
 
+Current selected AI is GPT-OSS 120B on Groq: the preserved cloud baseline is 54/60
+with six API/schema errors, followed by a 60/60 selected in-sample regression.
+See [cloud validation](evidence/CLOUD-VALIDATION.md). Local verification currently
+includes 105 integration, 8 web, 25 browser, 17 contract/fork and 1 tooling case;
+browser/model transport fixtures and actual fork execution retain separate labels.
+The Qwen figures below describe the earlier local-model checkpoint.
+
 No user study or production provider benchmark has been conducted. COST-01 now
 compares actual Kernel/worker single vs 4/7 batches on an isolated fork, with three
 repetitions per mode: [batching/cost scope](BATCHING_AND_COST.md) and

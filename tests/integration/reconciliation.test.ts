@@ -58,6 +58,6 @@ describe("Reconciliation evidence conflicts (chain/RPC fixtures, no transaction 
   ] as const)("evaluates %j as %s", async (options, status, reason) => {
     const f = fixture(options); expect(await f.run()).toMatchObject({ status, ...(reason ? { reason } : {}) });
     expect(f.fetcher).toHaveBeenCalledOnce();
-    if (options.headBehind || options.windowExceeded) expect(f.events).not.toHaveBeenCalled();
+    if (("headBehind" in options && options.headBehind) || ("windowExceeded" in options && options.windowExceeded)) expect(f.events).not.toHaveBeenCalled();
   });
 });

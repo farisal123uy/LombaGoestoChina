@@ -1,9 +1,7 @@
-import { mkdir, mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
-import { readFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
-import { join } from "node:path";
 import { join } from "node:path";
 import { once } from "node:events";
 import { PGlite, type Transaction } from "@electric-sql/pglite";
@@ -39,7 +37,7 @@ it("reopens an actual disk database after a lost send response and reconciles wi
   const state: PolicySnapshot = { chainId: 84532, account, guardianAddress: guardian, token, quoteSigner: account, policyVersion: "1", balanceUnits: "10000000", protectedBalanceUnits: "6000000", perPaymentLimitUnits: "1000000", dailyLimitUnits: "2000000", spentUnits: "0", installed: true, paused: false, validAfter: now - 1, validUntil: now + 3600, observedBlockNumber: "100", observedBlockHash: hash, observedAt: now };
   const quote = { account, token, recipient: account, providerId: hash, invoiceId: hash, serviceHash: hash, amountUnits: "260000", validUntil: now + 3600, signature: `0x${"11".repeat(65)}` as const };
   const task: PaymentTask = { id: randomUUID(), chainId: 84532, owner: account, paymentId: getPaymentId(84532, quote), quote, instruction: "Pay the authenticated fixture invoice.", status: "queued", createdAt: new Date().toISOString() };
-  const driver: PaymentExecutionDriver = { snapshot: async () => state, validate: async () => {}, prepare: vi.fn(async (plan) => ({ attempt: { taskId: plan.taskId, sender: account, userOperationHash: hash, nonce: "18446744073709551616", nonceKey: "1", status: "prepared", submissionBlock: "100", preparedAt: Date.now(), validUntil: plan.validUntil }, signedPayload: "private-fixture-payload" })), submit: vi.fn(async () => { throw new Error("lost response after inclusion"); }), reconcile: vi.fn(async () => ({ status: "confirmed", transactionHash: hash })) };
+  const driver: PaymentExecutionDriver = { snapshot: async () => state, validate: async () => {}, prepare: vi.fn<PaymentExecutionDriver["prepare"]>(async (plan) => ({ attempt: { taskId: plan.taskId, sender: account, userOperationHash: hash, nonce: "18446744073709551616", nonceKey: "1", status: "prepared", submissionBlock: "100", preparedAt: Date.now(), validUntil: plan.validUntil }, signedPayload: "private-fixture-payload" })), submit: vi.fn(async () => { throw new Error("lost response after inclusion"); }), reconcile: vi.fn<PaymentExecutionDriver["reconcile"]>(async () => ({ status: "confirmed", transactionHash: hash })) };
   try {
     db = new PGlite(directory); await applyTestMigrations(db);
     let store = new PaymentStore(wrap(db)); await store.createTask(task); await store.setPaused(key, false);

@@ -1,227 +1,235 @@
-# Guardian Wallet
+# Guardian Wallet: Astra
 
-A TypeScript and Solidity monorepo for building goal-aware financial delegation with
-bounded agent authority. International Track, Topic F.
+**An AI agent wallet whose spending limits are enforced on-chain, not by the AI.**
+International Track, Topic F (Agent Wallet).
 
-## Current stage
+An owner delegates database-service procurement to Astra through a restricted smart-account
+session. AI models interpret goals and propose payment decisions; deterministic code verifies
+signed invoices, and **GuardianPayments**, an ERC-7579 executor module installed on Kernel,
+enforces spending policy. Models hold no signing keys; a separate worker holds the scoped session.
 
-**Selected AI:** **GPT-OSS 120B via Groq Free**, with bounded structured output and
-no automatic fallback. Real API smoke, 120B/20B comparison, selected security regression,
-Linux production workflow and public HTTPS browser verification have passed.
-See [MODEL_SELECTION.md](docs/MODEL_SELECTION.md), [AI_CLOUD.md](docs/AI_CLOUD.md) and
-[recorded cloud evidence](docs/evidence/CLOUD-VALIDATION.md). Earlier Ollama evidence
-below remains historical and separate.
+## At a glance
 
-**Reviewer URL:** https://preview-95c94201191f7206.up.railway.app/review
-(private access code supplied by the team; [quick start](docs/REVIEWER_GUIDE.md)).
-The claimed Linux host uses a real cloud model and executes actual contracts on
-disposable forks through settlement, verified delivery and database write/read.
-The teammate frontend `4e47b13` is integrated locally with the assistant/reviewer.
-[Deployment guide](docs/REVIEW_DEPLOYMENT.md),
-[technical documentation](docs/technical-documentation.md),
-[release gates](docs/RELEASE_CHECKLIST.md). The review container is `Dockerfile.review`;
-native Linux deployment is verified; the Docker image itself has not been built here.
-The owner confirmed Free/Trial hosting without payment method. Credit/entitlement
-duration must cover judging; this is not unlimited free hosting or an uptime SLA.
+| Area | Current implementation |
+| --- | --- |
+| Scenario | Procure an expiring PostgreSQL JSONB key/value namespace from a team-operated provider. |
+| Application | TypeScript, Next.js/React, Fastify API, executor worker, PostgreSQL/Drizzle; PGlite for isolated tests/reviewer workspaces. |
+| On-chain | Solidity 0.8.28, GuardianPayments, ZeroDev Kernel 0.3.1, EntryPoint 0.7, Hardhat 3. |
+| AI | `openai/gpt-oss-120b` via Groq; bounded structured output and no automatic model fallback. Alternatives and legacy Ollama support are explicit opt-ins. |
+| Network/asset | Base Sepolia, chain ID **84532**; **MockUSD**, a six-decimal test token with no claimed USD value. |
+| Reviewer | [Hosted workspace](https://preview-95c94201191f7206.up.railway.app/review) · [recorded evidence](https://preview-95c94201191f7206.up.railway.app/evidence). Access code supplied privately by the team. |
 
-The dashboard now includes the [Astra wallet assistant](docs/WALLET_ASSISTANT.md):
-English/Indonesian asset overview, authenticated invoice drafting/payment planning,
-explicit queue release, and deterministic wallet-policy/operation risk checks.
-See the API contract and [frontend integration record](docs/FRONTEND_INTEGRATION.md).
-The [unified web workspace](docs/UI_WORKSPACE.md) connects overview, owner setup,
-wallet activity, escrow receipts and evidence with shared navigation and responsive layouts.
-The `submission/` directory was emptied at the team's request for a rebuild.
+## Implemented features
 
-An **opt-in service escrow path** is exercised end-to-end in the isolated reviewer fork
-and in a separate owner-authorized Base Sepolia deployment at Kernel index 1. The public
-demo includes a confirmed lock, provider-attested release and staged namespace activation;
-see the [recorded public escrow evidence](docs/evidence/public-escrow-procurement.json).
-The previous owner account at index 0 and the default mode remain direct-settlement.
-Owner setup has a separate opt-in path and dashboard receipts link to the public testnet
-transactions. See the [escrow design and demo steps](docs/ESCROW_PROTOTYPE.md).
+- **Owner onboarding:** MetaMask login, sponsored bootstrap, policy installation and separate
+  session authorization at `/setup`. Owner keys stay in the wallet.
+- **Wallet workspace:** English/Indonesian assistant, asset/budget overview, deterministic
+  payment-policy risk checks, invoice drafts, explicit queue release and task receipts at `/dashboard`.
+- **Authenticated procurement:** separate provider AI and signer processes; fixed-catalog
+  EIP-712 quotes bind chain/module, account, provider/invoice, service, token, recipient, amount and expiry.
+- **Policy-bound settlement:** recipient allowlist, per-payment/UTC-day limits, protected reserve,
+  expiry, pause, replay protection and atomic token-transfer checks. Default settlement is direct;
+  opt-in escrow adds provider-attested release or timeout refund.
+- **Durable execution:** persist the exact signed operation before sending; reconcile uncertain
+  outcomes without blind repayment. Direct mode supports batches of **1–10** invoices, default **1**;
+  escrow mode requires one invoice. Delivery retries do not repeat a payment.
+- **Disposable reviewer:** `/review` creates an isolated wallet, contracts and database on a local
+  Base Sepolia fork. `/evidence` displays labeled historical public, fork and model captures.
 
-Stage two is on **`feat/batching-evaluation`**: bounded queue batching with shared
-durable attempts, fee deadlines, expanded reconciliation/security evaluation and
-the new wallet assistant and opt-in escrow path. Current integration checks:
-**104 cases**, plus **7 web tests**. Contract/fork checkpoint: **17 cases**;
-**17 browser cases** cover the integrated
-frontend/reviewer. Lint/typecheck/build passed. Real GPT-OSS regression **60/60** after
-fixing six baseline API/schema errors; the failing baseline is preserved. Historical
-Qwen corpus **60/60** after prompt
-refinement (preserved baseline 52/60, in-sample). Batch evaluation is local/fork;
-public AI-01 below remains the original single-invoice run. Read
-[progress](docs/PROGRESS.md) and [batching/cost guide](docs/BATCHING_AND_COST.md).
+The demo bootstrap mints **10 MockUSD**, with a **6** protected reserve, **1** per-payment limit
+and **2** UTC-day cap. Catalog offers are **1 MiB / 1 hour / 0.26 MockUSD** and
+**4 MiB / 4 hours / 0.52 MockUSD**. These are managed test namespaces, not dedicated database instances.
 
-The A+B wallet/backend foundation is implemented on `feat/wallet-agent-backend`:
-Guardian ERC-7579 executor, restricted Kernel/session helpers, provider-signed quotes,
-bounded planner, owner API, SQL-backed task queue and a persist-before-send worker.
-The web application includes sponsored owner onboarding at `/setup` and financial
-procurement at `/dashboard`. See the [progress checkpoint](docs/PROGRESS.md),
-[runtime guide](docs/PROCUREMENT_RUNTIME.md) and [A+B API handoff](docs/ab-handoff.md).
-Teammate frontend setup: [Frontend handoff](docs/FRONTEND_HANDOFF.md).
+## How it works
 
-Foundation checkpoint verification: 36 integration tests, 14 contract/fork cases and six browser cases
-passed. Supabase is migrated through `0003`, and real local Qwen/provider quote
-preview succeeded. Public deployment and the first **0.26 MockUSD procurement with
-verified service delivery** are confirmed: [AI-01 evidence](docs/evidence/AI-01-public-procurement.md).
-Broader evaluation, queue batching economics and final demo remain.
-Local fork and browser-fixture evidence is labeled separately from public execution.
+```text
+Owner wallet -> Kernel account + Guardian policy + scoped session
+User goal -> authenticated API -> Astra <-> provider agent
+                                            |
+                               deterministic provider signer
+                                            |
+                            verified quote + PaymentPlan -> PostgreSQL
+                                            |
+                            worker: validate -> persist -> submit
+                                            |
+                               EntryPoint -> Kernel -> Guardian
+                                            |
+                         settlement/escrow -> delivery signature + probe
+```
 
-The historical public checkpoint used **Qwen `qwen3:8b` via local Ollama**. The current
-runtime is GPT-OSS 120B via Groq Free with privately configured key and recorded live checks.
-Checkpoint Supabase connection,
-migrations and RLS on nine internal tables are verified. See the synthetic
-[Qwen smoke evaluation](docs/evidence/qwen-local-evaluation.json) and real
-[provider quote preview](docs/evidence/provider-live-preview.json).
+The restricted session excludes arbitrary token transfers/approvals, administration and
+arbitrary message signatures. Direct payments move tokens from Kernel through its executor
+route; escrow temporarily holds the quoted amount in Guardian. `paid` confirms direct
+settlement, `escrowed` confirms a lock, and `completed` requires delivery verification.
+Local scheduling pause is separate from on-chain pause or session revocation.
 
-Owner onboarding is available at **`/setup`**. Run `npm run onboarding` in a second
-terminal, then connect MetaMask to sign the sponsored bootstrap and scoped session.
-See [Sponsored Setup](docs/SPONSORED_SETUP.md). The configured owner has completed
-deployment/session signatures: [public manifest](docs/evidence/public-deployment.json).
-For procurement, run `npm run runtime:dev` with web running, then use `/dashboard`.
-A local-fork test verifies bootstrap/session payment with zero owner/account ETH.
+## Run the project
 
-## Requirements
+### Hosted reviewer
 
-- Node.js 22.13.0 or newer; initial environment: Node.js 22.17.1.
-- npm 10; one root install and one root `package-lock.json`.
-- No API key, database, or funded wallet is needed to run the initial scaffold.
+Open the reviewer URL above and follow the [reviewer guide](docs/REVIEWER_GUIDE.md).
+No MetaMask, personal funds or reviewer-owned model API account is needed. The hosted
+workspace exercises escrow on an isolated fork. Sessions last 15 minutes; sandbox
+transactions are **fork-local**, not public broadcasts.
 
-On Windows PowerShell, use `npm.cmd` and `npx.cmd` if script execution policy prevents
-invoking `npm` or `npx` directly.
+### Local application
 
-## Quick start
-
-Run these commands from the `guardian-wallet` directory:
+Requirements: **Node.js ≥22.13.0**, **npm 10**, and one root install/lockfile.
+Run from the repository root (`guardian-wallet-stage2` in this checkout):
 
 ```sh
 npm ci
 npm run dev
 ```
 
-`dev` builds the shared packages, then starts the three base applications below.
-For the configured provider workflow, run web separately and use `runtime:dev` to
-start API/worker plus provider-agent/signer; see the runtime guide above.
+The large submission recording is tracked with Git LFS. Git LFS is needed only to
+download that media (`git lfs pull`); the application does not depend on the recording.
 
-| Service | Location | Current behavior |
-| --- | --- | --- |
-| Web | http://localhost:3000 | Landing page, `/setup` and `/dashboard`. |
-| API | http://localhost:4000/health | Process health. |
-| API status | http://localhost:4000/v1/status | Implementation and financial-runtime configuration status. |
-| Worker | Terminal output | Heartbeat by default; configured execution requires an authorized session and local start. |
+Web: **http://localhost:3000** · API: **http://localhost:4000/health** ·
+runtime status: **http://localhost:4000/v1/status**. Without financial configuration,
+the API exposes health/status and the worker runs with execution disabled.
+`dev` starts web/API/worker; the configured procurement workflow below also needs the provider processes.
 
-Press Ctrl+C to stop the development processes. Rebuild shared packages after editing
-their source, or restart `npm run dev` so consumers receive the updated output.
+### Owner setup and procurement
 
-## Repository structure
+For first-time public-testnet setup, configure the database, Base Sepolia RPC, ZeroDev
+bundler/sponsorship and owner address, then configure the Groq key:
 
-```text
-guardian-wallet/
-  apps/
-    web/                  Next.js, React, Tailwind
-    api/                  Fastify service
-    worker/               Executor process boundary
-  packages/
-    shared/               Types, status definitions, development chain
-    planner/              AI planner interface and SDK dependencies
-    wallet/               Read client and executor interface
-    database/             Drizzle schema, client, migrations
-  contracts/
-    contracts/            Solidity; MockUSD fixture
-    test/                 Contract acceptance-test plan
-    ignition/modules/     MockUSD deployment module
-    hardhat.config.ts
-  tests/
-    integration/          Integration-test plan
-    e2e/                  Browser-test plan
-  docs/
-    architecture.md
-    security-assessment.md
-    evaluation.md
-    execution-evidence.md
-    roadmap.md
-  .env.example
-  package.json
-  package-lock.json
+```sh
+npm run setup:services
+npm run setup:ai-cloud
+npm run db:migrate
+npm run owner:setup
 ```
 
-All workspace packages are private. Root scripts build shared packages before their
-consumers. Dependencies are resolved through the root lockfile; do not create a
-separate lockfile in each workspace.
+At **`/setup`**, connect the configured owner in MetaMask, review/sign deployment,
+wait for confirmation and authorize the scoped session. This flow submits public Base Sepolia
+operations. Existing valid setup can be reused; sign-in alone does not deploy or renew authority.
+See [service setup](docs/SETUP_LAYANAN.md), [cloud AI](docs/AI_CLOUD.md) and
+[owner demo guide](docs/OWNER_DEMO_GUIDE.md) for prerequisites and recovery.
 
-## Commands
+After setup, stop `owner:setup` and use separate terminals:
+
+```sh
+# Terminal 1: API, worker, provider agent and provider signer
+npm run runtime:dev
+
+# Terminal 2: frontend
+npm run dev:web
+```
+
+Open **`/dashboard`**, sign in with the owner, request a database through the wallet
+assistant, review the draft, choose **Queue reviewed payments**, then **Start agent**.
+Follow the task to `completed` and verify the database probe/write-read.
+**Direct service request** queues a plan immediately and may execute when scheduling is already active.
+For delegation management with web already running, use `npm run onboarding` in another terminal.
+
+### Configuration boundaries
+
+Each service loads its own ignored environment file; templates are supplied alongside it.
+
+| Local file | Scope |
+| --- | --- |
+| `apps/web/.env.local` | Public API/onboarding URLs only (`NEXT_PUBLIC_*`). |
+| `apps/api/.env` | Owner/account addresses, database/RPC, model and provider endpoints/tokens. |
+| `apps/worker/.env` | Restricted session, database/RPC/bundler, gas, batching and settlement mode. |
+| `packages/database/.env` | Database migration connection. |
+| `contracts/.env` | Optional network-specific contract tooling. |
+
+The root `.env.example` is an index. Keep `.local/` credentials and onboarding journals private;
+models/frontend never receive signing secrets. Escrow requires its migrations, compatible Guardian
+deployment and owner-authorized selectors; follow the [escrow guide](docs/ESCROW_PROTOTYPE.md).
+On Windows PowerShell use `npm.cmd`/`npx.cmd` if script policy blocks `npm`/`npx`.
+
+## Verification and recorded evidence
+
+Latest local checkpoint: **156 passing tests** — 105 integration, 8 web, 25 browser,
+17 contract/fork and 1 Docker-context tooling case. Details and history: [PROGRESS.md](docs/PROGRESS.md).
+Run checks after installing dependencies; the build also prepares API/worker output used by fork tests:
+
+```sh
+npm run lint
+npm run typecheck
+npm run build
+npm run test:integration
+npm run test:web
+npm run test:tooling
+npm run test:contracts
+npx playwright install chromium
+npm run test:e2e
+```
+
+Without `KERNEL_FORK_RPC_URL`, contract tests run **12 local policy cases** and skip
+**5 fork cases**. To run all 17 in PowerShell:
+
+```powershell
+$env:KERNEL_FORK_RPC_URL="https://sepolia.base.org"
+npm.cmd run test:contracts
+```
+
+For Bash: `KERNEL_FORK_RPC_URL=https://sepolia.base.org npm run test:contracts`.
+Browser tests use wallet/API fixtures; fork tests execute actual contracts on an isolated chain.
+
+| Recorded result | Evidence | Execution scope |
+| --- | --- | --- |
+| Owner-signed bootstrap, installed policy and recorded session authorization | [Deployment](docs/evidence/public-deployment.json) | Public Base Sepolia. |
+| AI-01: 0.26 MockUSD direct payment, signed delivery and database probe/write-read | [AI-01 report](docs/evidence/AI-01-public-procurement.md) · [transaction](https://sepolia.basescan.org/tx/0x7cd8b34b835cb34b65d5d3484d81541874b225e7d5fb345f5c9514ad20fdd86d) | Historical public local-Qwen run. |
+| Escrow lock, provider-attested release and staged namespace activation | [Escrow receipt](docs/evidence/public-escrow-procurement.json) | Public GPT-OSS run on a separately authorized Kernel index 1 account. |
+| Hostile-planner/bypass rejection, revocation and lost-response recovery | [Kernel evidence](docs/evidence/security-kernel-fork.json) · [reconciliation tests](tests/integration/reconciliation.test.ts) | Actual Kernel/EntryPoint fork execution plus explicit chain-driver fixtures. |
+| 4/7-invoice batching: **58.59% / 67.87%** lower enclosing EVM gas | [COST-01](docs/evidence/COST-01-local-batching.md) | Three repetitions per mode on a local fork; excludes OP L1-data/commercial pricing. |
+| GPT-OSS 120B selected security regression: **60/60 observations** | [Cloud validation](docs/evidence/CLOUD-VALIDATION.md) · [raw results](docs/evidence/security-cloud-model-evaluation.json) | 30 cases repeated twice; preserved baseline 54/60 with six API/schema errors. In-sample regression. |
+
+Recorded captures do not establish current host/service availability. Historical Qwen results
+remain separate from GPT-OSS evidence; expired namespace liveness applies only at capture time.
+
+## Useful commands
 
 | Command | Purpose |
 | --- | --- |
-| `npm run dev` | Build packages and start all three applications. |
-| `npm run dev:web` | Start the dashboard after packages have been built. |
-| `npm run dev:api` | Start the API after packages have been built. |
-| `npm run dev:worker` | Start the heartbeat worker after packages have been built. |
-| `npm run owner:setup` | Build and run web + local sponsored owner onboarding together. |
-| `npm run onboarding` | Run only the local signing coordinator when web is already running. |
-| `npm run runtime:dev` | Build/configure and start API, worker, separate provider agent/signer; web runs separately. |
-| `npm run provider:configure` | Provision ignored local provider tokens/endpoints and synchronize worker DB. |
-| `npm run provider:check -- --temporary-runtime --record` | Live model/signed-invoice preview on an empty paused queue; no payment task/submission. |
-| `npm run wallet:verify -- --record` | Verify public bootstrap receipt/policy and record sanitized evidence. |
-| `npm run wallet:procurement:verify -- --record` | Independently verify an existing public procurement/receipt and live service probe when active. |
-| `npm run wallet:deployment-quote` | Check the full bootstrap quote without owner signing or transaction submission. |
-| `npm run build:packages` | Build the four shared workspaces. |
-| `npm run lint` | Lint repository code. |
-| `npm run typecheck` | Build shared types and type-check all workspaces. |
-| `npm run build` | Build applications and compile contracts. |
-| `npm run test:contracts` | Run policy tests; fork case is opt-in. |
-| `npm run test:cost` | Record actual Kernel/worker single-vs-4/7-batch comparison on an isolated fork. |
-| `npm run model:security` | Record selected live local Qwen adversarial/benign corpus with synthetic finances. |
-| `npm run test:kernel` | Require RPC and run actual Kernel/EntryPoint local-fork integration. |
-| `npm run test:integration` | Run SQL/owner API/planner/worker recovery tests. |
-| `npm run test:e2e` | Run browser tests as they are implemented. |
-| `npm run db:generate` | Generate migrations from the reviewed Drizzle schema. |
-| `npm run db:migrate` | Apply migrations using the database workspace environment. |
+| `npm run wallet:diagnose` | Read-only policy, queue and provider diagnosis; `-- --ai` adds one model request. |
+| `npm run services:check -- --network` | Read-only configured service connectivity checks. |
+| `npm run wallet:verify -- --record` | Verify an existing public bootstrap. |
+| `npm run wallet:procurement:verify -- --record` / `npm run wallet:escrow:verify -- --record` | Verify existing procurement receipts; no new payment. |
+| `npm run test:cost` | Run and record the isolated-fork batching comparison. |
+| `npm run model:cloud` / `npm run model:compare` / `npm run model:security` | Live-model smoke, comparison and selected regression; requires configured model access/quota. |
+| `npm run release:source` | Create a source-only review archive; requires Python 3.9+. |
 
-Contract, backend, owner-onboarding and dashboard browser tests are implemented.
-Install Playwright's Chromium browser before running browser tests:
+For a locally hosted reviewer, build with `npm run review:build`, then run
+`npm run review:start` with cloud AI configured. Deployment details are in the
+[review deployment guide](docs/REVIEW_DEPLOYMENT.md). Native Linux workflow verification
+is recorded; the Docker image has not been built/tested in this Windows workspace.
 
-```sh
-npx playwright install chromium
+## Repository layout
+
+```text
+apps/         web, API, worker; reviewer runtime dependency boundary
+packages/     shared schemas, planner, wallet/Kernel helpers, database/migrations
+contracts/    GuardianPayments, demo tokens, policy/fork tests and deployment modules
+tests/        integration, browser, tooling and test helpers
+tools/        service setup, provider/reviewer runtime, diagnosis, evaluation and release
+deployment/   reviewer hosting configuration and environment template
+docs/         active guides, technical/security documentation and evidence
+docs/archive/ historical plans, early storyboard and cancelled inquiry drafts
+submission/   team-maintained PPTX, Markdown documents and screen recording
 ```
 
-## Environment configuration
+Documentation: [technical design](docs/technical-documentation.md),
+[security assessment](docs/security-assessment.md), [wallet assistant](docs/WALLET_ASSISTANT.md),
+[batching/cost](docs/BATCHING_AND_COST.md), [release checklist](docs/RELEASE_CHECKLIST.md),
+[archive index](docs/archive/README.md), and [presentation material](submission/PRESENTATION_MATERIAL.md).
+Maintain submission files directly in `submission/`; the old presentation generator is retired.
 
-Panduan setup akun/credential berbahasa Indonesia:
-[Setup layanan](docs/SETUP_LAYANAN.md). Jalankan `npm run setup:services` di terminal
-interaktif; input credential disembunyikan. `npm run services:check -- --network`
-memeriksa koneksi secara read-only dan hanya mencetak status.
+## Known limits
 
-Runtime files are optional for the scaffold and are ignored by Git:
-
-| Template | Local destination | Scope |
-| --- | --- | --- |
-| `apps/web/.env.example` | `apps/web/.env.local` | Public API URL only. |
-| `apps/api/.env.example` | `apps/api/.env` | API/auth, account, RPC, database, Ollama endpoint/model and optional gateway token. |
-| `apps/worker/.env.example` | `apps/worker/.env` | Restricted session, DB/bundler RPC, native gas cap and confirmations. |
-| `packages/database/.env.example` | `packages/database/.env` | Database migration connection. |
-| `contracts/.env.example` | `contracts/.env` | Network-specific contract tooling. |
-
-The root `.env.example` is an index, not a shared secret file. Configure each deployed
-service independently. The owner key stays in the user's wallet; delegated
-agent credentials belong only to the executor runtime.
-
-## Development network
-
-Base Sepolia, chain ID **84532**, is the initial development network. MockUSD is a
-six-decimal fixture and is not USDC. Confirm the organizers' acceptance of testnet
-evidence before choosing the submission network.
-
-## Next milestone
-
-Extend security/economics evaluation and deploy the hosted runtime following the
-first successful public procurement/delivery. [PROGRESS.md](docs/PROGRESS.md) records the verified checkpoint and
-next owner action; `docs/ab-handoff.md` documents API boundaries.
-
-The revised target demo is **Astra as an AI Enterprise Node**, procuring a database
-service from a provider agent with bounded micro-payments. These are design targets,
-not a completed product demo. See [workflow and branches](docs/workflow.md),
-[architecture](docs/architecture.md), [adversarial evaluation](docs/evaluation.md),
-and the [five-minute demo script](docs/demo-script.md). Branch names in the workflow
-are proposals except the active A+B branch. Local/fork evidence is recorded separately
-from public deployment and human/model evaluation.
+- **Scoped authority:** reserve/limit enforcement covers the configured agent route;
+  owner actions, other modules and prior allowances remain separate trust boundaries.
+  Gas caps are per operation, not a cumulative on-chain gas policy. Daily caps use a fixed UTC window.
+- **Prototype operations:** single configured owner/account per financial API instance,
+  in-memory login sessions, privileged server DB access and process-held session/provider credentials.
+- **Provider trust:** the team operates both provider processes and the real test namespace service.
+  Escrow attests readiness through the provider signer; it cannot prove service quality or uptime.
+- **Evidence scope:** MockUSD/testnet receipts and local-fork gas savings do not establish mainnet
+  economics. The team chose Base Sepolia; organizer acceptance is not claimed.
+- **Security/availability:** no independent audit or universal prompt-injection immunity claim.
+  The latest full/production dependency scans reported zero known advisories; hosting and model
+  Free-tier quotas still affect availability. See the linked assessment and progress for scope.

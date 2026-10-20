@@ -1,7 +1,8 @@
 # Guardian Wallet — technical documentation
 
-International Track, Topic F: Agent Wallet. Current source is the local
-`feat/batching-evaluation` working tree, not a frozen/published final revision.
+International Track, Topic F: Agent Wallet. Source branch: `feat/batching-evaluation`.
+Use Git HEAD or the source archive inventory for the exact revision; the deployed
+archive/build marker is verified separately.
 
 ## Purpose and implemented scope
 
@@ -32,8 +33,9 @@ bounded input/completion tokens and queues, explicit quota errors and no model f
 | Provider signer/service | Fixed catalog EIP-712 quote, settlement verification, signed delivery and actual expiring KV namespace |
 
 The owner authorizes deployment/session and policy administration separately. The
-agent permission allows only Guardian `executePayments`, with native value zero and
-expiry. It excludes arbitrary transfer/approval, admin, generic batch/delegatecall and
+default agent permission allows only Guardian `executePayments`, with native value zero
+and expiry. Opt-in escrow additionally scopes `lockPayment`, `releaseEscrow` and
+`refundEscrow` to Guardian. It excludes arbitrary transfer/approval, admin, generic batch/delegatecall and
 arbitrary message signatures. Reserve protection applies to the enabled agent route;
 owner-authorized withdrawals/other modules are separate trust boundaries.
 
@@ -132,6 +134,7 @@ Run from the source root:
 ```powershell
 npm.cmd ci
 npm.cmd run test:integration
+npm.cmd run test:tooling
 npm.cmd run typecheck
 npm.cmd run lint
 npm.cmd run build
@@ -145,3 +148,10 @@ For cloud configuration, evaluation and deployment, follow [AI_CLOUD.md](AI_CLOU
 and [REVIEW_DEPLOYMENT.md](REVIEW_DEPLOYMENT.md). Model/hosting accounts remain Free
 without billing activation. No paid-service or public transaction step is required
 for the local/fork suites above.
+
+`typecheck` includes the integration/browser sources and their root test configs via
+`tsconfig.tests.json`. `test:tooling` checks that the Docker review context contains
+every evidence JSON imported by the frontend. Presentation and supporting documents
+are maintained directly in the root [submission folder](../submission/); start with
+[PRESENTATION_MATERIAL.md](../submission/PRESENTATION_MATERIAL.md). Source-only review
+packaging remains available through `npm run release:source`.

@@ -90,7 +90,7 @@ Guardian Wallet - Astra team
 
 ## Historical draft and current decision
 
-The editable file `docs/organizer-network-query.eml` was created and opened as a draft;
+The editable file `docs/archive/organizer-network-query.eml` was created and opened as a draft;
 no email was sent by the assistant. The owner subsequently cancelled contacting the
 organizer and selected the existing network/evidence for the current project.
 

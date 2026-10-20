@@ -1,7 +1,13 @@
 # A+B implementation and frontend handoff
 
-Implementation snapshot: October 17, 2026. Active work branch:
+Historical implementation snapshot: October 17, 2026. Work branch at that checkpoint:
 **`feat/wallet-agent-backend`**, based on scaffold commit `6cd497e`.
+
+Current stage two is `feat/batching-evaluation`. This document preserves the original
+direct-settlement API handoff and its historical counts/limitations. Current model,
+batching, assistant and escrow behavior is documented in [technical documentation](technical-documentation.md),
+[WALLET_ASSISTANT.md](WALLET_ASSISTANT.md), [BATCHING_AND_COST.md](BATCHING_AND_COST.md),
+[ESCROW_PROTOTYPE.md](ESCROW_PROTOTYPE.md) and [PROGRESS.md](PROGRESS.md).
 
 ## Ownership
 

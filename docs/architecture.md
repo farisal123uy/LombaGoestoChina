@@ -1,9 +1,12 @@
 # Architecture
 
-Revision: October 16, 2026. The A+B initial slice is implemented; the detailed sections
-below also contain future design targets. [A+B handoff](ab-handoff.md) is the current
-implementation/limitation reference. [Workflow](workflow.md) defines integration gates;
-[demo script](demo-script.md) defines the enterprise AI-to-AI scenario.
+Historical design revision: October 16, 2026. The detailed notes below preserve the
+initial slice and its then-future design targets. For the current implemented
+GPT-OSS planner, bounded batching, escrow and reviewer, use
+[technical documentation](technical-documentation.md) and [progress](PROGRESS.md).
+[A+B handoff](ab-handoff.md) preserves the original direct-settlement API handoff.
+[Archived workflow](archive/workflow.md) records the original integration gates;
+[archived demo script](archive/demo-script.md) preserves the early enterprise storyboard.
 
 ## Foundation and implemented A+B additions
 

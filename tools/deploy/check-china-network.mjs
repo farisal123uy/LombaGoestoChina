@@ -42,6 +42,7 @@ const results = (measurement?.results || []).map((entry) => {
 const report = { capturedAt: new Date().toISOString(), evidenceType: "third-party-China-probes-public-HTTPS-readiness-only", publicOrigin: target.origin, expectedBuildId: deployment.buildId,
   measurementId: created.id, measurementUrl: `https://api.globalping.io/v1/measurements/${created.id}`, status: measurement?.status || "timeout", requestedProbes: 3, observedProbes: results.length, results,
   limitations: "A point-in-time readiness/TLS check from independent probes reported in mainland China. Not a judge browser session, app execution or permanent China reachability guarantee. No credentials or private reviewer capabilities were shared; unauthenticated Free service, no billing activation." };
-await writeFile(join(root, "docs/evidence/china-network-readiness.json"), `${JSON.stringify(report, null, 2)}\n`);
+const output = process.argv.includes("--local-report") ? ".local/linux-review/china-network-report.json" : "docs/evidence/china-network-readiness.json";
+await writeFile(join(root, output), `${JSON.stringify(report, null, 2)}\n`);
 console.log(JSON.stringify(report, null, 2));
 if (results.length < 3 || results.some((row) => !row.passed)) process.exitCode = 1;

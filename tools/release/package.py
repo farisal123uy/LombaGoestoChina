@@ -12,6 +12,11 @@ output.mkdir(parents=True, exist_ok=True)
 names = subprocess.check_output(
     ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"], cwd=root
 ).decode("utf-8").split("\0")
+# Local cleanup/renames may be uncommitted. Exclude tracked working-tree deletions
+# while retaining the missing-file guard for other source candidates.
+deleted = set(filter(None, subprocess.check_output(
+    ["git", "ls-files", "--deleted", "-z"], cwd=root
+).decode("utf-8").split("\0")))
 excluded = {".git", ".local", "node_modules", ".next", "dist", "coverage", "test-results", "playwright-report", "__pycache__"}
 files = []
 fixture_exceptions = []
@@ -19,7 +24,7 @@ fixture_exceptions = []
 # exception applies to this exact value/path, never to a whole test directory.
 known_fixture = ("tests/integration/services-setup.test.ts", b"sk-proj-" + b"this-is-a-key-not-a-model")
 patterns = [re.compile(rb"gsk_[A-Za-z0-9_-]{24,}"), re.compile(rb"sk-proj-[A-Za-z0-9_-]{24,}"), re.compile(rb"(?:AGENT_SESSION_PRIVATE_KEY|PROVIDER_SIGNER_PRIVATE_KEY)\s*=\s*[\"']?0x[0-9a-fA-F]{64}")]
-for name in sorted(set(filter(None, names))):
+for name in sorted(set(filter(None, names)) - deleted):
     path = Path(name)
     if any(part in excluded for part in path.parts) or path.suffix.lower() in {".zip", ".wav", ".webm", ".mp4", ".pptx", ".log", ".tsbuildinfo"}:
         continue

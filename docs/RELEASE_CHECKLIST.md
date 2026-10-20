@@ -1,7 +1,7 @@
 # Competition release gates
 
-This is an implementation/release tracker, not a submission receipt. Presentation and
-video preparation remain on hold pending explicit owner authorization.
+This is an implementation/release tracker, not a submission receipt. Team-maintained
+presentation and supporting documents are in the root [submission folder](../submission/).
 
 ## Technical gates
 
@@ -36,6 +36,8 @@ video preparation remain on hold pending explicit owner authorization.
 - [x] Technical architecture/algorithms/security documentation available in docs.
 - [x] Permission tiers, known risks and evidence boundaries documented.
 - [x] README, deployment guide and runnable tests available.
+- [x] Root typecheck includes integration/browser tests; the Docker evidence allowlist
+  has a regression check. Full and production dependency scans report zero advisories.
 - [ ] Final source revision frozen for official submission; the project branch
   `feat/batching-evaluation` is being published with owner authorization (`main` unchanged).
 - [x] Credential-free deployed source archive/inventory retained after frontend integration;
@@ -50,10 +52,11 @@ video preparation remain on hold pending explicit owner authorization.
 - Network decision: the owner chose to proceed with existing **Base Sepolia public
   testnet / MockUSD** evidence and cancelled the organizer email inquiry. The available
   rules do not explicitly resolve testnet acceptance; no organizer approval is claimed.
-  The [archived clarification draft](ORGANIZER_NETWORK_CONFIRMATION.md) is not an active
+  The [archived clarification draft](archive/ORGANIZER_NETWORK_CONFIRMATION.md) is not an active
   release task. Public receipts and local-fork reviewer results remain labeled separately.
-- [x] Required English presentation deck prepared after owner authorization (9 slides; target 7:45, under 10 minutes), with Indonesian rehearsal notes and public escrow receipt links in `submission/`.
-- [ ] Optional English demo video, if authorized, <=5 minutes; truthful live/fixture labels.
+- [x] Team-maintained presentation, technical/security documents and screen recording
+  are present in [submission/](../submission/). The retired generator's historical
+  export checks do not validate replacements supplied by the team.
 - [ ] Final links/materials reviewed and uploaded through the actual official channel.
 - [ ] Portal receipt/confirmation and final source/package copy retained.
 

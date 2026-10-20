@@ -8,15 +8,15 @@ import { UiIcon } from "./ui-icon";
 import { useOwnerSession } from "./owner-session";
 import { WalletAssistant } from "./wallet-assistant";
 import { TaskReceipt } from "./task-receipt";
+import { walletApiBase as apiBase, walletRequestError } from "../lib/api-error";
 
-const apiBase = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000").replace(/\/$/, "");
 interface Status { financialConfigured: boolean; providerConfigured: boolean; assistantConfigured?: boolean; executionEnabled: boolean; ownerAddress?: `0x${string}`; accountAddress?: `0x${string}`; model: { provider: string; modelId: string | null }; }
 interface TaskDetails { task: PaymentTask; operation?: PaymentAttempt; }
 async function apiRequest<T>(base: string, path: string, token?: string, body?: object, method = body ? "POST" : "GET"): Promise<T> {
   const response = await fetch(`${base}${path}`, { method, cache: "no-store", signal: AbortSignal.timeout(path === "/v1/procure" ? 150000 : 20000),
     headers: { ...(token ? { authorization: `Bearer ${token}` } : {}), ...(body ? { "content-type": "application/json" } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
   const value = await response.json();
-  if (!response.ok) throw new Error(typeof value.error === "string" ? value.error : "API_REQUEST_FAILED");
+  if (!response.ok) throw walletRequestError(base, response.status, value, Boolean(token));
   return value as T;
 }
 const activeStatuses = ["draft", "queued", "planned", "waiting", "executing", "escrowed", "paid", "service_pending"];
@@ -26,7 +26,7 @@ export function FinancialDashboard({ reviewSession }: { reviewSession?: { apiBas
   const isReview = Boolean(reviewSession);
   const request = useCallback(<T,>(path: string, token?: string, body?: object, method?: string) => apiRequest<T>(base, path, token, body, method), [base]);
   const [status, setStatus] = useState<Status>();
-  const { walletSession, setWalletSession: setAuth } = useOwnerSession();
+  const { walletSession, setWalletSession: setAuth, restoring } = useOwnerSession();
   const [sandboxAuth] = useState(reviewSession ? { token: reviewSession.token, address: reviewSession.ownerAddress } : undefined);
   const auth = sandboxAuth || walletSession;
   const [policy, setPolicy] = useState<PolicySnapshot>();
@@ -45,17 +45,18 @@ export function FinancialDashboard({ reviewSession }: { reviewSession?: { apiBas
   const hasActiveTasks = tasks.some((t) => ["planned", "executing", "escrowed", "paid", "service_pending"].includes(t.status));
   const refresh = useCallback(async (token?: string) => {
     setStatus(await request<Status>("/v1/status", token));
-    if (!token) return;
+    if (!token) { setPolicy(undefined); setTasks([]); setSelected(undefined); setExchange([]); setData({}); return; }
     const [nextTasks, nextPolicy] = await Promise.all([request<{ tasks: PaymentTask[] }>("/v1/tasks", token), request<{ policy: PolicySnapshot }>("/v1/policy", token)]);
     setTasks(nextTasks.tasks); setPolicy(nextPolicy.policy);
-    if (selectedId) setSelected(await request<TaskDetails>(`/v1/tasks/${selectedId}`, token));
+    if (selectedId && nextTasks.tasks.some((task) => task.id === selectedId)) setSelected(await request<TaskDetails>(`/v1/tasks/${selectedId}`, token));
+    else if (selectedId) setSelected(undefined);
   }, [selectedId, request]);
-  useEffect(() => { refresh(auth?.token).catch(() => setError(isReview ? "The review workspace is expired or unavailable. Close it and start a new workspace." : "Start the financial runtime with npm.cmd run runtime:dev, then refresh/sign in.")); }, [refresh, auth?.token, isReview]);
+  useEffect(() => { refresh(auth?.token).catch((cause: unknown) => setError(isReview ? "The review workspace is expired or unavailable. Close it and start a new workspace." : cause instanceof TypeError ? "Start the financial runtime with npm.cmd run runtime:dev, then refresh/sign in." : cause instanceof Error ? cause.message : "Could not load the wallet.")); }, [refresh, auth?.token, isReview]);
   useEffect(() => {
     if (!auth) return;
     let stopped = false; let timer: ReturnType<typeof setTimeout>;
     const poll = async () => {
-      try { await refresh(auth.token); } catch { if (!stopped) setError("Could not refresh. Sign in again if the session expired; payments are not retried from the browser."); }
+      try { await refresh(auth.token); } catch (cause) { if (!stopped) setError(cause instanceof Error ? cause.message : "Could not refresh the wallet."); }
       if (!stopped) timer = setTimeout(poll, hasActiveTasks ? 3000 : 10000);
     };
     timer = setTimeout(poll, 3000);
@@ -83,8 +84,8 @@ export function FinancialDashboard({ reviewSession }: { reviewSession?: { apiBas
     await ensureBaseSepolia(wallet);
     const challenge = await request<{ nonce: string; message: string }>("/auth/nonce", undefined, { address });
     const signature = await wallet.request({ method: "personal_sign", params: [textToHex(challenge.message), address] });
-    const session = await request<{ token: string }>("/auth/verify", undefined, { address, nonce: challenge.nonce, signature });
-    setAuth({ token: session.token, address: address as `0x${string}` });
+    const session = await request<{ token: string; expiresInSeconds: number }>("/auth/verify", undefined, { address, nonce: challenge.nonce, signature });
+    setAuth({ token: session.token, address: address as `0x${string}`, expiresAt: Date.now() + session.expiresInSeconds * 1000 });
   });
   const procure = () => action("Astra and provider are exchanging a service request and quote", async () => {
     if (!auth) throw new Error("Sign in first.");
@@ -115,12 +116,13 @@ export function FinancialDashboard({ reviewSession }: { reviewSession?: { apiBas
     {reviewSession && <p className="dashboard-notice sandbox-notice">Review sandbox: hosted AI inference and actual Kernel/Guardian execution on an isolated local fork. Transactions here are not public broadcasts. The owner and funds belong only to this disposable workspace.</p>}
     <section className="dashboard-heading">
       <div><p className="eyebrow">WALLET WORKSPACE / ASTRA</p><h1>Goals to services.<br /><span>Inside your authority.</span></h1><p>Your balance, your boundaries, your agent. Plan a purchase and follow it all the way to verified delivery.</p></div>
-      <div className="dashboard-login"><span className="model-avatar"><UiIcon name="spark" /></span><div><span className="label">YOUR AI ASSISTANT</span><strong>{status?.model.modelId || "Waiting for API"}</strong><p>{reviewSession ? "Disposable review workspace" : auth ? "Owner signed in" : "Owner sign-in required"}</p></div>{!reviewSession && <button disabled={!!busy || !status?.financialConfigured} onClick={signIn}>{auth ? "Sign in again" : "Connect owner & sign in"}</button>}</div>
+      <div className="dashboard-login"><span className="model-avatar"><UiIcon name="spark" /></span><div><span className="label">YOUR AI ASSISTANT</span><strong>{status?.model.modelId || "Waiting for API"}</strong><p>{reviewSession ? "Disposable review workspace" : restoring ? "Restoring owner sign-in…" : auth ? "Owner signed in" : "Owner sign-in required"}</p></div>{!reviewSession && <button disabled={!!busy || restoring || !status?.financialConfigured} onClick={signIn}>{auth ? "Sign in again" : "Connect owner & sign in"}</button>}</div>
     </section>
-    {!isReview && !auth && <div className="workspace-guide"><UiIcon name="wallet" /><p><strong>Your wallet workspace is ready when you are.</strong> Sign in with your owner wallet to see balances and tasks.</p><Link href="/setup">Need to finish setup? <UiIcon name="arrow" /></Link></div>}
+    {!isReview && <div className="workspace-guide"><UiIcon name="wallet" /><p><strong>Wallet is your daily workspace.</strong> {auth ? "Your sign-in stays active across refreshes in this tab until it expires. " : "Sign in with MetaMask to see balances and tasks. "}Setup is only needed to deploy the wallet and authorize Astra for the first time.</p><Link href="/setup">View deployment & delegation <UiIcon name="arrow" /></Link></div>}
+    {!isReview && status?.accountAddress && <p className="setup-detail">Active Kernel account: <code>{status.accountAddress}</code> · Tasks and invoices below belong to this account.</p>}
     <section className="dashboard-stats" aria-label="On-chain wallet balances">{[["Confirmed token balance", policy?.balanceUnits, "wallet"], ["Protected balance", policy?.protectedBalanceUnits, "shield"], ["UTC-day limit", policy?.dailyLimitUnits, "lock"], ["Spent this UTC day", policy?.spentUnits, "receipt"]].map(([name, amount, icon]) => <article key={name}><div className="stat-heading"><span className="label">{name}</span><UiIcon name={icon as "wallet" | "shield" | "lock" | "receipt"} /></div><strong>{amount === undefined ? "—" : tokenAmount(amount)}</strong><small>MockUSD test units</small></article>)}</section>
     <div className="workspace-control-bar"><div className="scheduler-label"><span className={`scheduler-dot${status?.executionEnabled ? " is-running" : ""}`} /><strong>Scheduler: {status?.executionEnabled ? "running" : "paused"}</strong><span>{counts.active} active task{counts.active === 1 ? "" : "s"}</span></div><div className="setup-buttons"><button disabled={!!busy || !auth || status?.executionEnabled} onClick={() => toggle(false)}>Start agent</button><button className="secondary" disabled={!!busy || !auth || !status?.executionEnabled} onClick={() => toggle(true)}>Pause worker</button></div></div>
-    <p className="control-hint">Starting resumes the account queue. Local pause affects scheduling; on-chain policy and session revocation remain separate.</p>
+    <p className="control-hint">Start agent enables the account queue; execution also requires a running worker process. If a task stays planned, check <code>npm.cmd run runtime:dev</code>. Local pause and on-chain revocation are separate.</p>
     {error && <div className="setup-error" role="alert">{error}</div>}{notice && <div className="dashboard-notice" role="status">{notice}</div>}{busy && <p className="setup-progress" role="status"><span className="busy-spinner" />{busy}…</p>}
     {status?.assistantConfigured && <WalletAssistant key={auth?.token || "signed-out"} token={auth?.token} tasks={tasks} baseUrl={base} onChanged={() => refresh(auth?.token)} />}
     <div className="dashboard-columns">
@@ -132,6 +134,7 @@ export function FinancialDashboard({ reviewSession }: { reviewSession?: { apiBas
       {!visibleTasks.length && <div className="empty-state"><UiIcon name="receipt" /><strong>{!auth ? "Your activity, in one place" : filter === "all" ? "No tasks yet" : "No matching tasks"}</strong><p>{!auth ? "Sign in and create a procurement task to begin." : filter === "all" ? "Request a database with Astra. Your task and its verified receipts will appear here." : "Choose another filter to see the rest of your activity."}</p></div>}
       <div className="task-list">{visibleTasks.map((task) => <button disabled={!!busy || !auth} className={`task-row ${selectedId === task.id ? "selected" : ""}`} key={task.id} onClick={() => action("Load task", async () => { setSelected(await request<TaskDetails>(`/v1/tasks/${task.id}`, auth!.token)); setExchange([]); setData({}); })}><span><strong>{task.offerId || "Authenticated invoice"}</strong><small>{task.id}</small></span><span>{tokenAmount(task.quote.amountUnits)} MockUSD</span><span className={`task-status status-${task.status}`}>{task.status.replaceAll("_", " ")}</span></button>)}</div>
       {selected && <div className="task-detail"><TaskReceipt task={selected.task} operation={selected.operation} local={isReview} />
+        {!selected.operation && ["draft", "queued", "planned", "waiting", "needs_owner", "rejected"].includes(selected.task.status) && <div className="setup-buttons"><button className="secondary" disabled={!!busy || !auth} onClick={() => action("Discard unsubmitted invoice", async () => { await request(`/v1/tasks/${selected.task.id}/cancel`, auth!.token, {}); await refresh(auth!.token); setNotice("Unsubmitted invoice discarded. Its reserved queue budget is released; you can request a fresh quote."); })}>Discard unsubmitted invoice</button></div>}
         {selected.task.status === "completed" && selected.task.delivery && <div className="service-evidence"><div className="panel-title"><span className="panel-icon"><UiIcon name="database" /></span><div><span className="label">Verified provider namespace</span><strong>Service workspace</strong></div></div><code>{selected.task.delivery.namespaceId}</code><p className="setup-detail">Expires {new Date(selected.task.delivery.expiresAt * 1000).toLocaleString()}. Completion requires a signed delivery receipt and a database write/read probe after settlement or escrow release.</p><button disabled={!!busy || !auth} onClick={probe}>Verify database probe</button><div className="database-edit"><label className="label" htmlFor="db-key">Database key</label><input id="db-key" value={key} maxLength={64} onChange={(event) => setKey(event.target.value)} /><label className="label" htmlFor="db-value">Value</label><input id="db-value" value={value} maxLength={4096} onChange={(event) => setValue(event.target.value)} /><button disabled={!!busy || !auth} onClick={() => action("Write database value", async () => { await request(`/v1/tasks/${selected.task.id}/database`, auth!.token, { key, value }, "PUT"); setData((await request<{ values: Record<string, string> }>(`/v1/tasks/${selected.task.id}/database`, auth!.token)).values); })}>Write & read back</button></div><pre>{JSON.stringify(data, null, 2)}</pre></div>}
       </div>}
     </section><footer>Bounded authority · confirmed settlement · verifiable test-service delivery</footer>

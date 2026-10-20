@@ -74,6 +74,7 @@ export async function buildApp(webOrigin = "http://localhost:3000", financial?: 
     const input = z.strictObject({ address: addressSchema, nonce: z.string().regex(/^[0-9a-f]{48}$/), signature: signatureSchema }).parse(request.body);
     return auth.verify(input.address, input.nonce, input.signature);
   });
+  app.get("/auth/session", async (request) => ({ address: context(request.headers.authorization).owner }));
 
   async function makeTask(header: string | undefined, body: unknown) {
     const ctx = context(header);
@@ -96,7 +97,7 @@ export async function buildApp(webOrigin = "http://localhost:3000", financial?: 
     const { ctx, task, state } = await makeTask(request.headers.authorization, request.body);
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
     const current = await ctx.store.getTask(id, ctx.owner);
-    if (!current) throw new ApiError(404, "TASK_NOT_FOUND");
+    if (!current || accountKey(current.chainId, current.quote.account) !== accountKey(ctx.chainId, ctx.accountAddress)) throw new ApiError(404, "TASK_NOT_FOUND");
     if (current.paymentId !== task.paymentId) throw new ApiError(400, "INVOICE_ID_MISMATCH");
     const updated = { ...current, ...task, id, createdAt: current.createdAt };
     const outcome = await ctx.planner.plan(updated, state);
@@ -110,13 +111,13 @@ export async function buildApp(webOrigin = "http://localhost:3000", financial?: 
   });
   app.get("/v1/tasks", async (request) => {
     const ctx = context(request.headers.authorization);
-    return { tasks: await ctx.store.listTasks(ctx.owner) };
+    return { tasks: await ctx.store.listAccountTasks(ctx.owner, accountKey(ctx.chainId, ctx.accountAddress)) };
   });
   app.get("/v1/tasks/:id", async (request) => {
     const ctx = context(request.headers.authorization);
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
     const task = await ctx.store.getTask(id, ctx.owner);
-    if (!task) throw new ApiError(404, "TASK_NOT_FOUND");
+    if (!task || accountKey(task.chainId, task.quote.account) !== accountKey(ctx.chainId, ctx.accountAddress)) throw new ApiError(404, "TASK_NOT_FOUND");
     return { task, operation: await ctx.store.getAttempt(id, ctx.owner) };
   });
   for (const [route, action] of [["cancel", "cancel"], ["retry-delivery", "retry_delivery"]] as const) {
@@ -178,7 +179,8 @@ export async function buildApp(webOrigin = "http://localhost:3000", financial?: 
     const ctx = context(header);
     const { id } = z.object({ id: z.string().uuid() }).parse(params);
     const task = await ctx.store.getTask(id, ctx.owner);
-    if (!ctx.procurement || task?.status !== "completed" || !task.delivery) throw new ApiError(409, "SERVICE_NOT_READY");
+    if (!task || accountKey(task.chainId, task.quote.account) !== accountKey(ctx.chainId, ctx.accountAddress)) throw new ApiError(404, "TASK_NOT_FOUND");
+    if (!ctx.procurement || task.status !== "completed" || !task.delivery) throw new ApiError(409, "SERVICE_NOT_READY");
     return { ctx, namespace: task.delivery.namespaceId };
   }
   app.post("/v1/tasks/:id/probe", async (request) => {

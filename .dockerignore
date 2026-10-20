@@ -13,7 +13,7 @@ contracts/ignition/deployments
 playwright-report
 test-results
 .local
-submission/generated
+submission
 .vercel
 .railway
 docs

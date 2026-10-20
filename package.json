@@ -26,6 +26,7 @@
     "services:check": "node tools/services/check.mjs",
     "services:schema": "node tools/services/schema-status.mjs",
     "wallet:check": "node tools/wallet/check.mjs",
+    "wallet:diagnose": "npm run build:packages && node tools/wallet/diagnose.mjs",
     "wallet:sponsorship": "npm run build:packages && node tools/wallet/check-sponsorship.mjs",
     "onboarding": "npm run build:packages && npm run build --workspace @guardian-wallet/api && npm run compile --workspace @guardian-wallet/contracts && node tools/wallet/onboarding-server.mjs",
     "owner:setup": "npm run build:packages && npm run build --workspace @guardian-wallet/api && npm run compile --workspace @guardian-wallet/contracts && concurrently -k -n web,owner \"npm run dev:web\" \"node tools/wallet/onboarding-server.mjs\"",
@@ -61,18 +62,23 @@
     "build:packages": "npm run build --workspace @guardian-wallet/shared && npm run build --workspace @guardian-wallet/planner && npm run build --workspace @guardian-wallet/wallet && npm run build --workspace @guardian-wallet/database",
     "build": "npm run build:packages && npm run build --workspace @guardian-wallet/api && npm run build --workspace @guardian-wallet/worker && npm run build --workspace @guardian-wallet/web && npm run compile --workspace @guardian-wallet/contracts",
     "lint": "eslint . --max-warnings 0",
-    "typecheck": "npm run build:packages && npm run compile --workspace @guardian-wallet/contracts && npm run typecheck --workspaces --if-present",
+    "typecheck": "npm run build:packages && npm run compile --workspace @guardian-wallet/contracts && npm run typecheck --workspaces --if-present && npm run typecheck:tests",
+    "typecheck:tests": "tsc -p tsconfig.tests.json",
     "test:contracts": "npm run build:packages && npm run test --workspace @guardian-wallet/contracts",
     "test:cost": "npm run build:packages && node tools/evaluation/run-cost.mjs",
     "test:kernel": "node -e \"if (!process.env.KERNEL_FORK_RPC_URL) throw new Error('Set KERNEL_FORK_RPC_URL before running the fork suite')\" && npm run build:packages && npm run test --workspace @guardian-wallet/contracts -- nodejs test/Kernel.integration.ts",
     "test:integration": "npm run build:packages && vitest run --config vitest.config.ts",
     "test:e2e": "playwright test",
     "test:web": "npm run test --workspace @guardian-wallet/web",
+    "test:tooling": "node --test tests/tooling/review-context.test.mjs",
     "db:generate": "npm run build:packages && npm run db:generate --workspace @guardian-wallet/database",
     "db:migrate": "npm run db:migrate --workspace @guardian-wallet/database"
   },
   "overrides": {
     "vite": "7.3.7",
+    "@esbuild-kit/core-utils": {
+      "esbuild": "0.25.12"
+    },
     "ethjs-unit": {
       "bn.js": "4.12.3"
     },

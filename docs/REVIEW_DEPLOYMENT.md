@@ -84,6 +84,11 @@ docker build -f Dockerfile.review -t guardian-review .
 docker run --rm -p 7860:7860 --env-file /private/review.env guardian-review
 ```
 
+`Dockerfile.review.dockerignore` explicitly includes the public escrow procurement
+JSON imported by the frontend. `npm run test:tooling` checks that every frontend
+evidence import is represented in this allowlist. This source-context check is separate
+from building/running the image; Docker is not installed in the current Windows workspace.
+
 `/api/review/health` checks liveness. `/api/review/ready` checks the chosen model's
 catalog availability and the fork source, plus workspace slots. Readiness is not a
 successful inference/transaction claim. Use the live smoke and reviewer workflow below.
@@ -166,15 +171,21 @@ hosting-credit/eligibility monitoring, a check on the judge's exact network, tea
 identity/eligibility, organizer acceptance of Base Sepolia, and official submission.
 Frontend `4e47b13` is integrated and the API key is configured privately. The owner
 has authorized source publication on the `feat/batching-evaluation` branch; `main`
-remains unchanged. Presentation/video remain on hold.
+remains unchanged. Presentation/video materials are maintained in the root
+[submission folder](../submission/), separately from runtime deployment and official upload.
 
 For this VM rollout, `node tools/deploy/linux-review.mjs --claimed-free` uses the
-dedicated private SSH identity, stops only owned app processes, uploads a credential-free
-source archive and builds/prunes dependencies, sends secrets via encrypted stdin,
-executes the real workflow, then verifies public readiness/build ID. A failed rollout
-is not success; private stage logs are under `.local/linux-review`. The initial retry
-found an old app process; the deployer now checks/stops exact owned process arguments
-instead of relying only on a stale PID file.
+dedicated private SSH identity, verifies a source-only archive, builds/prunes a fresh
+versioned release and runs the live fork workflow before switching the public service.
+Secrets travel through encrypted stdin. Activation stops only owned app processes,
+switches the release alias and checks readiness/build ID; the previous release/environment
+is retained for rollback. Fresh extraction prevents removed project files surviving an overlay.
+Private stage logs and current verification reports stay under `.local/linux-review`.
+
+After rollout, run `node tools/review/check-browser.mjs --public --local-report` and
+`node tools/deploy/check-china-network.mjs --local-report` to verify the current build
+without overwriting historical public evidence captures. `release:readiness` prefers
+these current local reports, checks their build IDs and reports Git publication state.
 
 The native supervisor does not create a system-wide startup service. Monitor health
 and host lifecycle; a VM deletion/restart or exhausted Free credits is not prevented

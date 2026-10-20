@@ -8,7 +8,7 @@ import { BoundedPaymentPlanner, QwenClient, buildWalletOverview, formatWalletUni
 import { getPaymentId, invoiceId, providerId, serviceHash, quoteTypedData, type PaymentExecutionDriver, type PaymentFulfillment } from "@guardian-wallet/wallet";
 import { paymentPlanSchema, serviceQuoteSchema, type DeliveryReceipt, type EscrowActionAttempt, type PaymentAttempt, type PaymentTask, type PolicySnapshot, type WalletAssistantResponse, type WalletIntent, type WalletOverview, type WalletRiskReport, type WalletExecutionResponse } from "@guardian-wallet/shared";
 import { PaymentWorker } from "../../apps/worker/src/worker.js";
-import { buildApp } from "../../apps/api/src/app.js";
+import { buildApp, type FinancialApi } from "../../apps/api/src/app.js";
 import { OwnerAuth } from "../../apps/api/src/auth.js";
 import { applyTestMigrations } from "../helpers/migrations.js";
 
@@ -22,6 +22,15 @@ beforeEach(async () => {
 });
 afterAll(async () => { await sharedDatabase.close(); });
 afterEach(async () => { for (const cleanup of close.splice(0).reverse()) await cleanup(); });
+
+function serviceFixture() {
+  type Service = NonNullable<FinancialApi["procurement"]>["service"];
+  return {
+    provision: vi.fn<Service["provision"]>(), provisionEscrow: vi.fn<Service["provisionEscrow"]>(),
+    activateEscrow: vi.fn<Service["activateEscrow"]>(), probe: vi.fn<Service["probe"]>(),
+    probeEscrow: vi.fn<Service["probeEscrow"]>(), values: vi.fn<Service["values"]>(), put: vi.fn<Service["put"]>(),
+  };
+}
 
 async function fixture() {
   const db = sharedDatabase;
@@ -56,11 +65,11 @@ async function fixture() {
   const planner = new BoundedPaymentPlanner();
   const driver: PaymentExecutionDriver = {
     snapshot: vi.fn(async () => state), validate: vi.fn(async () => {}),
-    prepare: vi.fn(async (plan) => ({
+    prepare: vi.fn<PaymentExecutionDriver["prepare"]>(async (plan) => ({
       attempt: { taskId: plan.taskId, sender: account, userOperationHash: keccak256(toBytes(plan.taskId)), nonce: "18446744073709551616", nonceKey: "1", status: "prepared", submissionBlock: "100", preparedAt: now, validUntil: plan.validUntil },
       signedPayload: "PRIVATE_TEST_SIGNED_OPERATION",
     })),
-    submit: vi.fn(), reconcile: vi.fn(async () => ({ status: "pending" })),
+    submit: vi.fn(), reconcile: vi.fn<PaymentExecutionDriver["reconcile"]>(async () => ({ status: "pending" })),
   };
   async function plannedTask(offer = false) {
     const value = { ...await task(), ...(offer ? { offerId: "database-small-1h" as const } : {}) };
@@ -74,7 +83,7 @@ async function fixture() {
 
 describe("Bounded queue batches and shared durable operations", () => {
   it("persists four invoice memberships before one send and recovers all members after a lost response", async () => {
-    const f = await fixture(), tasks = [];
+    const f = await fixture(), tasks: PaymentTask[] = [];
     for (let i = 0; i < 4; i++) tasks.push(await f.plannedTask());
     await f.store.setPaused(f.key, false);
     vi.mocked(f.driver.submit).mockImplementation(async () => {
@@ -413,7 +422,7 @@ describe("Wallet assistant: authenticated assets, payment planning and operation
         }
         onValidate?.();
       },
-      procurement: { qwen, provider: { requestQuote }, service: { provision: vi.fn(), probe: vi.fn(), values: vi.fn(), put: vi.fn() }, modelId: "qwen3:8b" },
+      procurement: { qwen, provider: { requestQuote }, service: serviceFixture(), modelId: "qwen3:8b" },
     });
     close.push(() => app.close());
     const challenge = (await app.inject({ method: "POST", url: "/auth/nonce", payload: { address: f.owner.address } })).json<{ nonce: string; message: string }>();
@@ -455,6 +464,25 @@ describe("Wallet assistant: authenticated assets, payment planning and operation
     expect(formatWalletUnits("1", 6)).toBe("0.000001");
     expect(formatWalletUnits("123", 0)).toBe("123");
     expect(buildWalletOverview(f.state, [{ ...task, quote: { ...task.quote, account: f.guardian } }], { symbol: "MUSD", decimals: 6 }, true).committedUnits).toBe("0");
+  });
+  it("lists only the active account's invoices and rejects old account IDs consistently across details and planning", async () => {
+    const f = await fixture(), task = await f.task();
+    const active = await f.store.createTask({ ...task, status: "draft" });
+    const quote = { ...task.quote, account: f.guardian };
+    const old = await f.store.createTask({ ...task, id: randomUUID(), quote, paymentId: getPaymentId(task.chainId, quote), status: "draft" });
+    const { app, headers } = await api(f, "plan_payments");
+    expect((await app.inject({ method: "GET", url: "/auth/session" })).statusCode).toBe(401);
+    const session = await app.inject({ method: "GET", url: "/auth/session", headers });
+    expect(session.json()).toEqual({ address: f.owner.address });
+    expect(session.headers["cache-control"]).toBe("no-store");
+    const listed = (await app.inject({ method: "GET", url: "/v1/tasks", headers })).json<{ tasks: PaymentTask[] }>().tasks;
+    expect(listed.map((value) => value.id)).toEqual([active.id]);
+    expect((await app.inject({ method: "GET", url: `/v1/tasks/${old.id}`, headers })).statusCode).toBe(404);
+    expect((await app.inject({ method: "POST", url: "/v1/assistant", headers, payload: { requestId: randomUUID(), instruction: "Preview selected invoices", taskIds: [old.id] } })).statusCode).toBe(404);
+    const preview = await app.inject({ method: "POST", url: "/v1/assistant", headers, payload: { requestId: randomUUID(), instruction: "Preview selected invoices", taskIds: listed.map((value) => value.id) } });
+    expect(preview.statusCode).toBe(200);
+    expect(preview.json<WalletAssistantResponse>().paymentReview).toMatchObject({ status: "ready", taskIds: [active.id] });
+    expect(f.driver.prepare).not.toHaveBeenCalled();
   });
   it("handles owner/wait decisions without an offer and never forwards a null quote request to the signer", async () => {
     const f = await fixture();
@@ -553,7 +581,7 @@ describe("Owner API, bounded planning and untrusted input", () => {
     const gate = new Promise<void>((resolve) => { release = resolve; }), started = new Promise<void>((resolve) => { entered = resolve; });
     const modelFetch = vi.fn<typeof fetch>(async () => { entered(); await gate; return new Response(JSON.stringify({ done: true, message: { role: "assistant", content: JSON.stringify({ action: "request_quote", offerId: "database-small-1h", summary: "Request the fixed small database offer." }) } })); });
     const requestQuote = vi.fn(async () => ({ accepted: true as const, quote: signed, reason: "Fixed small offer accepted.", modelId: "qwen3:8b" }));
-    const service = { provision: vi.fn(), probe: vi.fn(), values: vi.fn(), put: vi.fn() };
+    const service = serviceFixture();
     const app = await buildApp("https://guardian.test", { ownerAddress: f.owner.address, accountAddress: f.account, guardianAddress: f.guardian, chainId: 84532, authDomain: "guardian.test", store: f.store, planner: f.planner, readPolicy: async () => f.state,
       procurement: { qwen: new QwenClient({ provider: "ollama", fetch: modelFetch }), provider: { requestQuote }, service, modelId: "qwen3:8b" } });
     close.push(() => app.close());

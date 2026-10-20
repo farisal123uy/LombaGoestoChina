@@ -14,13 +14,15 @@ const root = fileURLToPath(new URL("../../", import.meta.url)), require = create
 await mkdir(directory, { recursive: true });
 const options = await loadModelOptions(); new StructuredModelClient(options);
 const publicMode = process.argv.includes("--public");
+const localReport = process.argv.includes("--local-report");
+if (localReport && !publicMode) throw new Error("LOCAL_DEPLOYMENT_REPORT_REQUIRES_PUBLIC_MODE");
 const deployment = publicMode ? JSON.parse(await readFile(join(root, ".local/linux-review/deployment-report.json"), "utf8")) : undefined;
 const accessCode = publicMode ? JSON.parse(await readFile(join(root, ".local/linux-review/access.private.json"), "utf8")).accessCode : randomBytes(32).toString("hex");
 const webPort = 3114, runtimePort = 4314;
 for (const port of publicMode ? [] : [webPort, runtimePort]) {
   try { await fetch(`http://127.0.0.1:${port}`, { signal: AbortSignal.timeout(1000) }); throw new Error("BROWSER_CHECK_PORT_IN_USE"); } catch (error) { if (error.message === "BROWSER_CHECK_PORT_IN_USE") throw error; }
 }
-const paths = ["apps/web/components/financial-dashboard.tsx", "apps/web/components/wallet-assistant.tsx", "apps/web/components/reviewer-workspace.tsx", "apps/web/lib/evidence.ts", "apps/api/src/review-host.ts"];
+const paths = ["apps/web/components/financial-dashboard.tsx", "apps/web/components/wallet-assistant.tsx", "apps/web/components/reviewer-workspace.tsx", "apps/web/components/app-navigation.tsx", "apps/web/app/icon.svg", "apps/web/lib/evidence.ts", "apps/api/src/review-host.ts"];
 const sourceHashes = Object.fromEntries(await Promise.all(paths.map(async (path) => [path, createHash("sha256").update(await readFile(join(root, path))).digest("hex")])));
 const buildId = publicMode ? deployment.buildId : createHash("sha256").update(JSON.stringify(sourceHashes)).digest("hex");
 const origin = publicMode ? new URL(deployment.previewUrl).origin : `http://127.0.0.1:${webPort}`;
@@ -60,6 +62,13 @@ try {
   await page.goto(origin);
   stage = "public-navigation";
   await expect(page.getByRole("heading", { name: /AI proposes\.\s*The contract decides\./ })).toBeVisible();
+  const logo = page.getByRole("link", { name: "Guardian Wallet overview", exact: true }).locator("img.guardian-logo");
+  await expect(logo).toBeVisible();
+  await expect(logo).toHaveAttribute("src", "/icon.svg");
+  await expect(page.locator('link[rel="icon"][type="image/svg+xml"]')).toHaveCount(1);
+  const icon = await page.request.get(`${origin}/icon.svg`);
+  assert.equal(icon.status(), 200, "PUBLIC_BRAND_ICON_UNAVAILABLE");
+  assert.equal(createHash("sha256").update(await icon.body()).digest("hex"), sourceHashes["apps/web/app/icon.svg"], "PUBLIC_BRAND_ICON_SOURCE_MISMATCH");
   await expect(page.getByRole("link", { name: "Owner setup", exact: true })).toHaveCount(0);
   await page.goto(`${origin}/dashboard`);
   await expect(page).toHaveURL(`${origin}/review`);
@@ -103,7 +112,7 @@ try {
   await expect(page.getByRole("button", { name: "Start private review workspace" })).toBeVisible();
   assert.deepEqual(forbiddenBrowserRequests, [], "BROWSER_MADE_FORBIDDEN_DIRECT_PROVIDER_OR_LOCALHOST_REQUEST");
   report = { capturedAt: new Date().toISOString(), evidenceType: publicMode ? "public-HTTPS-browser-Linux-production-real-Groq-API-isolated-Kernel-fork" : "actual-production-Next-browser-real-Groq-API-local-Kernel-fork", passed: true, modelId: options.modelId, diagnosticBuildId: buildId, ...(publicMode ? { publicOrigin: origin, deployedSourceSha256: buildId } : {}), ...responseEvidence,
-    elapsedMs: Date.now() - began, procurementThroughWriteReadMs, checks: ["public-review-navigation", "owner-route-redirect", "no-MetaMask", "real-API-payment-preview", "queue-and-worker-escrow-completion", "dashboard-shows-escrow-lock-and-release", "local-hash-not-public-explorer", "service-probe-write-read", "close-workspace", "no-browser-Groq-Google-font-or-owner-localhost-request"], sourceHashes,
+    elapsedMs: Date.now() - began, procurementThroughWriteReadMs, ...(publicMode ? { sourceRevision: deployment.sourceRevision } : {}), checks: ["public-brand-icon-matches-source", "browser-favicon", "public-review-navigation", "owner-route-redirect", "no-MetaMask", "real-API-payment-preview", "queue-and-worker-escrow-completion", "dashboard-shows-escrow-lock-and-release", "local-hash-not-public-explorer", "service-probe-write-read", "close-workspace", "no-browser-Groq-Google-font-or-owner-localhost-request"], sourceHashes,
     limitations: publicMode ? "Browser on the owner's network to the claimed Linux server over public HTTPS, not a China-network measurement. Model is real Groq API; transfers are only isolated fork assets. Hosting account Free/Trial is operator-confirmed. No video/presentation recording." : "Production web/backend on this Windows host for QA, not the final judge deployment. Model is real Groq API; transactions are isolated fork assets. No video or presentation recording." };
 } catch (error) { failure = error; }
 finally { await browser?.close().catch(() => {}); for (const child of children.reverse()) child.kill("SIGTERM"); }
@@ -112,4 +121,8 @@ if (failure) {
   await writeFile(join(directory, "browser-error.private.log"), details, { mode: 0o600 });
   console.error(JSON.stringify({ error: failure instanceof Error && /^[A-Z0-9_]+$/.test(failure.message) ? failure.message : "LIVE_BROWSER_VERIFICATION_FAILED", stage, diagnostics: ".local/review/browser-error.private.log" })); process.exitCode = 1;
 }
-else { if (process.argv.includes("--record")) await writeFile(join(root, publicMode ? "docs/evidence/reviewer-public-browser.json" : "docs/evidence/reviewer-live-browser.json"), `${JSON.stringify(report, null, 2)}\n`); console.log(JSON.stringify(report, null, 2)); }
+else {
+  if (localReport) await writeFile(join(root, ".local/linux-review/public-browser-report.json"), `${JSON.stringify(report, null, 2)}\n`, { mode: 0o600 });
+  else if (process.argv.includes("--record")) await writeFile(join(root, publicMode ? "docs/evidence/reviewer-public-browser.json" : "docs/evidence/reviewer-live-browser.json"), `${JSON.stringify(report, null, 2)}\n`);
+  console.log(JSON.stringify(report, null, 2));
+}

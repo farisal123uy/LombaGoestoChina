@@ -1,5 +1,85 @@
 # Guardian Wallet — catatan progres
 
+## Perapihan struktur proyek — 20 Oktober
+
+- Materi submission aktif memakai sembilan berkas PPTX/Markdown/rekaman milik tim
+  di root `submission/`. Isi materi tersebut dipertahankan.
+- Generator `tools/submission/` beserta tes generator dan panduan lamanya dihapus.
+  Empat script npm generator dihapus; `test:tooling` mempertahankan pemeriksaan
+  allowlist evidence Docker yang masih digunakan. Redirect `QWEN_CLOUD.md` yang
+  sudah digantikan `AI_CLOUD.md` dihapus dan tautannya diperbarui.
+- Lima dokumen historis dipindahkan ke [docs/archive](archive/README.md): roadmap,
+  workflow awal, storyboard demo lama, draft klarifikasi jaringan dan draft email
+  yang dibatalkan. Dokumen arsitektur/API serta seluruh evidence tetap di lokasi
+  semula karena masih menjadi referensi aplikasi, tooling dan materi tim.
+- Output verifikasi sementara generator dan smoke migrasi lama dibersihkan;
+  credential, jurnal onboarding, dependency serta build runtime dipertahankan.
+- Packager source-only diperbaiki agar tetap bekerja pada working tree yang
+  memiliki penghapusan/pemindahan file belum di-commit.
+- Hasil akhir: **12 berkas source/tooling usang dihapus**, **5 dokumen diarsipkan**
+  ditambah satu indeks arsip, serta **28 artefak sementara dibersihkan**. Inventaris
+  berkas proyek turun dari **309 menjadi 298** (di luar dependency/hasil build).
+- Hash kesembilan berkas submission tim sama sebelum/sesudah perapihan. Verifikasi
+  lint, typecheck, production build, **105 integrasi**, **8 web**, **25 browser**,
+  **17 kontrak/fork**, **1 tooling** dan packaging source-only semuanya lulus.
+
+## Perbaikan pemeriksaan menyeluruh — 20 Oktober
+
+Catatan checkpoint sebelum perapihan. Generator dan output presentasi yang disebut
+di bawah sudah dihentikan/dibersihkan; materi aktif kini berada di root `submission/`.
+
+- Konteks `Dockerfile.review` kini menyertakan `public-escrow-procurement.json`
+  yang diimpor frontend. Berkas submission tidak masuk konteks image runtime.
+  Regresi tooling mencocokkan seluruh import evidence frontend dengan allowlist.
+  Docker tidak terpasang pada mesin ini; image belum dibangun/dijalankan di sesi ini.
+- `npm run typecheck` kini mencakup tes integrasi/browser dan konfigurasi tes root
+  melalui `tsconfig.tests.json`. Import `join` ganda, tipe mock driver, fixture service
+  escrow dan akses opsi union pada tes rekonsiliasi sudah diperbaiki tanpa melonggarkan strict mode.
+- Override esbuild **0.25.12** khusus `@esbuild-kit/core-utils` menghapus empat advisory
+  pengembangan. Lockfile dipertahankan pada versi SDK/aplikasi semula dan diuji ulang
+  dengan **`npm ci`**; audit penuh dan produksi sama-sama **0 advisory**. Drizzle check,
+  generate schema ke `.local/drizzle-smoke` serta transform TS sync/async lulus.
+- Pipeline submission memiliki schema deck lengkap, folder output otomatis dan
+  `GUARDIAN_SUBMISSION_DIR` bersama untuk Node/Python/PowerShell. Konten memakai
+  GPT-OSS/cloud serta bukti escrow publik; capture historis tidak ditimpa. Validasi
+  tidak lagi mencantumkan angka tes hardcoded sebagai hasil pengujian baru.
+- Ekspor lokal `.local/submission-check/` berhasil: **9 slide / 7:45**, tiga PDF,
+  speaker notes, empat tautan receipt publik dan catatan latihan Indonesia. Video
+  bernarasi juga diekspor dan durasi sebenarnya di Chromium **223,772 detik**
+  (1280×720). Manifest dan ZIP memverifikasi SHA-256 artefak serta evidence.
+- Regresi akhir: **105 integrasi**, **8 web**, **25 browser**, **17 kontrak/fork**,
+  **4 tooling**, lint, typecheck dan production build lulus. Pemeriksaan output web
+  tidak menemukan key model terkonfigurasi atau path runtime privat pada berkas yang diperiksa.
+- README dan panduan package/test diperbarui; checkpoint lama tetap diberi label
+  historis. Materi submission aktif sekarang dikelola langsung oleh tim di root proyek.
+
+## Perbaikan lokal 20 Oktober — Setup, Wallet, dan pemulihan demo owner
+
+- Setup dijelaskan sebagai deployment/delegasi awal; Wallet sebagai workspace harian.
+  Status konfigurasi tersimpan memakai **Already configured**, terpisah dari login saat ini.
+- Login coordinator dan API dipertahankan dalam sessionStorage per service, maksimal
+  masa sesi server 15 menit. Pemulihan memvalidasi akun MetaMask, Base Sepolia, expiry,
+  dan endpoint `/auth/session`; account/network change dan 401 membatalkan sesi terkait.
+- Daftar/detail task dibatasi pada chain/Kernel aktif agar invoice akun lama tidak
+  ditawarkan ke assistant yang account-scoped. Regresi SQL/API mencakup pemisahan ini.
+- Checkbox invoice dijelaskan sebagai pemilihan preview. Ada tombol preview eksplisit,
+  invoice kedaluwarsa dinonaktifkan, dan invoice yang belum dikirim dapat dibuang
+  melalui endpoint cancel yang sudah ada. Saldo/risk bisa di-refresh tanpa inferensi AI.
+- Diagnosis langsung menemukan saldo **9,48 MockUSD**, anggaran hari itu **2 MockUSD**,
+  empat task akun lama, satu expired plan, serta provider agent/signer tidak hidup.
+  Log worker menunjukkan kegagalan pemuatan `tsx` pada proses runtime lama.
+- Runtime lokal dan coordinator di-restart. Provider health kembali 200; worker
+  mengalihkan expired plan ke `needs_owner/EXPIRED_PLAN`, lalu idle. Komitmen antrean
+  kembali nol. Satu inferensi diagnosis GPT-OSS 120B berhasil; tidak ada transaksi
+  pembayaran baru yang dibuat oleh diagnosis/pemulihan ini.
+- Verifikasi: **105 integration**, **8 web unit**, **22 browser cases terkait**
+  (dashboard/setup/reviewer), lint, typecheck seluruh workspace, build API dan web lulus.
+  Pengujian browser memakai wallet/API fixture; pembayaran MetaMask live berikutnya
+  tetap dilakukan owner. Perubahan ini lokal, belum merupakan deployment cloud baru.
+- Panduan: [OWNER_DEMO_GUIDE.md](OWNER_DEMO_GUIDE.md). Diagnosis ulang:
+  `npm.cmd run wallet:diagnose` atau `npm.cmd run wallet:diagnose -- --ai` untuk satu
+  permintaan tambahan ke model.
+
 ## Keputusan aktif — lanjut menggunakan jaringan yang ada
 
 - User mengonfirmasi identitas/eligibility tim sudah diselesaikan; dicatat sebagai
@@ -10,7 +90,7 @@
   mainnet/testnet; penerimaan resmi tidak diklaim. Hasil fork reviewer tetap terpisah.
 - Aturan lokal dan brief International Track di situs/tautan IEEE sudah diperiksa;
   belum ditemukan penerimaan Base Sepolia/testnet secara eksplisit. Draft pertanyaan
-  Inggris di `ORGANIZER_NETWORK_CONFIRMATION.md` dan `organizer-network-query.eml`
+  Inggris di `archive/ORGANIZER_NETWORK_CONFIRMATION.md` dan `archive/organizer-network-query.eml`
   sekarang menjadi arsip yang tidak dikirim, bukan permintaan yang sedang menunggu jawaban.
 - Owner kini mengizinkan publikasi source ke branch GitHub `feat/batching-evaluation`;
   branch `main` tidak diubah. Presentasi/video tetap menunggu izin terpisah.
@@ -83,7 +163,7 @@
   owner; frontend teman belum di-push sehingga integrasi frontend final belum selesai.
 - Qwen runtime dipindahkan ke adapter **Groq Free**, model pinned
   `qwen/qwen3.8-27b`, strict JSON, reasoning none, batas token/request dan penanganan
-  quota tanpa paid fallback. Panduan: [QWEN_CLOUD.md](QWEN_CLOUD.md).
+  quota tanpa paid fallback. Panduan konfigurasi saat ini: [AI_CLOUD.md](AI_CLOUD.md).
 - **75 integration cases lulus** (termasuk adapter cloud berbasis mock dan isolasi
   host juri). Inferensi Groq/latensi aktual belum terverifikasi tanpa key akun Free.
 - Sandbox juri `/review` dan host capability-scoped sudah diimplementasikan. Runtime

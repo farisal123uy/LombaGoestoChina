@@ -1,16 +1,22 @@
 # AI planner
 
-The legacy Planner interface remains available. The payment path now uses
-BoundedPaymentPlanner and a native Ollama Qwen JSON-schema adapter. Model output
-can only choose pay/wait/needs_owner with a summary; it cannot supply quote fields,
+The payment path uses `BoundedPaymentPlanner` and `StructuredModelClient` (also
+exported as the compatibility name `QwenClient`). The default model is
+`openai/gpt-oss-120b` on Groq. `openai/gpt-oss-20b` and the reviewed cloud Qwen model
+are explicit alternatives; there is no automatic fallback. Model output can choose
+pay/wait/needs_owner with a summary; it cannot supply financial quote fields,
 calldata, signing or owner approval. `AI_PROVIDER=baseline` selects the deterministic
-baseline; `AI_PROVIDER=ollama` uses Qwen without a cloud API key. Local live smoke
-evaluation is recorded in `../../docs/evidence/qwen-local-evaluation.json`.
+baseline. `AI_PROVIDER=ollama` with `AI_MODEL_ID=qwen3:8b` enables the legacy local
+transport. Current cloud and historical local evidence are labeled separately in
+`../../docs/evidence/`; configuration is documented in `../../docs/AI_CLOUD.md`.
 
 The separate vendor parser has no tools and returns only bounded service attributes
 from escaped untrusted text. It is not an injection-proof authorization layer. Keep
 all signing credentials outside this runtime; execution revalidates quote/policy.
 
-`QwenClient` uses native fetch, thinking disabled, finite context/output, a bounded
-single-flight queue, a total request timeout and ten-minute keep-alive. It rejects
-truncated/non-schema outputs; transport errors are sanitized. No AI SDK is required.
+The model client uses native fetch, strict structured output plus Zod validation,
+finite input/completion budgets, bounded concurrency and a total timeout. Groq uses
+allowlisted HTTPS/model profiles, quota reservation/cooldowns and model-specific
+reasoning settings. Ollama disables thinking and uses a ten-minute keep-alive.
+Malformed/truncated responses are rejected and transport errors are sanitized.
+Deterministic batching and wallet overview/risk calculations are separate from inference.

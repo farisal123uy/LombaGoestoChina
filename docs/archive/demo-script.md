@@ -1,19 +1,14 @@
 # Astra enterprise demo — previous five-minute storyboard
 
-The current, refreshed nine-slide competition presentation is
-[`submission/generated/Guardian-Wallet-presentation.pptx`](../submission/generated/Guardian-Wallet-presentation.pptx),
-with Indonesian rehearsal notes at
-[`submission/presentation-notes.md`](../submission/presentation-notes.md). It includes
-the owner-authorized public Base Sepolia escrow deployment and lock/release receipts.
-The five-minute direct-settlement storyboard below is retained as a separate historical
-live-rehearsal variant; it is not the current escrow presentation.
+Archived direct-settlement rehearsal storyboard. The team's current materials are
+maintained in the repository-root [submission folder](../../submission/), including
+[PRESENTATION_MATERIAL.md](../../submission/PRESENTATION_MATERIAL.md) and
+[Guardian_Wallet_Astra_Presentation_v2.pptx](../../submission/Guardian_Wallet_Astra_Presentation_v2.pptx).
+The former generated presentation/video pipeline has been retired.
 
-Status: **live-UI storyboard for team rehearsal; a separate 4m24s English-narrated
-recorded-evidence walkthrough is prepared** at
-`submission/generated/Guardian-Wallet-demo.webm`. Presentation PPTX/PDF and notes
-are in the same directory; [submission review guide](../submission/README.md).
-Public AI-01, local COST-01 and selected security results are linked in execution
-evidence. This storyboard does not imply every scene was performed live on camera.
+Public AI-01, local COST-01 and selected security results are linked in
+[execution evidence](../execution-evidence.md). This historical storyboard does not
+imply every scene was performed live on camera.
 Astra is the buyer agent's product name,
 not a model ID. Record the actual model configuration for every AI runtime used.
 
@@ -96,6 +91,6 @@ The working phrase **Air-Gapped AI Guardian Wallet** describes separated authori
 Use **authority-separated AI with on-chain enforcement** as the technical description:
 this networked application does not implement a physical network air gap. XML tags,
 Dual-LLM parsing and one blocked prompt do not prove universal injection resistance.
-Use only results actually recorded in [execution evidence](execution-evidence.md).
+Use only results actually recorded in [execution evidence](../execution-evidence.md).
 Public payment/service liveness is historical after the one-hour rental; local/fork
 and browser-fixture scenes retain their own explicit labels in any final recording.

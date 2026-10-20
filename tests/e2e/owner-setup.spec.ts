@@ -17,6 +17,7 @@ test("owner completes the visible sign/deploy/session flow without entering a pr
     (window as unknown as { ethereum: object }).ethereum = {
       request: async ({ method }: { method: string }) => {
         if (["eth_requestAccounts", "eth_accounts"].includes(method)) return [address];
+        if (method === "eth_chainId") return "0x14a34";
         if (["wallet_switchEthereumChain", "wallet_addEthereumChain"].includes(method)) return null;
         if (["personal_sign", "eth_signTypedData_v4"].includes(method)) return `0x${"11".repeat(65)}`;
         throw new Error("Unexpected test wallet method");
@@ -30,7 +31,8 @@ test("owner completes the visible sign/deploy/session flow without entering a pr
     if (route.request().method() === "OPTIONS") return route.fulfill({ status: 204, headers });
     let body: unknown = current;
     if (path === "/auth/nonce") body = { nonce: "test-nonce", message: "Owner sign-in test fixture" };
-    if (path === "/auth/verify") body = { token: "owner-browser-test-token" };
+    if (path === "/auth/verify") body = { token: "owner-browser-test-token", expiresInSeconds: 900 };
+    if (path === "/auth/session") body = { address: owner };
     if (path === "/prepare") current.operation = { id: "11111111-1111-4111-8111-111111111111", hash: `0x${"aa".repeat(32)}`, status: "prepared", preparedAt: Date.now(), maxGasCostEth: "0.0001" };
     if (path === "/submit") { current.operation!.status = "submitted"; }
     if (path === "/reconcile") { current.operation!.status = "confirmed"; current.operation!.transactionHash = `0x${"bb".repeat(32)}`; current.installed = true; current.ready = true; }
@@ -51,6 +53,9 @@ test("owner completes the visible sign/deploy/session flow without entering a pr
   await page.getByRole("button", { name: "Authorize Astra session" }).click();
   await expect(page.getByText("Runtime configuration ready.", { exact: true })).toBeVisible();
   await expect(page.getByRole("textbox")).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText("Owner connected", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Setup progress").getByText("Already configured", { exact: true })).toHaveCount(2);
 });
 
 test("coordinator outage gives a usable startup instruction", async ({ page }) => {
@@ -86,4 +91,17 @@ test("owner setup clearly identifies an escrow deployment and its fresh account 
   await page.goto("/setup");
   await expect(page.getByText("Base Sepolia · owner setup · escrow", { exact: true })).toBeVisible();
   await expect(page.getByText(/Settlement mode: escrow · refund window 600s · new isolated Kernel index 1/)).toBeVisible();
+});
+
+test("existing deployment is identified as saved configuration before owner sign-in", async ({ page }) => {
+  await page.route("http://127.0.0.1:4100/**", (route) => route.fulfill({
+    contentType: "application/json", headers: { "access-control-allow-origin": route.request().headers().origin || "http://localhost:3000" },
+    body: JSON.stringify({ ...state, installed: true, ready: true, sessionAuthorized: true, runtimeConfigured: true }),
+  }));
+  await page.goto("/setup");
+  await expect(page.getByText(/An existing setup was found/)).toBeVisible();
+  await expect(page.getByLabel("Setup progress").getByText("Already configured", { exact: true })).toHaveCount(2);
+  await expect(page.getByLabel("Setup progress").getByText("Signed in", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Open wallet workspace" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Prepare deployment", exact: true })).toBeDisabled();
 });

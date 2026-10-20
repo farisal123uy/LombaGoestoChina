@@ -5,6 +5,7 @@ import { developmentChain } from "@guardian-wallet/shared";
 import Link from "next/link";
 import { UiIcon } from "./ui-icon";
 import { useOwnerSession } from "./owner-session";
+import { onboardingBase as coordinator, walletRequestError } from "../lib/api-error";
 
 type Hex = `0x${string}`;
 interface WalletProvider {
@@ -21,7 +22,6 @@ interface SetupState {
   limits: { initialTokenUnits: string; protectedUnits: string; perPaymentUnits: string; dailyUnits: string; decimals: number };
   operation?: { id: string; hash: Hex; status: string; preparedAt: number; maxGasCostEth: string; transactionHash?: Hex; reason?: string };
 }
-const coordinator = (process.env.NEXT_PUBLIC_ONBOARDING_URL || "http://127.0.0.1:4100").replace(/\/$/, "");
 const activeStates = new Set(["submitting", "submitted", "unknown"]);
 const toHex = (text: string) => `0x${Array.from(new TextEncoder().encode(text), (byte) => byte.toString(16).padStart(2, "0")).join("")}`;
 const units = (value: string) => {
@@ -36,7 +36,7 @@ async function call<T>(path: string, token?: string, body?: object): Promise<T> 
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
   const result = await response.json();
-  if (!response.ok) throw new Error(typeof result.error === "string" ? result.error : "SETUP_REQUEST_FAILED");
+  if (!response.ok) throw walletRequestError(coordinator, response.status, result, Boolean(token));
   return result as T;
 }
 function provider() {
@@ -55,17 +55,11 @@ async function switchNetwork(wallet: WalletProvider) {
 
 export function OwnerSetup() {
   const [state, setState] = useState<SetupState>();
-  const { setupSession: login, setSetupSession: setLogin } = useOwnerSession();
+  const { setupSession: login, setSetupSession: setLogin, restoring } = useOwnerSession();
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const refresh = useCallback(async () => { setState(await call<SetupState>("/state")); }, []);
   useEffect(() => { refresh().catch(() => setError("Start the local coordinator with npm.cmd run onboarding, then refresh.")); }, [refresh]);
-  useEffect(() => {
-    const wallet = (window as unknown as { ethereum?: WalletProvider }).ethereum;
-    const changed = () => { setLogin(undefined); setError("Wallet account changed. Reconnect using the configured owner."); };
-    wallet?.on?.("accountsChanged", changed);
-    return () => wallet?.removeListener?.("accountsChanged", changed);
-  }, []);
   const operationStatus = state?.operation?.status;
   useEffect(() => {
     if (!login || !operationStatus || !activeStates.has(operationStatus)) return;
@@ -106,8 +100,8 @@ export function OwnerSetup() {
     await switchNetwork(wallet);
     const challenge = await call<{ nonce: string; message: string }>("/auth/nonce", undefined, { address });
     const signature = await wallet.request({ method: "personal_sign", params: [toHex(challenge.message), address] });
-    const auth = await call<{ token: string }>("/auth/verify", undefined, { address, nonce: challenge.nonce, signature });
-    setLogin({ address, token: auth.token });
+    const auth = await call<{ token: string; expiresInSeconds: number }>("/auth/verify", undefined, { address, nonce: challenge.nonce, signature });
+    setLogin({ address, token: auth.token, expiresAt: Date.now() + auth.expiresInSeconds * 1000 });
   });
   const prepare = () => action("Prepare sponsored deployment", async () => {
     await assertOwner();
@@ -133,16 +127,17 @@ export function OwnerSetup() {
 
   return <main className="setup-shell">
     <div className="setup-context-bar"><span className="setup-context-kicker">OWNER ONBOARDING</span><span className="setup-context-mode">Base Sepolia · owner setup · {state?.settlementMode || "direct"}</span>{state && <span className="setup-context-index">Kernel index {state.kernelIndex}</span>}</div>
-    <section className="setup-intro"><p className="eyebrow">YOUR WALLET STARTS HERE</p><h1>Authorize once.<br /><span>Keep authority bounded.</span></h1><p>Three steps to a policy-bound wallet. Connect your owner account, deploy with sponsored gas, then delegate a scoped session to Astra.</p></section>
+    <section className="setup-intro"><p className="eyebrow">ONE-TIME DEPLOYMENT & DELEGATION</p><h1>Authorize once.<br /><span>Keep authority bounded.</span></h1><p>Setup creates your smart wallet and gives Astra a scoped permission. After setup, use Wallet for balances, invoices and demo payments. Connecting MetaMask only signs you in; it does not deploy a wallet or grant Astra payment authority.</p></section>
+    {state && !login && <p className="dashboard-notice">{state.ready || state.sessionAuthorized ? "An existing setup was found for the configured owner. Saved deployment and delegation are shown below; they were not created by opening this page. " : "Connect the owner before proceeding with deployment and delegation. "}Setup sign-in is for the local coordinator; Wallet sign-in is for the payment API. Both last 15 minutes and can survive a refresh in this tab.</p>}
     <ol className="onboarding-progress" aria-label="Setup progress">
-      {[{ label: "Owner sign-in", done: Boolean(login), icon: "wallet" as const }, { label: "Policy deployed", done: Boolean(state?.ready), icon: "shield" as const }, { label: "Astra authorized", done: Boolean(state?.sessionAuthorized), icon: "spark" as const }].map((step, index) => <li className={step.done ? "is-complete" : ""} key={step.label}><span className="progress-step-icon"><UiIcon name={step.done ? "check" : step.icon} /></span><div><small>STEP 0{index + 1}</small><strong>{step.label}</strong></div><span className="progress-step-status">{step.done ? "Complete" : "Pending"}</span></li>)}
+      {[{ label: "Owner sign-in", done: Boolean(login), saved: false, icon: "wallet" as const }, { label: "Policy deployed", done: Boolean(state?.ready), saved: true, icon: "shield" as const }, { label: "Astra authorized", done: Boolean(state?.ready && state.sessionAuthorized), saved: true, icon: "spark" as const }].map((step, index) => <li className={step.done ? "is-complete" : ""} key={step.label}><span className="progress-step-icon"><UiIcon name={step.done ? "check" : step.icon} /></span><div><small>STEP 0{index + 1}</small><strong>{step.label}</strong></div><span className="progress-step-status">{step.done ? step.saved ? "Already configured" : "Signed in" : index === 0 && restoring ? "Checking…" : !login && index > 0 ? "Connect owner first" : "Pending"}</span></li>)}
     </ol>
-    {state?.runtimeConfigured && <div className="next-action"><span className="next-action-icon"><UiIcon name="check" /></span><div><strong>Your wallet setup is complete.</strong><p>Continue to the wallet workspace to sign in, review a service quote and follow its settlement.</p></div><Link className="action-primary" href="/dashboard">Open wallet workspace <UiIcon name="arrow" /></Link></div>}
+    {state?.ready && state.sessionAuthorized && state.runtimeConfigured && <div className="next-action"><span className="next-action-icon"><UiIcon name="check" /></span><div><strong>Your wallet setup is already saved.</strong><p>Continue directly to Wallet. Deployment and Astra authorization do not need to be repeated for daily use.</p></div><Link className="action-primary" href="/dashboard">Open wallet workspace <UiIcon name="arrow" /></Link></div>}
     {error && <div className="setup-error" role="alert">{error}</div>}
     {busy && <p role="status" className="setup-progress">{busy}…</p>}
     <div className="setup-columns">
       <section className="setup-panel"><div className="panel-title"><span className="panel-icon"><UiIcon name="shield" /></span><div><p className="eyebrow">OWNER AUTHORITY</p><h2>Set up your delegation</h2></div></div>
-        <article className="setup-step"><span>01</span><div><h2>Connect owner</h2><p>Sign the domain-bound login message. This establishes access to the local coordinator.</p><button disabled={!!busy || !state} onClick={connect}>{login ? "Reconnect owner" : "Connect MetaMask & sign in"}</button>{login && <p className="setup-ok">Owner connected</p>}</div></article>
+        <article className="setup-step"><span>01</span><div><h2>Connect owner</h2><p>Sign in to manage deployment and delegation with the local coordinator. If setup is already saved, you can go directly to Wallet.</p><button disabled={!!busy || restoring || !state} onClick={connect}>{login ? "Reconnect owner" : "Connect MetaMask & sign in"}</button>{login && <p className="setup-ok">Owner connected</p>}</div></article>
         <article className="setup-step"><span>02</span><div><h2>Deploy with sponsored gas</h2><p>Create Kernel, deploy Guardian and the fixed-supply test token, then install the policy. Preparing can reserve project sponsorship quota; the displayed gas bound is not a fiat pricing guarantee.</p><div className="setup-buttons"><button disabled={!!busy || !login || state?.ready || (operationStatus !== undefined && activeStates.has(operationStatus))} onClick={prepare}>Prepare deployment</button><button disabled={!!busy || !login || operationStatus !== "prepared"} onClick={signAndDeploy}>Sign & submit deployment</button></div>{state?.operation && <p className="setup-detail">Operation: <strong>{state.operation.status}</strong><br />Maximum native gas exposure: {state.operation.maxGasCostEth} ETH<br />UserOperation hash: <code>{state.operation.hash}</code></p>}{state?.operation?.transactionHash && <a className="setup-link" target="_blank" rel="noreferrer" href={`${developmentChain.explorerUrl}/tx/${state.operation.transactionHash}`}>View transaction on Blockscout ↗</a>}</div></article>
         <article className="setup-step"><span>03</span><div><h2>Delegate to Astra</h2><p>Sign the scoped permission for the session address below. Direct transfers, approvals and administration are outside this session. The owner retains policy and revocation authority.</p><button disabled={!!busy || !login || !state?.ready || state.sessionAuthorized} onClick={authorize}>Authorize Astra session</button>{state?.sessionAuthorized && <p className="setup-ok">Session authorization recorded</p>}{state?.sessionAuthorized && !state.runtimeConfigured && <button disabled={!!busy || !login} onClick={() => action("Synchronize runtime", async () => setState(await call<SetupState>("/runtime/sync", login!.token, {})))}>Retry runtime synchronization</button>}{state?.runtimeConfigured && <div className="setup-success"><strong>Runtime configuration ready.</strong><p>Start or restart the API and worker to load the deployed addresses and session: <code>npm.cmd run dev:api</code> and <code>npm.cmd run dev:worker</code>. Scheduling starts paused until you sign in to the API and start the agent.</p></div>}</div></article>
         <div className="setup-buttons"><button className="secondary" disabled={!!busy} onClick={() => action("Refresh", refresh)}>Refresh status</button><button className="secondary" disabled={!!busy || !login} onClick={() => action("Check transaction", async () => setState(await call<SetupState>("/reconcile", login!.token, {})))}>Check transaction</button></div>

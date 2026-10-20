@@ -18,7 +18,6 @@ body {
 .app-network-dot { box-shadow: 0 0 0 3px rgba(8,127,104,.1); }
 .app-network-chip.is-sandbox { background: #fff5e0; color: #78500f; border-color: #ecd5a6; }
 .app-network-chip.is-sandbox .app-network-dot { box-shadow: none; }
-.brand-mark { color: #fff; background: var(--brand-gradient); }
 .setup-shell, .dashboard-shell, .evidence-shell { color: var(--text); }
 .setup-panel, .dashboard-login, .dashboard-stats article, .evidence-card, .evidence-subcard, .comparison-card, .evidence-widget, .api-status {
   color: var(--text);

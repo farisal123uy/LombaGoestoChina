@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { UiIcon, type IconName } from "./ui-icon";
 
@@ -22,7 +23,7 @@ export function AppNavigation({ reviewOnly = false }: { reviewOnly?: boolean }) 
   return <div className="app-nav-frame">
     <header className="app-navigation">
       <Link className="app-brand" href="/" aria-label="Guardian Wallet overview">
-        <span className="brand-mark" aria-hidden="true">G</span>
+        <Image className="guardian-logo" src="/icon.svg" alt="" aria-hidden="true" width={44} height={44} loading="eager" unoptimized />
         <span className="app-brand-copy"><strong>Guardian <span>Wallet</span></strong><small>POLICY CONTROL</small></span>
       </Link>
       <nav className="app-nav-links" aria-label="Main navigation">

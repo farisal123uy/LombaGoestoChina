@@ -13,7 +13,7 @@ contracts/ignition/deployments
 playwright-report
 test-results
 .local
-submission/generated
+submission
 .vercel
 .railway
 *.log
@@ -23,6 +23,7 @@ docs/*
 docs/evidence/*
 !docs/evidence/public-deployment.json
 !docs/evidence/public-procurement.json
+!docs/evidence/public-escrow-procurement.json
 !docs/evidence/2026-10-16-local-fork.json
 !docs/evidence/provider-live-preview.json
 !docs/evidence/qwen-local-evaluation.json

@@ -44,11 +44,13 @@ itself observe service quality. See [ESCROW_PROTOTYPE.md](ESCROW_PROTOTYPE.md).
 Current guides: [AI_CLOUD.md](AI_CLOUD.md), [REVIEW_DEPLOYMENT.md](REVIEW_DEPLOYMENT.md),
 [technical documentation](technical-documentation.md), [release checklist](RELEASE_CHECKLIST.md).
 
-Latest dependency scan: `npm audit --omit=dev` reports **0** known advisories including
-the declared reviewer runtime dependencies. Full `npm audit` still reports **4 moderate**
-development-chain advisories through drizzle-kit/old esbuild (GHSA-67mh-4wv8-2f99).
-The review image prunes build-only dev tooling. This scan is neither an independent
-security audit nor a verified Docker build; no esbuild development server is exposed.
+Latest dependency scan (October 20): both `npm audit --omit=dev` and full `npm audit`
+report **0** known advisories. A scoped override moves only `@esbuild-kit/core-utils`'s
+esbuild dependency to **0.25.12**, removing GHSA-67mh-4wv8-2f99 without downgrading
+Drizzle or changing application SDK versions. The root lockfile was verified with
+`npm ci`; migration tooling is checked locally. Earlier four-moderate results below
+are historical. The review image still prunes build-only dev tooling; a dependency
+scan is not an independent audit or a verified Docker build.
 
 Status: **public procurement verified; stage-two batching/security evaluated on local
 forks and selected live-model cases; not independently assessed/audited**.
@@ -118,7 +120,7 @@ Detailed target design: [architecture](architecture.md). Acceptance matrix and m
 vs enforcement evaluation: [evaluation](evaluation.md). No audit or attack-resistance
 claim is made until implementation and evidence are reviewed.
 
-## Dependency review (October 16, 2026)
+## Historical dependency review (October 16, 2026)
 
 `npm audit --omit=dev` reports **0 known runtime advisories** after overriding the
 SDK's transitive ethjs-unit/number-to-bn copies to bn.js 4.12.3. Vitest is upgraded to

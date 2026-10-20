@@ -102,4 +102,5 @@ the organizing committee and label test tokens clearly.
 For SEC-01, distinguish local EVM execution, public-chain simulation, bundler rejection
 and mined revert. Only the first three may be available for a rejected operation;
 none implies a mined failure. Preserve the real authorization path in contract tests.
-The [demo script](demo-script.md) must refer to actual saved results before recording.
+The [historical demo script](archive/demo-script.md) is retained for reference. Current
+[presentation material](../submission/PRESENTATION_MATERIAL.md) must use actual saved results.
