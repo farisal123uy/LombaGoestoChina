@@ -5,7 +5,6 @@ import { OwnerSessionProvider } from "../components/owner-session";
 import "./theme.css";
 import "./globals.css";
 import "./workspace.css";
-import "./light-theme.css";
 
 const sans = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
 const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
